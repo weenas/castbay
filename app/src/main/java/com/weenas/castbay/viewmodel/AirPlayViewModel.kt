@@ -43,8 +43,9 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     fun refreshNetwork() = networkMonitor.refresh()
 
     // StateFlow, not LiveData: Compose only recomposes for state it observes.
-    private val _navigateToSettings = MutableStateFlow(false)
-    val navigateToSettings: StateFlow<Boolean> = _navigateToSettings.asStateFlow()
+    /** A screen the home screen asked to open ("settings" or "about"), until it is shown. */
+    private val _navigateTo = MutableStateFlow<String?>(null)
+    val navigateTo: StateFlow<String?> = _navigateTo.asStateFlow()
 
     private val _navigateBack = MutableStateFlow(false)
     val navigateBack: StateFlow<Boolean> = _navigateBack.asStateFlow()
@@ -109,15 +110,19 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun navigateToSettings() {
-        _navigateToSettings.value = true
+        _navigateTo.value = "settings"
+    }
+
+    fun navigateToAbout() {
+        _navigateTo.value = "about"
     }
 
     fun navigateBack() {
         _navigateBack.value = true
     }
 
-    fun onNavigateToSettingsConsumed() {
-        _navigateToSettings.value = false
+    fun onNavigateToConsumed() {
+        _navigateTo.value = null
     }
 
     fun onNavigateBackConsumed() {

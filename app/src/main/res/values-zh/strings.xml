@@ -120,7 +120,6 @@
     <string name="about_source">源代码</string>
     <string name="about_license">以 GPL-3.0 协议开源，基于 UxPlay、libplist、Apple ALAC 和 Media3。</string>
     <string name="about_scan">用手机扫码打开官网</string>
-    <string name="about_open">打开</string>
 
     <!-- Notification -->
     <string name="notification_channel">映湾服务</string>

@@ -119,7 +119,6 @@
     <string name="about_source">Source code</string>
     <string name="about_license">Open source under GPL-3.0, built on UxPlay, libplist, Apple ALAC and Media3.</string>
     <string name="about_scan">Scan with your phone to open the website</string>
-    <string name="about_open">Open</string>
 
     <!-- Notification -->
     <string name="notification_channel">CastBay Service</string>

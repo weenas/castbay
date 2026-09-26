@@ -35,13 +35,13 @@ private fun Screens() {
     var currentScreen by remember { mutableStateOf("mirror") }
     val viewModel: AirPlayViewModel = viewModel()
 
-    val navigateToSettings by viewModel.navigateToSettings.collectAsState()
+    val navigateTo by viewModel.navigateTo.collectAsState()
     val navigateBack by viewModel.navigateBack.collectAsState()
 
-    LaunchedEffect(navigateToSettings) {
-        if (navigateToSettings) {
-            currentScreen = "settings"
-            viewModel.onNavigateToSettingsConsumed()
+    LaunchedEffect(navigateTo) {
+        navigateTo?.let {
+            currentScreen = it
+            viewModel.onNavigateToConsumed()
         }
     }
 
@@ -60,19 +60,17 @@ private fun Screens() {
         if (streaming) currentScreen = "mirror"
     }
 
-    // The remote's Back key leaves sub-screens instead of closing the app (About is opened
-    // from Settings, so it goes back there).
+    // The remote's Back key leaves Settings and About for the home screen instead of closing the app.
     BackHandler(enabled = currentScreen != "mirror") {
-        currentScreen = if (currentScreen == "about") "settings" else "mirror"
+        currentScreen = "mirror"
     }
 
     when (currentScreen) {
         "mirror" -> MirrorScreen(viewModel = viewModel)
         "settings" -> SettingsScreen(
             viewModel = viewModel,
-            onBack = { currentScreen = "mirror" },
-            onAbout = { currentScreen = "about" }
+            onBack = { currentScreen = "mirror" }
         )
-        "about" -> AboutScreen(onBack = { currentScreen = "settings" })
+        "about" -> AboutScreen(onBack = { currentScreen = "mirror" })
     }
 }

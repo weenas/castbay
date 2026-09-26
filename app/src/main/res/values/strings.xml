@@ -135,7 +135,6 @@
     <!-- Help -->
     <string name="help">Help</string>
     <string name="help_more">More help: %1$s</string>
-    <string name="waiting_hint">Pick “%1$s” on your phone to cast. Not sure how? See Help.</string>
     <string name="help_mirror_title">Screen mirroring from iPhone or iPad</string>
     <string name="help_mirror">Open Control Center, tap Screen Mirroring and pick “%1$s”.\nThe screen and sound go to the TV. To end, tap Stop Mirroring in Control Center.</string>
     <string name="help_airplay_apps_title">Music and video from apps (AirPlay)</string>

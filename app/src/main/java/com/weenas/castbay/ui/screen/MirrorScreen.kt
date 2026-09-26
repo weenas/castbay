@@ -14,7 +14,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.style.TextAlign
 import com.weenas.castbay.service.DacpClient
 import com.weenas.castbay.service.NowPlaying
 import com.weenas.castbay.service.StatsFormat
@@ -240,20 +239,11 @@ fun IdleScreen(viewModel: AirPlayViewModel) {
 
 @Composable
 fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
-    val settings by viewModel.settings.collectAsState()
     HomeScreen(viewModel) {
+        // How to cast from each device is on the Help screen.
         // Text's default style has a fixed 24 sp line height, so larger text that may wrap sets
         // its own (in sp: an em line height in the theme crashed text fields' label animation).
         Text(stringResource(R.string.waiting_title), color = Color.White, fontSize = 28.sp, lineHeight = 36.sp)
-        Spacer(modifier = Modifier.height(16.dp))
-        // Just the name to pick; how to cast from each device is on the Help screen.
-        Text(
-            stringResource(R.string.waiting_hint, settings.advertisedName),
-            color = Color.White,
-            fontSize = 18.sp,
-            lineHeight = 26.sp,
-            textAlign = TextAlign.Center
-        )
         if (lastError != null) {
             // Why the last AirPlay video stopped, e.g. the TV couldn't reach the video site.
             Spacer(modifier = Modifier.height(16.dp))

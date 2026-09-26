@@ -91,8 +91,13 @@ class ReceiverSettingsStore(context: Context) {
     private val preferences = context.applicationContext
         .getSharedPreferences("receiver_settings", Context.MODE_PRIVATE)
 
+    /** "CastBay (TV name)": used, and followed as the TV's name changes, until the user picks one. */
+    private val defaultName = DeviceName.default(context.applicationContext)
+
     fun load() = ReceiverSettings(
-        deviceName = preferences.getString("device_name", "CastBay").orEmpty().ifBlank { "CastBay" },
+        // Older versions stored the plain default "CastBay"; it now means "not chosen" too.
+        deviceName = preferences.getString("device_name", null)?.trim()
+            ?.takeUnless { it.isEmpty() || it == DeviceName.BRAND } ?: defaultName,
         // Values from older versions (e.g. "4K") fall back to Auto.
         resolution = preferences.getString("resolution", null)
             ?.takeIf { it in ReceiverSettings.RESOLUTIONS } ?: ReceiverSettings.RESOLUTION_AUTO,
@@ -117,8 +122,12 @@ class ReceiverSettingsStore(context: Context) {
     )
 
     fun save(settings: ReceiverSettings) {
+        val name = settings.deviceName.trim()
         preferences.edit()
-            .putString("device_name", settings.deviceName.trim().ifBlank { "CastBay" })
+            .apply {
+                // The default isn't stored, so it keeps following the TV's name.
+                if (name.isEmpty() || name == defaultName) remove("device_name") else putString("device_name", name)
+            }
             .putString("resolution", settings.resolution)
             .putString("frame_rate", settings.frameRate)
             .putString("video_codec", settings.videoCodec)

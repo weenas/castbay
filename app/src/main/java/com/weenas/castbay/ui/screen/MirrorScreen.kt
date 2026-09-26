@@ -256,7 +256,7 @@ fun IdleScreen(viewModel: AirPlayViewModel, onStart: () -> Unit, starting: Boole
         )
         Spacer(modifier = Modifier.height(48.dp))
         val busy = starting || pressed
-        HomeButtons(onSettings = { viewModel.navigateToSettings() }) {
+        HomeButtons(viewModel) {
             // Stays enabled while starting, so D-pad focus doesn't jump away; presses are ignored.
             HomeButton(
                 stringResource(if (busy) R.string.starting else R.string.action_start),
@@ -292,20 +292,30 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null, on
             Text(lastError, color = Color(0xFFFFB4AB), fontSize = 18.sp)
         }
         Spacer(modifier = Modifier.height(32.dp))
-        HomeButtons(onSettings = { viewModel.navigateToSettings() }) {
+        HomeButtons(viewModel) {
             HomeButton(stringResource(R.string.action_stop), Modifier.initialFocus(), onClick = onStop)
         }
     }
 }
 
-/** The home screen's main button with Settings beside it, in the same style. */
+/** The home screen's main button with Settings and About beside it, in the same style. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeButtons(onSettings: () -> Unit, main: @Composable () -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        main()
-        HomeButton(stringResource(R.string.settings), onClick = onSettings)
+private fun HomeButtons(viewModel: AirPlayViewModel, main: @Composable () -> Unit) {
+    // Narrower than elsewhere so three fit beside the info panel; they wrap if they still don't.
+    CompositionLocalProvider(LocalHomeButtonMinWidth provides 120.dp) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            main()
+            HomeButton(stringResource(R.string.settings), onClick = { viewModel.navigateToSettings() })
+            HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
+        }
     }
 }
+
+private val LocalHomeButtonMinWidth = staticCompositionLocalOf { 160.dp }
 
 /** A home/Settings button. The focused one gets a white outline, visible from the sofa. */
 @Composable
@@ -319,7 +329,8 @@ fun HomeButton(text: String, modifier: Modifier = Modifier, muted: Boolean = fal
         colors = if (muted) ButtonDefaults.buttonColors(containerColor = Color(0xFF4A4A52), contentColor = Color(0xFFDDDDDD))
         else ButtonDefaults.buttonColors(),
         border = if (focused) BorderStroke(3.dp, Color.White) else null,
-        modifier = modifier.widthIn(min = 160.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        modifier = modifier.widthIn(min = LocalHomeButtonMinWidth.current)
     ) {
         Text(text, fontSize = 20.sp)
     }
@@ -343,7 +354,7 @@ private fun HomeLayout(info: @Composable () -> Unit, primary: @Composable Column
                     content = primary
                 )
                 Spacer(modifier = Modifier.width(48.dp))
-                Box(modifier = Modifier.weight(1.2f)) { info() }
+                Box(modifier = Modifier.weight(1f)) { info() }
             }
         } else {
             Column(
@@ -400,7 +411,6 @@ fun ReceiverInfo(viewModel: AirPlayViewModel) {
         InfoRow(stringResource(R.string.info_dlna), stringResource(if (settings.dlnaEnabled) R.string.info_dlna_on else R.string.off))
         InfoRow(stringResource(R.string.info_password), stringResource(if (settings.requirePassword) R.string.setting_password_on else R.string.setting_password_off))
         InfoRow(stringResource(R.string.info_second_device), stringResource(if (settings.allowTakeover) R.string.info_takes_over else R.string.info_refused))
-        InfoRow(stringResource(R.string.info_version), viewModel.appVersion)
         if (network.type == NetworkStatus.Type.NONE) {
             Spacer(modifier = Modifier.height(12.dp))
             Text(stringResource(R.string.no_network), color = Color(0xFFFFB4AB), fontSize = 16.sp)

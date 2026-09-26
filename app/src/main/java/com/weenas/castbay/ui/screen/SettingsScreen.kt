@@ -17,6 +17,7 @@ import com.weenas.castbay.R
 import com.weenas.castbay.ui.mirroringLabel
 import com.weenas.castbay.ui.settingValueLabel
 import com.weenas.castbay.ui.AppBackground
+import com.weenas.castbay.ui.SegmentedChoice
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
@@ -39,7 +40,7 @@ import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit, onAbout: () -> Unit = {}) {
+fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
     // Starts on the row below the device name: focusing the text field opens the keyboard.
     val firstChoice = remember { FocusRequester() }
@@ -128,9 +129,6 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit, onAbout: () 
                 SwitchSetting(stringResource(R.string.setting_start_on_boot), settings.startOnBoot) { enabled ->
                     viewModel.updateSettings { it.copy(startOnBoot = enabled) }
                 }
-                SettingLine(stringResource(R.string.about)) {
-                    HomeButton(stringResource(R.string.about_open), onClick = onAbout)
-                }
             }
         }
     }
@@ -154,17 +152,8 @@ fun ChoiceSetting(
     modifier: Modifier = Modifier,
     onSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
     SettingLine(label) {
-        // The menu is anchored to the button, so it opens beside the value on the right.
-        Box {
-            HomeButton("${display(value)}  ▾", modifier) { expanded = true }
-            DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                choices.forEach { choice ->
-                    DropdownMenuItem(text = { Text(display(choice), fontSize = 18.sp) }, onClick = { onSelected(choice); expanded = false })
-                }
-            }
-        }
+        SegmentedChoice(value, choices, display, modifier, onSelected)
     }
 }
 
@@ -250,7 +239,8 @@ fun AccessSetting(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
     var choosingPassword by remember { mutableStateOf(false) }
     ChoiceSetting(
         stringResource(R.string.setting_password),
-        if (settings.requirePassword) ACCESS_PASSWORD else ACCESS_OPEN,
+        // Shows "Required" while a password is being chosen, though it applies only once saved.
+        if (settings.requirePassword || choosingPassword) ACCESS_PASSWORD else ACCESS_OPEN,
         listOf(ACCESS_OPEN, ACCESS_PASSWORD),
         display = { stringResource(if (it == ACCESS_PASSWORD) R.string.setting_password_on else R.string.setting_password_off) }
     ) { choice ->
@@ -294,11 +284,12 @@ fun PinSetting(value: String, onSaved: (String) -> Unit) {
 @Composable
 fun SwitchSetting(label: String, checked: Boolean, onChanged: (Boolean) -> Unit) {
     SettingLine(label) {
-        HomeButton(stringResource(if (checked) R.string.on else R.string.off), muted = !checked) { onChanged(!checked) }
+        // Off and On side by side, like the other settings' choices.
+        SegmentedChoice(checked, listOf(false, true), { stringResource(if (it) R.string.on else R.string.off) }, onSelected = onChanged)
     }
 }
 
-/** One setting: its name on the left, its control (a home-style button) on the right. */
+/** One setting: its name on the left, its choices on the right. */
 @Composable
 private fun SettingLine(label: String, control: @Composable () -> Unit) {
     Row(

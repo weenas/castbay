@@ -42,7 +42,7 @@ import com.weenas.castbay.viewmodel.AirPlayViewModel
 @Composable
 fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
-    // Starts on the row below the device name: focusing the text field opens the keyboard.
+    // Starts on "Receive casts", not the device name: focusing the text field opens the keyboard.
     val firstChoice = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstChoice.requestFocus() } }
     // Same look as the home screen: no app bar, a title with a button beside it.
@@ -64,6 +64,15 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     HomeButton(stringResource(R.string.action_back), onClick = onBack)
                 }
             }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                SwitchSetting(
+                    stringResource(R.string.setting_receiver),
+                    settings.receiverEnabled,
+                    Modifier.focusRequester(firstChoice)
+                ) { viewModel.setReceiverEnabled(it) }
+                Text(stringResource(R.string.setting_receiver_note), color = Color.Gray, fontSize = 14.sp)
+            }
             // Connection settings change what senders see, so the receiver restarts for them;
             // playback settings apply live and are also in the quick menu during playback.
             item {
@@ -74,10 +83,9 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             item {
-            ChoiceSetting(
-                stringResource(R.string.setting_resolution), settings.resolution, ReceiverSettings.RESOLUTIONS,
-                modifier = Modifier.focusRequester(firstChoice)
-            ) { viewModel.updateSettings { current -> current.copy(resolution = it) } }
+            ChoiceSetting(stringResource(R.string.setting_resolution), settings.resolution, ReceiverSettings.RESOLUTIONS) {
+                viewModel.updateSettings { current -> current.copy(resolution = it) }
+            }
         }
             item { ChoiceSetting(stringResource(R.string.setting_frame_rate), settings.frameRate, ReceiverSettings.FRAME_RATES) { viewModel.updateSettings { current -> current.copy(frameRate = it) } } }
             item {
@@ -122,12 +130,6 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
             item {
                 ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
                     viewModel.updateSettings { current -> current.copy(pictureMode = it) }
-                }
-            }
-            item {
-                SectionHeader(stringResource(R.string.section_system), null)
-                SwitchSetting(stringResource(R.string.setting_start_on_boot), settings.startOnBoot) { enabled ->
-                    viewModel.updateSettings { it.copy(startOnBoot = enabled) }
                 }
             }
         }
@@ -282,10 +284,10 @@ fun PinSetting(value: String, onSaved: (String) -> Unit) {
 }
 
 @Composable
-fun SwitchSetting(label: String, checked: Boolean, onChanged: (Boolean) -> Unit) {
+fun SwitchSetting(label: String, checked: Boolean, modifier: Modifier = Modifier, onChanged: (Boolean) -> Unit) {
     SettingLine(label) {
         // Off and On side by side, like the other settings' choices.
-        SegmentedChoice(checked, listOf(false, true), { stringResource(if (it) R.string.on else R.string.off) }, onSelected = onChanged)
+        SegmentedChoice(checked, listOf(false, true), { stringResource(if (it) R.string.on else R.string.off) }, modifier, onChanged)
     }
 }
 

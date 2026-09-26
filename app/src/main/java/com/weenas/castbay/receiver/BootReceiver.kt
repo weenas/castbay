@@ -8,11 +8,11 @@ import androidx.core.content.ContextCompat
 import com.weenas.castbay.service.AirPlayService
 import com.weenas.castbay.service.ReceiverSettingsStore
 
-/** Starts the receiver when the TV boots, if "Start when the TV turns on" is enabled. */
+/** Starts the receiver when the TV boots, if "Receive casts" is on. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in BOOT_ACTIONS) return
-        if (!ReceiverSettingsStore(context).load().startOnBoot) return
+        if (!ReceiverSettingsStore(context).load().receiverEnabled) return
         Log.i(TAG, "Starting AirPlay receiver after boot (${intent.action})")
         try {
             ContextCompat.startForegroundService(

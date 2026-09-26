@@ -88,7 +88,6 @@
     <string name="section_connection_note">修改这些设置会重启接收器，已连接的设备需要重新连接。</string>
     <string name="section_playback">播放</string>
     <string name="section_playback_note">立即生效。投屏时按遥控器的下键或菜单键也可以修改。</string>
-    <string name="section_system">系统</string>
     <string name="setting_device_name">设备名称</string>
     <string name="setting_resolution">镜像分辨率</string>
     <string name="setting_frame_rate">镜像帧率</string>
@@ -109,7 +108,9 @@
     <string name="setting_picture">画面</string>
     <string name="setting_lyrics">播放音乐时显示歌词</string>
     <string name="setting_lyrics_note">会把歌名和歌手发送到 lrclib.net 查询歌词。</string>
-    <string name="setting_start_on_boot">电视开机时自动启动</string>
+    <string name="setting_receiver">接收投屏</string>
+    <string name="setting_receiver_note">电视开机或打开映湾时自动开始；关闭后手机上看不到这台电视。</string>
+    <string name="receiver_off">投屏接收已关闭，可在设置中打开。</string>
     <string name="frame_rate_fps">%1$d 帧/秒</string>
 
     <!-- About -->

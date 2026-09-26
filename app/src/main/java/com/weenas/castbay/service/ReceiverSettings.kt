@@ -3,7 +3,12 @@ package com.weenas.castbay.service
 import android.content.Context
 
 data class ReceiverSettings(
-    val deviceName: String = "CastBay",
+    /** The name the user chose; senders see [advertisedName]. */
+    val deviceName: String = DeviceName.BRAND,
+    /** Add the TV's own name after [deviceName], so several TVs on one network tell apart. */
+    val appendTvName: Boolean = true,
+    /** The TV's device name (or model), read from the system on load; not stored. */
+    val tvName: String = "",
     val resolution: String = RESOLUTION_AUTO,
     val frameRate: String = FRAME_RATE_AUTO,
     /** "Auto" offers H.265 when the TV decodes it in hardware; otherwise H.264 only. */
@@ -56,6 +61,10 @@ data class ReceiverSettings(
      * Whether switching from [previous] needs a running receiver restarted: connection settings
      * do (senders must reconnect); playback settings apply live and are also in the quick menu.
      */
+    /** The name senders list this TV under. */
+    val advertisedName: String
+        get() = DeviceName.compose(deviceName, if (appendTvName) tvName else "")
+
     fun needsRestartComparedTo(previous: ReceiverSettings): Boolean =
         withoutLiveSettings() != previous.withoutLiveSettings()
 
@@ -91,13 +100,12 @@ class ReceiverSettingsStore(context: Context) {
     private val preferences = context.applicationContext
         .getSharedPreferences("receiver_settings", Context.MODE_PRIVATE)
 
-    /** "CastBay (TV name)": used, and followed as the TV's name changes, until the user picks one. */
-    private val defaultName = DeviceName.default(context.applicationContext)
+    private val tvName = DeviceName.tvName(context.applicationContext)
 
     fun load() = ReceiverSettings(
-        // Older versions stored the plain default "CastBay"; it now means "not chosen" too.
-        deviceName = preferences.getString("device_name", null)?.trim()
-            ?.takeUnless { it.isEmpty() || it == DeviceName.BRAND } ?: defaultName,
+        deviceName = preferences.getString("device_name", DeviceName.BRAND).orEmpty().ifBlank { DeviceName.BRAND },
+        appendTvName = preferences.getBoolean("append_tv_name", true),
+        tvName = tvName,
         // Values from older versions (e.g. "4K") fall back to Auto.
         resolution = preferences.getString("resolution", null)
             ?.takeIf { it in ReceiverSettings.RESOLUTIONS } ?: ReceiverSettings.RESOLUTION_AUTO,
@@ -122,12 +130,9 @@ class ReceiverSettingsStore(context: Context) {
     )
 
     fun save(settings: ReceiverSettings) {
-        val name = settings.deviceName.trim()
         preferences.edit()
-            .apply {
-                // The default isn't stored, so it keeps following the TV's name.
-                if (name.isEmpty() || name == defaultName) remove("device_name") else putString("device_name", name)
-            }
+            .putString("device_name", settings.deviceName.trim().ifBlank { DeviceName.BRAND })
+            .putBoolean("append_tv_name", settings.appendTvName)
             .putString("resolution", settings.resolution)
             .putString("frame_rate", settings.frameRate)
             .putString("video_codec", settings.videoCodec)

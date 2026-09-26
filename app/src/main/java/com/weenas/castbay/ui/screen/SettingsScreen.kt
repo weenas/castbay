@@ -80,6 +80,14 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                 DeviceNameSetting(value = settings.deviceName) { name ->
                     viewModel.updateSettings { it.copy(deviceName = name) }
                 }
+                SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
+                    viewModel.updateSettings { it.copy(appendTvName = enabled) }
+                }
+                Text(
+                    stringResource(R.string.setting_append_tv_name_note, settings.advertisedName),
+                    color = Color.Gray,
+                    fontSize = 14.sp
+                )
                 Spacer(modifier = Modifier.height(8.dp))
             }
             item {

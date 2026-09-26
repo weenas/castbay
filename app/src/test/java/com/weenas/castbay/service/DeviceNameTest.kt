@@ -6,24 +6,36 @@ import org.junit.Test
 
 class DeviceNameTest {
     @Test
-    fun usesTheTvsNameThenItsModel() {
-        assertEquals("CastBay (Living Room TV)", DeviceName.compose(" Living Room TV ", "BRAVIA 4K UR2"))
-        assertEquals("CastBay (BRAVIA 4K UR2)", DeviceName.compose(null, "BRAVIA 4K UR2"))
-        assertEquals("CastBay (客厅电视)", DeviceName.compose("客厅电视", null))
-        assertEquals("CastBay (TCL Android TV)", DeviceName.compose("TCL_Android_TV", null))
+    fun tvNameIsTheSystemNameThenTheModel() {
+        assertEquals("Living Room TV", DeviceName.tvName(" Living Room TV ", "BRAVIA 4K UR2"))
+        assertEquals("BRAVIA 4K UR2", DeviceName.tvName(null, "BRAVIA 4K UR2"))
+        assertEquals("TCL Android TV", DeviceName.tvName("TCL_Android_TV", null))
+        assertEquals("", DeviceName.tvName(" ", ""))
+        assertEquals("", DeviceName.tvName("castbay", null))
     }
 
     @Test
-    fun plainCastBayWithoutAName() {
-        assertEquals("CastBay", DeviceName.compose(null, null))
-        assertEquals("CastBay", DeviceName.compose(" ", ""))
-        assertEquals("CastBay", DeviceName.compose("castbay", null))
+    fun appendsTheTvName() {
+        assertEquals("CastBay (客厅电视)", DeviceName.compose("CastBay", "客厅电视"))
+        assertEquals("CastBay", DeviceName.compose("CastBay", ""))
+        assertEquals("CastBay (BRAVIA)", DeviceName.compose(" ", "BRAVIA"))
+        // Not twice when the chosen name already has it.
+        assertEquals("客厅电视", DeviceName.compose("客厅电视", "客厅电视"))
     }
 
     @Test
     fun staysWithinTheMdnsLimit() {
-        val name = DeviceName.compose("客厅".repeat(30), null)
+        val name = DeviceName.compose("CastBay", "客厅".repeat(30))
         assertTrue(name.toByteArray().size <= 60)
         assertTrue(name.startsWith("CastBay (客厅") && name.endsWith(")"))
+        assertTrue(DeviceName.compose("映".repeat(40), "TV").toByteArray().size <= 60)
+    }
+
+    @Test
+    fun settingsAdvertiseTheComposedName() {
+        val settings = ReceiverSettings(tvName = "BRAVIA")
+        assertEquals("CastBay (BRAVIA)", settings.advertisedName)
+        assertEquals("CastBay", settings.copy(appendTvName = false).advertisedName)
+        assertTrue(settings.copy(appendTvName = false).needsRestartComparedTo(settings))
     }
 }

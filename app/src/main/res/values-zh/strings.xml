@@ -136,7 +136,6 @@
     <!-- Help -->
     <string name="help">帮助</string>
     <string name="help_more">更多帮助：%1$s</string>
-    <string name="waiting_hint">在手机上选择“%1$s”即可投屏。不知道怎么投？请看“帮助”。</string>
     <string name="help_mirror_title">iPhone、iPad 屏幕镜像</string>
     <string name="help_mirror">打开控制中心，点“屏幕镜像”，选择“%1$s”。\n画面和声音都会投到电视上。结束时在控制中心点“停止镜像”。</string>
     <string name="help_airplay_apps_title">在 App 里投音乐和视频（AirPlay）</string>

@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import com.weenas.castbay.service.DacpClient
 import com.weenas.castbay.service.NowPlaying
 import com.weenas.castbay.service.StatsFormat
@@ -245,13 +246,14 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
         // its own (in sp: an em line height in the theme crashed text fields' label animation).
         Text(stringResource(R.string.waiting_title), color = Color.White, fontSize = 28.sp, lineHeight = 36.sp)
         Spacer(modifier = Modifier.height(16.dp))
+        // Just the name to pick; how to cast from each device is on the Help screen.
         Text(
-            stringResource(if (settings.dlnaEnabled) R.string.waiting_how_dlna else R.string.waiting_how, settings.advertisedName),
+            stringResource(R.string.waiting_hint, settings.advertisedName),
             color = Color.White,
-            fontSize = 18.sp
+            fontSize = 18.sp,
+            lineHeight = 26.sp,
+            textAlign = TextAlign.Center
         )
-        Spacer(modifier = Modifier.height(4.dp))
-        Text(stringResource(R.string.waiting_same_network), color = Color.Gray, fontSize = 16.sp)
         if (lastError != null) {
             // Why the last AirPlay video stopped, e.g. the TV couldn't reach the video site.
             Spacer(modifier = Modifier.height(16.dp))
@@ -286,14 +288,24 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
     }
 }
 
-/** The home screen's buttons: Settings (focused first) and About. */
+/** The home screen's buttons: Settings (focused first), Help and About. */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeButtons(viewModel: AirPlayViewModel) {
-    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-        HomeButton(stringResource(R.string.settings), Modifier.initialFocus(), onClick = { viewModel.navigateToSettings() })
-        HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
+    // Narrower than elsewhere so three fit beside the info panel; they wrap if they still don't.
+    CompositionLocalProvider(LocalHomeButtonMinWidth provides 120.dp) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            HomeButton(stringResource(R.string.settings), Modifier.initialFocus(), onClick = { viewModel.navigateToSettings() })
+            HomeButton(stringResource(R.string.help), onClick = { viewModel.navigateToHelp() })
+            HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
+        }
     }
 }
+
+private val LocalHomeButtonMinWidth = staticCompositionLocalOf { 160.dp }
 
 /** A home/Settings button. The focused one gets a white outline, visible from the sofa. */
 @Composable
@@ -307,7 +319,8 @@ fun HomeButton(text: String, modifier: Modifier = Modifier, muted: Boolean = fal
         colors = if (muted) ButtonDefaults.buttonColors(containerColor = Color(0xFF4A4A52), contentColor = Color(0xFFDDDDDD))
         else ButtonDefaults.buttonColors(),
         border = if (focused) BorderStroke(3.dp, Color.White) else null,
-        modifier = modifier.widthIn(min = 160.dp)
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        modifier = modifier.widthIn(min = LocalHomeButtonMinWidth.current)
     ) {
         Text(text, fontSize = 20.sp)
     }

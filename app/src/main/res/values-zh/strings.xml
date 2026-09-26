@@ -16,9 +16,6 @@
 
     <!-- Home and status screens -->
     <string name="waiting_title">等待投屏连接…</string>
-    <string name="waiting_how">iPhone 或 iPad：控制中心 → 屏幕镜像 → %1$s。在 App 中，点 AirPlay 图标。</string>
-    <string name="waiting_how_dlna">iPhone 或 iPad：控制中心 → 屏幕镜像 → %1$s。在 App 中，点 AirPlay 图标，或 App 自带的投屏按钮（如 B 站）。</string>
-    <string name="waiting_same_network">手机和电视需要连接同一个网络。</string>
     <string name="starting">启动中…</string>
     <string name="advertising_only_title">映湾已在局域网中可见</string>
     <string name="advertising_only_detail">仅可被发现，暂不支持 AirPlay 投屏。</string>
@@ -136,4 +133,24 @@
     <string name="error_video_refused">视频服务器拒绝了请求。</string>
     <string name="error_video_format">这台电视无法播放该视频格式。</string>
     <string name="error_video_failed">视频播放失败（%1$s）。</string>
+    <!-- Help -->
+    <string name="help">帮助</string>
+    <string name="help_more">更多帮助：%1$s</string>
+    <string name="waiting_hint">在手机上选择“%1$s”即可投屏。不知道怎么投？请看“帮助”。</string>
+    <string name="help_mirror_title">iPhone、iPad 屏幕镜像</string>
+    <string name="help_mirror">打开控制中心，点“屏幕镜像”，选择“%1$s”。\n画面和声音都会投到电视上。结束时在控制中心点“停止镜像”。</string>
+    <string name="help_airplay_apps_title">在 App 里投音乐和视频（AirPlay）</string>
+    <string name="help_airplay_apps">在 Apple Music、YouTube、爱奇艺等 App 的播放界面点 AirPlay 图标，选择“%1$s”。\n视频由电视直接从网上播放，手机可以锁屏或做别的事。</string>
+    <string name="help_dlna_title">App 自带的投屏按钮（DLNA）</string>
+    <string name="help_dlna">B 站、爱奇艺、网易云音乐、QQ 音乐等 App 有自己的“投屏”按钮（通常是电视图标），点它并选择“%1$s”。\niPhone 和安卓手机都可以用，需要在设置中打开“DLNA 投屏”。</string>
+    <string name="help_android_title">安卓手机</string>
+    <string name="help_android">用 App 自带的投屏按钮投视频和音乐，方法见“App 自带的投屏按钮”。\n暂不支持安卓系统自带的“屏幕镜像”“无线投屏”（Miracast、Google Cast）。</string>
+    <string name="help_mac_title">Mac</string>
+    <string name="help_mac">点菜单栏的控制中心 → 屏幕镜像，选择“%1$s”。\n在音乐、视频 App 里也可以点 AirPlay 图标投送。</string>
+    <string name="help_remote_title">遥控器</string>
+    <string name="help_remote">视频：OK 键暂停或继续，左右键快退、快进 10 秒。\n音乐：左右键选择按钮，OK 键操作。\n下键或菜单键：打开播放菜单（画面、音轨、字幕、歌词等）。\n连按两次返回键：结束投屏。主页键：在后台继续播放。</string>
+    <string name="help_not_found_title">手机上找不到这台电视？</string>
+    <string name="help_not_found">• 手机和电视连接同一个 Wi-Fi，不要用访客网络。\n• 在设置中确认“接收投屏”已打开。\n• 路由器开启了“AP 隔离”时，设备之间互相看不到，需要关闭。\n• 重新打开映湾或重启电视后再试。</string>
+    <string name="help_video_title">视频无法播放？</string>
+    <string name="help_video">AirPlay 和 DLNA 视频由电视直接从网上获取。如果手机要通过代理或 VPN 才能打开（例如 YouTube），电视也需要。\n设置了投屏密码时，在手机上输入设置中的密码。</string>
 </resources>

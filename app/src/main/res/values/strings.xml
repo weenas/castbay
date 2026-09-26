@@ -15,9 +15,6 @@
 
     <!-- Home and status screens -->
     <string name="waiting_title">Waiting for a connection…</string>
-    <string name="waiting_how">On iPhone or iPad: Control Center → Screen Mirroring → %1$s. In apps, tap the AirPlay icon.</string>
-    <string name="waiting_how_dlna">On iPhone or iPad: Control Center → Screen Mirroring → %1$s. In apps, tap the AirPlay icon, or the app\'s own cast button (e.g. Bilibili).</string>
-    <string name="waiting_same_network">Your device must be on the same network as the TV.</string>
     <string name="starting">Starting…</string>
     <string name="advertising_only_title">CastBay is visible on the local network</string>
     <string name="advertising_only_detail">Discovery preview only — AirPlay streaming is not available yet.</string>
@@ -135,4 +132,24 @@
     <string name="error_video_refused">The video server refused the request.</string>
     <string name="error_video_format">This TV can\'t play the video\'s format.</string>
     <string name="error_video_failed">Video playback failed (%1$s).</string>
+    <!-- Help -->
+    <string name="help">Help</string>
+    <string name="help_more">More help: %1$s</string>
+    <string name="waiting_hint">Pick “%1$s” on your phone to cast. Not sure how? See Help.</string>
+    <string name="help_mirror_title">Screen mirroring from iPhone or iPad</string>
+    <string name="help_mirror">Open Control Center, tap Screen Mirroring and pick “%1$s”.\nThe screen and sound go to the TV. To end, tap Stop Mirroring in Control Center.</string>
+    <string name="help_airplay_apps_title">Music and video from apps (AirPlay)</string>
+    <string name="help_airplay_apps">In Apple Music, YouTube, iQiyi and other apps, tap the AirPlay icon while playing and pick “%1$s”.\nThe TV plays video straight from the internet, so your phone can lock or do something else.</string>
+    <string name="help_dlna_title">Apps\' own cast button (DLNA)</string>
+    <string name="help_dlna">Bilibili, iQiyi, NetEase Cloud Music, QQ Music and other apps have their own cast button (usually a TV icon). Tap it and pick “%1$s”.\nWorks from iPhone and Android phones, with DLNA casting on in Settings.</string>
+    <string name="help_android_title">Android phones</string>
+    <string name="help_android">Cast video and music with apps\' own cast button, as in “Apps\' own cast button”.\nAndroid\'s built-in screen mirroring (Miracast, Google Cast) isn\'t supported yet.</string>
+    <string name="help_mac_title">Mac</string>
+    <string name="help_mac">Click Control Center in the menu bar → Screen Mirroring and pick “%1$s”.\nMusic and video apps can also send to it with their AirPlay icon.</string>
+    <string name="help_remote_title">The remote</string>
+    <string name="help_remote">Video: OK pauses or resumes; Left and Right skip back or ahead 10 seconds.\nMusic: Left and Right choose a button; OK presses it.\nDown or Menu: the playback menu (picture, audio, subtitles, lyrics…).\nBack twice: stop casting. Home: keep playing in the background.</string>
+    <string name="help_not_found_title">Your phone can\'t find this TV?</string>
+    <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that Receive casts is on in Settings.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
+    <string name="help_video_title">A video won\'t play?</string>
+    <string name="help_video">AirPlay and DLNA videos are fetched by the TV itself. If your phone needs a proxy or VPN to open them (e.g. YouTube), so does the TV.\nIf a casting password is set, enter the one from Settings on your phone.</string>
 </resources>

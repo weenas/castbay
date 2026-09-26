@@ -12,6 +12,7 @@ import com.weenas.castbay.ui.LocalBackgroundImage
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
 import com.weenas.castbay.ui.screen.AboutScreen
+import com.weenas.castbay.ui.screen.HelpScreen
 import com.weenas.castbay.ui.theme.CastBayTheme
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
@@ -60,7 +61,7 @@ private fun Screens() {
         if (streaming) currentScreen = "mirror"
     }
 
-    // The remote's Back key leaves Settings and About for the home screen instead of closing the app.
+    // The remote's Back key leaves Settings, Help and About for the home screen instead of closing the app.
     BackHandler(enabled = currentScreen != "mirror") {
         currentScreen = "mirror"
     }
@@ -71,6 +72,7 @@ private fun Screens() {
             viewModel = viewModel,
             onBack = { currentScreen = "mirror" }
         )
+        "help" -> HelpScreen(viewModel = viewModel, onBack = { currentScreen = "mirror" })
         "about" -> AboutScreen(onBack = { currentScreen = "mirror" })
     }
 }

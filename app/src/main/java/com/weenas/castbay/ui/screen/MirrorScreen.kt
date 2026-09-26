@@ -192,22 +192,13 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             contentAlignment = Alignment.Center
         ) {
             when (state.connectionState) {
-                AirPlayConnectionState.Idle -> IdleScreen(
-                    viewModel = viewModel,
-                    onStart = { viewModel.startServer() }
-                )
+                AirPlayConnectionState.Idle -> IdleScreen(viewModel = viewModel)
                 AirPlayConnectionState.Discovering -> DiscoveringScreen(
                     viewModel = viewModel,
-                    lastError = state.errorMessage,
-                    onStop = { viewModel.stopServer() }
+                    lastError = state.errorMessage
                 )
-                // Same screen as Idle, with the button saying "Starting…", so starting doesn't
-                // flash an extra screen before the waiting one.
-                AirPlayConnectionState.Registering -> IdleScreen(
-                    viewModel = viewModel,
-                    onStart = {},
-                    starting = true
-                )
+                // Same screen as Idle ("Starting…"), so starting doesn't flash an extra screen.
+                AirPlayConnectionState.Registering -> IdleScreen(viewModel = viewModel)
                 AirPlayConnectionState.AdvertisingOnly -> AdvertisingOnlyScreen(
                     onStop = { viewModel.stopServer() }
                 )
@@ -232,20 +223,11 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
     }
 }
 
-private const val START_TIMEOUT_MS = 10_000L
 
-/** [starting]: the receiver is starting; the button reads "Starting…" until it is ready. */
+/** Before the receiver is up: starting (it starts when the app opens), or turned off in Settings. */
 @Composable
-fun IdleScreen(viewModel: AirPlayViewModel, onStart: () -> Unit, starting: Boolean = false) {
-    // Shown right on the press: the service reports "starting" a moment later.
-    var pressed by remember { mutableStateOf(false) }
-    LaunchedEffect(pressed) {
-        // In case the service never reports back, don't stay "Starting…" forever.
-        if (pressed) {
-            delay(START_TIMEOUT_MS)
-            pressed = false
-        }
-    }
+fun IdleScreen(viewModel: AirPlayViewModel) {
+    val settings by viewModel.settings.collectAsState()
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         BrandTitle()
         Spacer(modifier = Modifier.height(16.dp))
@@ -254,25 +236,19 @@ fun IdleScreen(viewModel: AirPlayViewModel, onStart: () -> Unit, starting: Boole
             fontSize = 18.sp,
             color = Color.Gray
         )
-        Spacer(modifier = Modifier.height(48.dp))
-        val busy = starting || pressed
-        HomeButtons(viewModel) {
-            // Stays enabled while starting, so D-pad focus doesn't jump away; presses are ignored.
-            HomeButton(
-                stringResource(if (busy) R.string.starting else R.string.action_start),
-                Modifier.initialFocus()
-            ) {
-                if (!busy) {
-                    pressed = true
-                    onStart()
-                }
-            }
-        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            stringResource(if (settings.receiverEnabled) R.string.starting else R.string.receiver_off),
+            color = Color.White,
+            fontSize = 18.sp
+        )
+        Spacer(modifier = Modifier.height(32.dp))
+        HomeButtons(viewModel)
     }
 }
 
 @Composable
-fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null, onStop: () -> Unit) {
+fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         val settings by viewModel.settings.collectAsState()
         // Text's default style has a fixed 24 sp line height, so larger text that may wrap sets
@@ -292,30 +268,18 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null, on
             Text(lastError, color = Color(0xFFFFB4AB), fontSize = 18.sp)
         }
         Spacer(modifier = Modifier.height(32.dp))
-        HomeButtons(viewModel) {
-            HomeButton(stringResource(R.string.action_stop), Modifier.initialFocus(), onClick = onStop)
-        }
+        HomeButtons(viewModel)
     }
 }
 
-/** The home screen's main button with Settings and About beside it, in the same style. */
-@OptIn(ExperimentalLayoutApi::class)
+/** The home screen's buttons: Settings (focused first) and About. */
 @Composable
-private fun HomeButtons(viewModel: AirPlayViewModel, main: @Composable () -> Unit) {
-    // Narrower than elsewhere so three fit beside the info panel; they wrap if they still don't.
-    CompositionLocalProvider(LocalHomeButtonMinWidth provides 120.dp) {
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            main()
-            HomeButton(stringResource(R.string.settings), onClick = { viewModel.navigateToSettings() })
-            HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
-        }
+private fun HomeButtons(viewModel: AirPlayViewModel) {
+    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        HomeButton(stringResource(R.string.settings), Modifier.initialFocus(), onClick = { viewModel.navigateToSettings() })
+        HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
     }
 }
-
-private val LocalHomeButtonMinWidth = staticCompositionLocalOf { 160.dp }
 
 /** A home/Settings button. The focused one gets a white outline, visible from the sofa. */
 @Composable
@@ -329,8 +293,7 @@ fun HomeButton(text: String, modifier: Modifier = Modifier, muted: Boolean = fal
         colors = if (muted) ButtonDefaults.buttonColors(containerColor = Color(0xFF4A4A52), contentColor = Color(0xFFDDDDDD))
         else ButtonDefaults.buttonColors(),
         border = if (focused) BorderStroke(3.dp, Color.White) else null,
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-        modifier = modifier.widthIn(min = LocalHomeButtonMinWidth.current)
+        modifier = modifier.widthIn(min = 160.dp)
     ) {
         Text(text, fontSize = 20.sp)
     }

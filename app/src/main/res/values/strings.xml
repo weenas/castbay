@@ -87,7 +87,6 @@
     <string name="section_connection_note">Changing these restarts the receiver; connected devices need to reconnect.</string>
     <string name="section_playback">Playback</string>
     <string name="section_playback_note">These apply right away. While casting, press Down or Menu on the remote to change them.</string>
-    <string name="section_system">System</string>
     <string name="setting_device_name">Device Name</string>
     <string name="setting_resolution">Mirroring Resolution</string>
     <string name="setting_frame_rate">Mirroring Frame Rate</string>
@@ -108,7 +107,9 @@
     <string name="setting_picture">Picture</string>
     <string name="setting_lyrics">Show lyrics for music</string>
     <string name="setting_lyrics_note">Looks up lyrics on lrclib.net by the song\'s title and artist.</string>
-    <string name="setting_start_on_boot">Start when the TV turns on</string>
+    <string name="setting_receiver">Receive casts</string>
+    <string name="setting_receiver_note">Starts when the TV turns on or CastBay opens. Off: phones won\'t see this TV.</string>
+    <string name="receiver_off">Receiving casts is off. Turn it on in Settings.</string>
     <string name="frame_rate_fps">%1$d FPS</string>
 
     <!-- About -->

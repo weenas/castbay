@@ -384,8 +384,8 @@ fun ReceiverInfo(viewModel: AirPlayViewModel) {
         }
         InfoRow(stringResource(R.string.info_ip), network.ipv4.joinToString(", ").ifEmpty { "—" })
         val mirroring = remember(settings) { viewModel.mirroringProfile(settings) }
-        InfoRow(stringResource(R.string.info_mirroring), mirroringLabel(mirroring))
-        InfoRow(stringResource(R.string.info_dlna), stringResource(if (settings.dlnaEnabled) R.string.info_dlna_on else R.string.off))
+        InfoRow(stringResource(R.string.info_mirroring), mirroringLabel(mirroring, withReason = false))
+        InfoRow(stringResource(R.string.info_dlna), stringResource(if (settings.dlnaEnabled) R.string.on else R.string.off))
         InfoRow(stringResource(R.string.info_password), stringResource(if (settings.requirePassword) R.string.setting_password_on else R.string.setting_password_off))
         InfoRow(stringResource(R.string.info_second_device), stringResource(if (settings.allowTakeover) R.string.info_takes_over else R.string.info_refused))
         if (network.type == NetworkStatus.Type.NONE) {
@@ -403,11 +403,15 @@ private fun networkLabel(network: NetworkStatus): String = when (network.type) {
     NetworkStatus.Type.NONE -> stringResource(R.string.network_none)
 }
 
+/** One line each: text too long for it scrolls, so the panel's layout never shifts. */
 @Composable
 private fun InfoRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-        Text(label, color = Color.Gray, fontSize = 18.sp, modifier = Modifier.weight(0.45f))
-        Text(value, color = Color.White, fontSize = 18.sp, modifier = Modifier.weight(0.55f))
+        Text(
+            label, color = Color.Gray, fontSize = 18.sp, maxLines = 1,
+            modifier = Modifier.weight(0.4f).padding(end = 12.dp).marquee()
+        )
+        Text(value, color = Color.White, fontSize = 18.sp, maxLines = 1, modifier = Modifier.weight(0.6f).marquee())
     }
 }
 

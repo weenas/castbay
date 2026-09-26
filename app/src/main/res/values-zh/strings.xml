@@ -37,7 +37,6 @@
     <string name="info_ip">IP 地址</string>
     <string name="info_mirroring">屏幕镜像</string>
     <string name="info_dlna">DLNA 投屏</string>
-    <string name="info_dlna_on">开（App 自带投屏按钮）</string>
     <string name="info_password">密码</string>
     <string name="info_second_device">其他设备投屏</string>
     <string name="info_takes_over">接管</string>

@@ -228,34 +228,19 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
 @Composable
 fun IdleScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
-    HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
-        BrandTitle()
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = stringResource(R.string.app_tagline),
-            fontSize = 18.sp,
-            color = Color.Gray
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+    HomeScreen(viewModel) {
         Text(
             stringResource(if (settings.receiverEnabled) R.string.starting else R.string.receiver_off),
             color = Color.White,
             fontSize = 18.sp
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        HomeButtons(viewModel)
     }
 }
 
 @Composable
 fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
-    HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
-        val settings by viewModel.settings.collectAsState()
-        // The brand, as on the other home screens, above what to do.
-        BrandTitle()
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray)
-        Spacer(modifier = Modifier.height(32.dp))
+    val settings by viewModel.settings.collectAsState()
+    HomeScreen(viewModel) {
         // Text's default style has a fixed 24 sp line height, so larger text that may wrap sets
         // its own (in sp: an em line height in the theme crashed text fields' label animation).
         Text(stringResource(R.string.waiting_title), color = Color.White, fontSize = 28.sp, lineHeight = 36.sp)
@@ -272,7 +257,31 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
             Spacer(modifier = Modifier.height(16.dp))
             Text(lastError, color = Color(0xFFFFB4AB), fontSize = 18.sp)
         }
-        Spacer(modifier = Modifier.height(32.dp))
+    }
+}
+
+/** Room for the home screen's status, so the brand and buttons stay put as it changes. */
+private val HOME_STATUS_MIN_HEIGHT = 190.dp
+
+/**
+ * The home screen in every receiver state: the brand at the top, [status] in the middle and the
+ * buttons below, with the status area a fixed minimum height so the brand and buttons don't
+ * move when the receiver starts, stops or waits.
+ */
+@Composable
+private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnScope.() -> Unit) {
+    HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
+        BrandTitle()
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.height(16.dp))
+        Column(
+            modifier = Modifier.heightIn(min = HOME_STATUS_MIN_HEIGHT),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            content = status
+        )
+        Spacer(modifier = Modifier.height(16.dp))
         HomeButtons(viewModel)
     }
 }

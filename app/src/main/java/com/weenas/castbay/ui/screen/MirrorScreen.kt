@@ -251,6 +251,11 @@ fun IdleScreen(viewModel: AirPlayViewModel) {
 fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         val settings by viewModel.settings.collectAsState()
+        // The brand, as on the other home screens, above what to do.
+        BrandTitle()
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray)
+        Spacer(modifier = Modifier.height(32.dp))
         // Text's default style has a fixed 24 sp line height, so larger text that may wrap sets
         // its own (in sp: an em line height in the theme crashed text fields' label animation).
         Text(stringResource(R.string.waiting_title), color = Color.White, fontSize = 28.sp, lineHeight = 36.sp)

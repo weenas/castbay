@@ -264,12 +264,12 @@ class AirPlayManager private constructor(private val context: Context) {
     }
 
     fun start(settings: ReceiverSettings = settingsStore.load()): Boolean {
-        Log.d(TAG, "Starting AirPlay server: ${settings.deviceName}")
+        Log.d(TAG, "Starting AirPlay server: ${settings.advertisedName}")
         logMirroringCapabilities(settings)
         activeSettings = settings
         currentError = null
         val protocolPort = nativeBridge.start(
-            settings.deviceName,
+            settings.advertisedName,
             discoveryAdvertiser.hardwareAddress(),
             mirroringProfile(settings).also { advertised = it },
             settings.maxFps(),
@@ -277,7 +277,7 @@ class AirPlayManager private constructor(private val context: Context) {
             settings.allowTakeover
         )
         if (!discoveryAdvertiser.start(
-                settings.deviceName,
+                settings.advertisedName,
                 protocolPort.takeIf { it > 0 },
                 records = nativeBridge.discoveryRecords() ?: DiscoveryRecords.FALLBACK,
                 onReady = {
@@ -298,7 +298,7 @@ class AirPlayManager private constructor(private val context: Context) {
         }
         currentState = AirPlayConnectionState.Registering
         // DLNA (video apps' own cast buttons, e.g. Bilibili's) runs beside AirPlay.
-        if (settings.dlnaEnabled) Thread({ dlna.start(settings.deviceName, dlnaTarget) }, "DLNA-start").start()
+        if (settings.dlnaEnabled) Thread({ dlna.start(settings.advertisedName, dlnaTarget) }, "DLNA-start").start()
         return true
     }
 

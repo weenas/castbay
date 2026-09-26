@@ -107,6 +107,8 @@
     <string name="setting_picture">Picture</string>
     <string name="setting_lyrics">Show lyrics for music</string>
     <string name="setting_lyrics_note">Looks up lyrics on lrclib.net by the song\'s title and artist.</string>
+    <string name="setting_append_tv_name">Add the TV\'s name after it</string>
+    <string name="setting_append_tv_name_note">Phones see: %1$s</string>
     <string name="setting_receiver">Receive casts</string>
     <string name="setting_receiver_note">Starts when the TV turns on or CastBay opens. Off: phones won\'t see this TV.</string>
     <string name="receiver_off">Receiving casts is off. Turn it on in Settings.</string>

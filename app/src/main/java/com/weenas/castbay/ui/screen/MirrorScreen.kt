@@ -246,7 +246,7 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
         Text(stringResource(R.string.waiting_title), color = Color.White, fontSize = 28.sp, lineHeight = 36.sp)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            stringResource(if (settings.dlnaEnabled) R.string.waiting_how_dlna else R.string.waiting_how, settings.deviceName),
+            stringResource(if (settings.dlnaEnabled) R.string.waiting_how_dlna else R.string.waiting_how, settings.advertisedName),
             color = Color.White,
             fontSize = 18.sp
         )
@@ -370,7 +370,7 @@ fun ReceiverInfo(viewModel: AirPlayViewModel) {
             .background(Color(0x1FFFFFFF))
             .padding(horizontal = 32.dp, vertical = 24.dp)
     ) {
-        InfoRow(stringResource(R.string.info_name), settings.deviceName)
+        InfoRow(stringResource(R.string.info_name), settings.advertisedName)
         InfoRow(stringResource(R.string.info_network), networkLabel(network))
         if (network.type == NetworkStatus.Type.WIFI && network.ssid == null) {
             if (!viewModel.canReadWifiName()) {

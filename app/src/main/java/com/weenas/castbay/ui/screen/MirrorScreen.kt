@@ -714,6 +714,16 @@ private fun Modifier.marquee(): Modifier = basicMarquee(
     repeatDelayMillis = 2000,
     velocity = 40.dp
 )
+/**
+ * The sung lyric line's scroll: a line lasts a few seconds, so it starts soon and moves
+ * faster than titles do, once.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+private fun Modifier.lyricMarquee(): Modifier = basicMarquee(
+    iterations = 1,
+    initialDelayMillis = 500,
+    velocity = 90.dp
+)
 /** A lighter tint of the app's purple, bright enough on dark backdrops (progress, the focus glow). */
 private val MUSIC_ACCENT = Color(0xFFA48BF5)
 /**
@@ -780,15 +790,21 @@ private fun LyricsView(lyrics: Lyrics, positionSec: Double, contextLines: Int) {
                 1 -> 0.6f
                 else -> 0.35f
             }
-            Text(
-                line,
-                fontSize = if (active) 26.sp else 22.sp,
-                fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
-                color = Color.White.copy(alpha = alpha),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(vertical = 3.dp)
-            )
+            // The sung line scrolls when too long to read in full; the others are cut short.
+            // Keyed by line, so each new line starts its scroll from the beginning.
+            key(index) {
+                Text(
+                    line,
+                    fontSize = if (active) 26.sp else 22.sp,
+                    fontWeight = if (active) FontWeight.Bold else FontWeight.Normal,
+                    color = Color.White.copy(alpha = alpha),
+                    maxLines = 1,
+                    overflow = if (active) TextOverflow.Clip else TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .padding(vertical = 3.dp)
+                        .then(if (active) Modifier.lyricMarquee() else Modifier)
+                )
+            }
         }
     }
 }

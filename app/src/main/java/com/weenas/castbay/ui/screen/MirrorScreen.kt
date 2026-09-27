@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import com.weenas.castbay.service.DacpClient
 import com.weenas.castbay.service.NowPlaying
@@ -159,7 +160,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 StreamKind.MIRRORING -> MirroringVideo(viewModel = viewModel, streamInfo = stream, pictureMode = settings.pictureMode, modifier = contentModifier)
             }
             if (kind == StreamKind.AUDIO) {
-                CastingBadge(stream, Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 24.dp))
+                CastingBadge(stream, Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 20.dp))
             }
             if (settings.showStats) {
                 // On the music screen the top left holds the casting badge.
@@ -538,16 +539,18 @@ fun AudioPlayback(
     // The cover, blurred, behind everything.
     Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
         MusicBackdrop(nowPlaying.coverArt)
+        // Centred as before; the cover only shrinks where the screen is too short for it to clear
+        // the casting badge above it (540 dp tall TVs; 720 dp ones keep 400 dp).
+        val coverSize = minOf(COVER_SIZE, LocalConfiguration.current.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2)
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                // The top is kept for the casting badge (CastingBadge), even on 540 dp tall TVs.
-                .padding(start = 56.dp, end = 56.dp, top = MUSIC_TOP_INSET, bottom = 24.dp),
+                .padding(horizontal = 56.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(400.dp)
+                    .size(coverSize)
                     .shadow(24.dp, RoundedCornerShape(16.dp))
                     .clip(RoundedCornerShape(16.dp))
                     .background(Color(0xFF2A2A2A)),
@@ -691,8 +694,9 @@ private fun MediaButton(
 
 private val MEDIA_BUTTON_SIZE = 60.dp
 
-/** Room above the music screen's content for the casting badge. */
-private val MUSIC_TOP_INSET = 88.dp
+private val COVER_SIZE = 400.dp
+/** Space the cover keeps from the top (and, to stay centred, the bottom) for the casting badge. */
+private val MUSIC_BADGE_CLEARANCE = 100.dp
 
 /** Scrolls text that doesn't fit, pausing before each pass; text that fits stays still. */
 @OptIn(ExperimentalFoundationApi::class)

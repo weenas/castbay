@@ -35,27 +35,27 @@ import com.weenas.castbay.service.StreamInfo
 fun CastingBadge(stream: StreamInfo, modifier: Modifier = Modifier) {
     val protocol = if (stream.isDlna) "DLNA" else "AirPlay"
     val sender = if (stream.isDlna) dlnaSenderLabel(stream.sender) else stream.sender
-    Column(modifier = modifier.widthIn(max = 520.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = modifier.widthIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(R.drawable.ic_castbay_mark), contentDescription = null, modifier = Modifier.size(30.dp))
+            Image(painterResource(R.drawable.ic_castbay_mark), contentDescription = null, modifier = Modifier.size(36.dp))
             Spacer(modifier = Modifier.size(8.dp))
-            Text(stringResource(R.string.app_name), color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+            Text(stringResource(R.string.app_name), color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.size(10.dp))
-            Spacer(modifier = Modifier.size(9.dp).clip(CircleShape).background(CONNECTED_GREEN))
+            Spacer(modifier = Modifier.size(11.dp).clip(CircleShape).background(CONNECTED_GREEN))
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 if (stream.isDlna) MediaIcons.Tv else MediaIcons.AirPlay,
                 contentDescription = null,
                 tint = SECONDARY,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.size(8.dp))
             Text(
                 if (sender.isEmpty()) stringResource(R.string.casting_via, protocol)
                 else stringResource(R.string.casting_via_from, protocol, sender),
                 color = SECONDARY,
-                fontSize = 16.sp,
+                fontSize = 19.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )

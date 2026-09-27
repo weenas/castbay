@@ -14,6 +14,8 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
         private const val HEARTBEAT_CHECK_MS = 1000L
+        /** A pause from the TV the sender hasn't acted on by then is undone. */
+        private const val HOLD_TIMEOUT_MS = 3000L
         /** Two heartbeats missed (they come every two seconds; the TCL's gaps stayed under 2.6 s). */
         private const val HEARTBEAT_TIMEOUT_MS = 5000L
         private const val DLNA_PROGRESS_MS = 500L
@@ -438,9 +440,20 @@ class AirPlayManager private constructor(private val context: Context) {
      */
     private fun onPcmAudio(pcm: ByteArray, compressedBytes: Int) {
         audioRenderer.renderPcm(pcm, compressedBytes)
-        lastAudioAtMs = android.os.SystemClock.elapsedRealtime()
+        val now = android.os.SystemClock.elapsedRealtime()
+        val previousAudio = lastAudioAtMs
+        lastAudioAtMs = now
+        val held = heldAtMs
+        if (held != 0L) {
+            // Paused from the TV: audio arriving is the sender still stopping. A gap then new
+            // audio is a resume; audio that never stops means the sender ignored the pause.
+            val resumed = now - previousAudio > NowPlaying.STALL_MS
+            val ignored = now - held > HOLD_TIMEOUT_MS
+            if (!resumed && !ignored) return
+            releaseHold()
+        }
         // Heard once the buffered lead has played, so the position counts from then.
-        if (!nowPlaying.playing) updateNowPlaying { it.resumed(lastAudioAtMs + AudioRenderer.MUSIC_LEAD_MS) }
+        if (!nowPlaying.playing) updateNowPlaying { it.resumed(now + AudioRenderer.MUSIC_LEAD_MS) }
         if (currentState == AirPlayConnectionState.Connecting || videoSource == VideoSource.DLNA) {
             stopDlnaVideo()
             currentStreamInfo = StreamInfo(isAudioOnly = true, sender = airPlaySender, nowPlaying = nowPlaying)
@@ -537,7 +550,27 @@ class AirPlayManager private constructor(private val context: Context) {
             }
             return
         }
+        if (command == DacpClient.Command.PLAY_PAUSE && currentStreamInfo.isAudioOnly) {
+            // Pause here at once: the sender takes about a second to stop sending, and until
+            // then the TV would keep playing. It resumes once the sender sends audio again.
+            if (nowPlaying.playing) {
+                heldAtMs = android.os.SystemClock.elapsedRealtime()
+                audioRenderer.holdMusic(true)
+                updateNowPlaying { it.paused() }
+            } else {
+                releaseHold()
+            }
+        }
         dacp.send(command)
+    }
+
+    /** When music was paused from the TV ([AudioRenderer.holdMusic]); 0 when not held. */
+    @Volatile private var heldAtMs = 0L
+
+    private fun releaseHold() {
+        if (heldAtMs == 0L) return
+        heldAtMs = 0L
+        audioRenderer.holdMusic(false)
     }
 
     /** Skips the sender's music about ten seconds forward or back (it can't seek exactly). */

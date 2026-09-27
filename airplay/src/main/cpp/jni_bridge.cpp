@@ -297,9 +297,10 @@ void audioSetCoverart(void *, const void *buffer, int length) {
     castbay::dispatchCoverArt(buffer, length);
 }
 
-void audioStopCoverartRendering(void *) {
-    castbay::dispatchCoverArt(nullptr, 0);
-}
+/* Called when a sender tears its audio stream down, which iOS does a few seconds into a pause:
+ * the cover stays, as the song is only paused. A new song brings its own cover, and a session
+ * ending clears it. */
+void audioStopCoverartRendering(void *) {}
 void audioRemoteControlId(void *, const char *, const char *) {}
 /* RTP timestamps at 44.1 kHz; unsigned subtraction handles wraparound. */
 void audioSetProgress(void *, uint32_t *start, uint32_t *current, uint32_t *end) {

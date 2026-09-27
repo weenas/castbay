@@ -66,7 +66,8 @@ class AirPlayManager private constructor(private val context: Context) {
                 it.copy(
                     positionSec = positionSec,
                     durationSec = durationSec,
-                    positionAtMs = android.os.SystemClock.elapsedRealtime()
+                    // The sender's position is heard only once the buffered lead has played.
+                    positionAtMs = android.os.SystemClock.elapsedRealtime() + AudioRenderer.MUSIC_LEAD_MS
                 )
             }
         },

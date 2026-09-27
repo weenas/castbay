@@ -133,6 +133,18 @@
     <string name="error_video_refused">视频服务器拒绝了请求。</string>
     <string name="error_video_format">这台电视无法播放该视频格式。</string>
     <string name="error_video_failed">视频播放失败（%1$s）。</string>
+    <!-- The music screen's "what is casting" badge -->
+    <string name="casting_via">%1$s 已连接</string>
+    <string name="casting_via_from">%1$s 已连接 · %2$s</string>
+    <string name="sender_iqiyi">爱奇艺</string>
+    <string name="sender_bilibili">哔哩哔哩</string>
+    <string name="sender_netease_music">网易云音乐</string>
+    <string name="sender_qq_music">QQ 音乐</string>
+    <string name="sender_tencent_video">腾讯视频</string>
+    <string name="sender_youku">优酷</string>
+    <string name="sender_mango_tv">芒果 TV</string>
+    <string name="sender_kugou">酷狗音乐</string>
+    <string name="sender_kuwo">酷我音乐</string>
     <!-- Help -->
     <string name="help">帮助</string>
     <string name="help_more">更多帮助：%1$s</string>

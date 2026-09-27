@@ -45,6 +45,7 @@ jmethodID g_on_video_rate = nullptr;
 jmethodID g_on_video_stop = nullptr;
 jmethodID g_playback_info = nullptr;
 jmethodID g_on_remote_control = nullptr;
+jmethodID g_on_client = nullptr;
 /* raop keeps a pointer to this for HLS audio/subtitle selection; it must outlive g_raop. */
 std::string g_lang_system;
 /* Client-access password senders must enter; empty = open access. Read on protocol threads. */
@@ -304,7 +305,24 @@ void audioSetProgress(void *, uint32_t *start, uint32_t *current, uint32_t *end)
 }
 void videoReportSize(void *, float *, float *, float *, float *) {}
 void mirrorVideoRunning(void *, bool) {}
-void reportClientRequest(void *, char *, char *, char *, bool *admit) { *admit = true; }
+/* A sender setting up a session: its name ("eason的iPhone") and model ("iPhone15,2"), shown on
+ * the TV. Passed as UTF-8 bytes: NewStringUTF expects modified UTF-8, which emoji break. */
+jbyteArray utf8Bytes(JNIEnv *env, const char *text) {
+    jsize length = text ? static_cast<jsize>(strlen(text)) : 0;
+    jbyteArray bytes = env->NewByteArray(length);
+    if (bytes && length) env->SetByteArrayRegion(bytes, 0, length, reinterpret_cast<const jbyte *>(text));
+    return bytes;
+}
+void reportClientRequest(void *, char *, char *model, char *name, bool *admit) {
+    *admit = true;
+    JNIEnv *env = currentEnv();
+    if (!env) return;
+    jbyteArray jname = utf8Bytes(env, name);
+    jbyteArray jmodel = utf8Bytes(env, model);
+    if (jname && jmodel) callStatic(g_on_client, jname, jmodel);
+    if (jname) env->DeleteLocalRef(jname);
+    if (jmodel) env->DeleteLocalRef(jmodel);
+}
 void displayPin(void *, char *) {}
 void registerClient(void *, const char *, const char *, const char *) {}
 bool checkRegister(void *, const char *) { return true; /* no registration list is kept */ }
@@ -615,8 +633,9 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     g_on_video_stop = env->GetStaticMethodID(local, "onVideoStop", "()V");
     g_playback_info = env->GetStaticMethodID(local, "playbackInfo", "()[D");
     g_on_remote_control = env->GetStaticMethodID(local, "onRemoteControl", "(Ljava/lang/String;Ljava/lang/String;)V");
+    g_on_client = env->GetStaticMethodID(local, "onClient", "([B[B)V");
     if (!g_on_connection_started || !g_on_video_play || !g_on_video_scrub || !g_on_video_rate ||
-        !g_on_video_stop || !g_playback_info || !g_on_remote_control) return JNI_ERR;
+        !g_on_video_stop || !g_playback_info || !g_on_remote_control || !g_on_client) return JNI_ERR;
     env->DeleteLocalRef(local);
     return JNI_VERSION_1_6;
 }

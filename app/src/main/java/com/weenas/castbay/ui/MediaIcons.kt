@@ -1,6 +1,7 @@
 package com.weenas.castbay.ui
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathBuilder
@@ -41,12 +42,26 @@ object MediaIcons {
         moveTo(12f, 6f); lineTo(3f, 12f); lineTo(12f, 18f); close()
     }
 
+    /** AirPlay: a screen with a triangle rising into it from below. */
+    val AirPlay: ImageVector = icon("AirPlay", PathFillType.EvenOdd) {
+        rect(2f, 3f, 20f, 13f)
+        rect(4f, 5f, 16f, 9f)
+        moveTo(12f, 13f); lineTo(18f, 21f); lineTo(6f, 21f); close()
+    }
+
+    /** DLNA: a TV on its stand. */
+    val Tv: ImageVector = icon("Tv", PathFillType.EvenOdd) {
+        rect(2f, 4f, 20f, 13f)
+        rect(4f, 6f, 16f, 9f)
+        rect(8f, 19f, 8f, 2f)
+    }
+
     private fun PathBuilder.rect(x: Float, y: Float, width: Float, height: Float) {
         moveTo(x, y); lineTo(x + width, y); lineTo(x + width, y + height); lineTo(x, y + height); close()
     }
 
-    private fun icon(name: String, shape: PathBuilder.() -> Unit): ImageVector =
+    private fun icon(name: String, fillType: PathFillType = PathFillType.NonZero, shape: PathBuilder.() -> Unit): ImageVector =
         ImageVector.Builder(name, 24.dp, 24.dp, 24f, 24f)
-            .path(fill = SolidColor(Color.White), pathBuilder = shape)
+            .path(fill = SolidColor(Color.White), pathFillType = fillType, pathBuilder = shape)
             .build()
 }

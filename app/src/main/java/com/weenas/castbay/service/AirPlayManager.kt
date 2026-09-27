@@ -48,6 +48,10 @@ class AirPlayManager private constructor(private val context: Context) {
             hlsPlayer.setVolume(gain)
         },
         onRemoteControl = { dacpId, activeRemote -> dacp.setSender(dacpId, activeRemote) },
+        onClient = { name, model ->
+            Log.i(TAG, "AirPlay sender: $name ($model)")
+            airPlaySender = name.trim()
+        },
         audioInfo = object : AudioInfoListener {
             override fun onMetadata(dmap: ByteArray) {
                 val track = DmapMetadata.parse(dmap) ?: return
@@ -163,14 +167,17 @@ class AirPlayManager private constructor(private val context: Context) {
                     // Music apps' casts get the music screen: cover, title, lyrics, controls.
                     nowPlaying = NowPlaying(title = media.title, artist = media.artist, album = media.album)
                     currentStreamInfo = StreamInfo(
-                        sourceName = media.title.orEmpty(), isAudioOnly = true, isDlna = true, nowPlaying = nowPlaying
+                        sourceName = media.title.orEmpty(), isAudioOnly = true, isDlna = true,
+                        sender = media.sender, nowPlaying = nowPlaying
                     )
                     mediaSession.update(nowPlaying)
                     loadDlnaCover(url, media.albumArtUrl)
                     mainHandler.removeCallbacks(dlnaMusicProgress)
                     mainHandler.post(dlnaMusicProgress)
                 } else {
-                    currentStreamInfo = StreamInfo(sourceName = media.title.orEmpty(), isVideoPlayback = true, isDlna = true)
+                    currentStreamInfo = StreamInfo(
+                        sourceName = media.title.orEmpty(), isVideoPlayback = true, isDlna = true, sender = media.sender
+                    )
                 }
                 currentState = AirPlayConnectionState.Streaming
             }
@@ -252,6 +259,8 @@ class AirPlayManager private constructor(private val context: Context) {
         }
 
     @Volatile private var currentStreamInfo: StreamInfo = StreamInfo()
+    /** The name of the AirPlay sender that set up the latest session, for [StreamInfo.sender]. */
+    @Volatile private var airPlaySender = ""
     private var currentError: String? = null
 
     val isDiscoveryOnly: Boolean
@@ -346,7 +355,7 @@ class AirPlayManager private constructor(private val context: Context) {
             videoRenderer.configure(width, height)
         }
         stopDlnaVideo()
-        currentStreamInfo = StreamInfo(name, model, width, height, fps, sampleRate, channels, isMirroring, true)
+        currentStreamInfo = StreamInfo(name, model, width, height, fps, sampleRate, channels, isMirroring, true, sender = airPlaySender)
         currentError = null
         currentState = AirPlayConnectionState.Streaming
     }
@@ -390,7 +399,7 @@ class AirPlayManager private constructor(private val context: Context) {
         videoRenderer.stop()
         audioRenderer.stop()
         hlsPlayer.play(url, startPositionSec) {
-            currentStreamInfo = StreamInfo(isVideoPlayback = true)
+            currentStreamInfo = StreamInfo(isVideoPlayback = true, sender = airPlaySender)
             currentError = null
             currentState = AirPlayConnectionState.Streaming
         }
@@ -406,7 +415,7 @@ class AirPlayManager private constructor(private val context: Context) {
         if (!nowPlaying.playing) updateNowPlaying { it.resumed() }
         if (currentState == AirPlayConnectionState.Connecting || videoSource == VideoSource.DLNA) {
             stopDlnaVideo()
-            currentStreamInfo = StreamInfo(isAudioOnly = true, nowPlaying = nowPlaying)
+            currentStreamInfo = StreamInfo(isAudioOnly = true, sender = airPlaySender, nowPlaying = nowPlaying)
             currentState = AirPlayConnectionState.Streaming
             mediaSession.update(nowPlaying)
             mainHandler.removeCallbacks(pauseWatchdog)
@@ -596,7 +605,8 @@ class AirPlayManager private constructor(private val context: Context) {
                 videoFps = 60,
                 audioSampleRate = 0,
                 audioChannels = 0,
-                isMirroring = true
+                isMirroring = true,
+                sender = airPlaySender
             )
             currentStreamInfo = stream
             currentState = AirPlayConnectionState.Streaming

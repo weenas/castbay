@@ -22,8 +22,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 37
-        versionName = "1.0.37"
+        versionCode = 38
+        versionName = "1.0.38"
 
         if (enableNativeBuild.get()) {
             externalNativeBuild {

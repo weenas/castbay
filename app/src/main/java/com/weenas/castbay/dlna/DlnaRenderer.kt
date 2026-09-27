@@ -34,10 +34,13 @@ class DlnaRenderer(private val target: Target) {
     private var uri = ""
     private var metadata = ""
 
-    /** The out arguments of [action] on [service], in SCPD order; throws [Soap.Fault]. */
+    /**
+     * The out arguments of [action] on [service], in SCPD order; throws [Soap.Fault]. [sender]
+     * is the requesting app ([DlnaSender]), kept with the media it casts.
+     */
     @Synchronized
-    fun handle(service: UpnpDescriptions.Service, action: Soap.Action): List<Pair<String, String>> = when (service) {
-        UpnpDescriptions.AV_TRANSPORT -> avTransport(action)
+    fun handle(service: UpnpDescriptions.Service, action: Soap.Action, sender: String = ""): List<Pair<String, String>> = when (service) {
+        UpnpDescriptions.AV_TRANSPORT -> avTransport(action, sender)
         UpnpDescriptions.RENDERING_CONTROL -> renderingControl(action)
         else -> connectionManager(action)
     }
@@ -75,14 +78,14 @@ class DlnaRenderer(private val target: Target) {
         else -> if (uri.isEmpty()) "" else "Play"
     }
 
-    private fun avTransport(action: Soap.Action): List<Pair<String, String>> {
+    private fun avTransport(action: Soap.Action, sender: String): List<Pair<String, String>> {
         val status = target.status()
         return when (action.name) {
             "SetAVTransportURI" -> {
                 val url = action.args["CurrentURI"]?.trim().orEmpty()
                 if (url.isEmpty()) throw Soap.Fault(714, "Illegal MIME-type")
                 val newMetadata = action.args["CurrentURIMetaData"].orEmpty()
-                target.open(url, DlnaMedia.parse(newMetadata, url))
+                target.open(url, DlnaMedia.parse(newMetadata, url).copy(sender = sender))
                 uri = url
                 metadata = newMetadata
                 emptyList()

@@ -24,6 +24,7 @@ class NativeBridge(
     private val audioInfo: AudioInfoListener,
     private val videoPlayback: VideoPlaybackListener,
     private val onRemoteControl: (dacpId: String, activeRemote: String) -> Unit,
+    private val onClient: (name: String, model: String) -> Unit,
     private val onSessionEnd: () -> Unit
 ) {
     companion object {
@@ -58,6 +59,7 @@ class NativeBridge(
         AirPlayNative.connectionListener = onConnectionStarted
         AirPlayNative.videoPlaybackListener = videoPlayback
         AirPlayNative.remoteControlListener = onRemoteControl
+        AirPlayNative.clientListener = onClient
         AirPlayNative.setVideoSink(object : VideoSink {
             override fun onVideoData(data: ByteArray, presentationTimeUs: Long, isH265: Boolean) {
                 // Qualified: an unqualified call resolves to this override and recurses.

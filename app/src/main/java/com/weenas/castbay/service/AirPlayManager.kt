@@ -434,7 +434,8 @@ class AirPlayManager private constructor(private val context: Context) {
     private fun onPcmAudio(pcm: ByteArray, compressedBytes: Int) {
         audioRenderer.renderPcm(pcm, compressedBytes)
         lastAudioAtMs = android.os.SystemClock.elapsedRealtime()
-        if (!nowPlaying.playing) updateNowPlaying { it.resumed() }
+        // Heard once the buffered lead has played, so the position counts from then.
+        if (!nowPlaying.playing) updateNowPlaying { it.resumed(lastAudioAtMs + AudioRenderer.MUSIC_LEAD_MS) }
         if (currentState == AirPlayConnectionState.Connecting || videoSource == VideoSource.DLNA) {
             stopDlnaVideo()
             currentStreamInfo = StreamInfo(isAudioOnly = true, sender = airPlaySender, nowPlaying = nowPlaying)
@@ -454,7 +455,8 @@ class AirPlayManager private constructor(private val context: Context) {
             // DLNA music plays here, not from the sender, so no audio gap means a pause there.
             if (!currentStreamInfo.isAudioOnly || currentStreamInfo.isDlna) return
             val lastAudio = lastAudioAtMs
-            if (nowPlaying.stalled(lastAudio)) updateNowPlaying { it.paused(nowMs = lastAudio) }
+            // The last audio to arrive is heard a buffered lead later.
+            if (nowPlaying.stalled(lastAudio)) updateNowPlaying { it.paused(nowMs = lastAudio + AudioRenderer.MUSIC_LEAD_MS) }
             mainHandler.postDelayed(this, PAUSE_CHECK_MS)
         }
     }

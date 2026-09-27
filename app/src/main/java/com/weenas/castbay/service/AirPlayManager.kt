@@ -43,6 +43,7 @@ class AirPlayManager private constructor(private val context: Context) {
         },
         onVolume = { db ->
             volumeDb = db
+            reportSenderVolume(AirPlayVolume.toSlider(db))
             val gain = AirPlayVolume.toGain(db)
             audioRenderer.setVolume(gain)
             hlsPlayer.setVolume(gain)
@@ -126,6 +127,24 @@ class AirPlayManager private constructor(private val context: Context) {
     @Volatile private var nowPlaying = NowPlaying()
     /** The sender's last volume (AirPlay dB), for the stats overlay. */
     @Volatile private var volumeDb: Float? = null
+
+    /** The sender's volume ([level] 0–1); [changes] counts moves, so the TV shows each one. */
+    data class SenderVolume(val level: Float, val changes: Int)
+    private val _senderVolume = kotlinx.coroutines.flow.MutableStateFlow<SenderVolume?>(null)
+    val senderVolume: kotlinx.coroutines.flow.StateFlow<SenderVolume?> = _senderVolume
+
+    /**
+     * A sender's volume setting. The first one only sets the level: senders send their volume
+     * as they connect, and that isn't a change to show.
+     */
+    private fun reportSenderVolume(level: Float) {
+        val previous = _senderVolume.value
+        _senderVolume.value = when {
+            previous == null -> SenderVolume(level, 0)
+            previous.level == level -> previous
+            else -> SenderVolume(level, previous.changes + 1)
+        }
+    }
     private val dacp = DacpClient(context)
     private val mediaSession = NowPlayingSession(context, onCommand = ::remoteControl)
     private val dlna = com.weenas.castbay.dlna.DlnaReceiver(context)
@@ -217,11 +236,13 @@ class AirPlayManager private constructor(private val context: Context) {
         override fun setVolume(percent: Int) {
             volume = percent
             applyVolume()
+            if (ours()) reportSenderVolume(if (muted) 0f else percent / 100f)
         }
 
         override fun setMuted(muted: Boolean) {
             this.muted = muted
             applyVolume()
+            if (ours()) reportSenderVolume(if (muted) 0f else volume / 100f)
         }
 
         private fun applyVolume() {

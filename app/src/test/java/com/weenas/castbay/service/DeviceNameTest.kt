@@ -5,13 +5,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceNameTest {
+    private fun tvName(system: String?, bluetooth: String? = null, model: String? = null) =
+        DeviceName.tvName(system, bluetooth, model, listOf(model))
+
     @Test
     fun tvNameIsTheSystemNameThenTheModel() {
-        assertEquals("Living Room TV", DeviceName.tvName(" Living Room TV ", "BRAVIA 4K UR2"))
-        assertEquals("BRAVIA 4K UR2", DeviceName.tvName(null, "BRAVIA 4K UR2"))
-        assertEquals("TCL Android TV", DeviceName.tvName("TCL_Android_TV", null))
-        assertEquals("", DeviceName.tvName(" ", ""))
-        assertEquals("", DeviceName.tvName("castbay", null))
+        assertEquals("Living Room TV", tvName(" Living Room TV ", "Bedroom", "BRAVIA 4K UR2"))
+        assertEquals("BRAVIA 4K UR2", tvName(null, model = "BRAVIA 4K UR2"))
+        assertEquals("TCL Android TV", tvName("TCL_Android_TV"))
+        assertEquals("", tvName(" ", "", ""))
+        assertEquals("", tvName("castbay"))
+    }
+
+    @Test
+    fun aProductCodeGivesWayToTheBluetoothName() {
+        // TCL: the device name is the product code; the owner's name is the Bluetooth name.
+        assertEquals("卧室电视TCL", tvName("tcl_m7642", "卧室电视TCL", "tcl_m7642"))
+        assertEquals("卧室电视TCL", tvName("M7642", "卧室电视TCL", "m7642"))
+        // With no Bluetooth name, the code is still better than nothing.
+        assertEquals("tcl m7642", tvName("tcl_m7642", null, "tcl_m7642"))
     }
 
     @Test

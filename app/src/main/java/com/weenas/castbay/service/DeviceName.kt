@@ -14,20 +14,32 @@ object DeviceName {
     /** mDNS names are at most 63 bytes; a little under, as the advertiser allows. */
     private const val MAX_BYTES = 60
 
-    /** The TV's device name in its Settings, else its model; "" if neither is usable. */
+    /**
+     * The TV's name as its owner set it: the device name in its Settings, or, where the maker
+     * leaves that as a product code (TCL: "tcl_m7642") and keeps the user's name as the
+     * Bluetooth name ("卧室电视TCL"), that; else the model. "" if nothing is usable.
+     */
     fun tvName(context: Context): String {
-        val system = runCatching {
-            Settings.Global.getString(context.contentResolver, Settings.Global.DEVICE_NAME)
-        }.getOrNull()
-        return tvName(system, Build.MODEL)
+        val resolver = context.contentResolver
+        val system = runCatching { Settings.Global.getString(resolver, Settings.Global.DEVICE_NAME) }.getOrNull()
+        // Not a public setting; some Android versions refuse it, hence runCatching.
+        val bluetooth = runCatching { Settings.Secure.getString(resolver, "bluetooth_name") }.getOrNull()
+        return tvName(system, bluetooth, Build.MODEL, listOf(Build.MODEL, Build.DEVICE, Build.PRODUCT))
     }
 
-    internal fun tvName(system: String?, model: String?): String =
-        listOf(system, model)
+    internal fun tvName(system: String?, bluetooth: String?, model: String?, productCodes: List<String?>): String {
+        val codes = productCodes.mapNotNull { it?.trim()?.lowercase() }.toSet()
+        fun isCode(name: String) = name.lowercase() in codes || PRODUCT_CODE.matches(name)
+        val system = system?.trim().orEmpty()
+        return listOf(system.takeUnless { isCode(it) }, bluetooth, system, model)
             // Some makers' names read like identifiers ("TCL_Android_TV").
             .map { it?.replace('_', ' ')?.trim().orEmpty() }
             .firstOrNull { it.isNotEmpty() && !it.equals(BRAND, ignoreCase = true) }
             .orEmpty()
+    }
+
+    /** Lowercase letters and digits joined by underscores, e.g. "tcl_m7642": a code, not a name. */
+    private val PRODUCT_CODE = Regex("[a-z0-9]+(_[a-z0-9]+)+")
 
     /** [name] with "([tvName])" after it, unless [tvName] is empty or already in it. */
     fun compose(name: String, tvName: String): String {

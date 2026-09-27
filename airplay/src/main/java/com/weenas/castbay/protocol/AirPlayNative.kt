@@ -55,6 +55,8 @@ object AirPlayNative {
     var remoteControlListener: ((String, String) -> Unit)? = null
     /** (name, model) of a sender setting up a session, e.g. ("eason的iPhone", "iPhone15,2"). */
     var clientListener: ((String, String) -> Unit)? = null
+    /** The sender's heartbeat, every two seconds while it is connected. */
+    var feedbackListener: (() -> Unit)? = null
 
     /**
      * Starts the protocol server and returns its port, or 0 on failure. [keyFile] stores the
@@ -143,6 +145,11 @@ object AirPlayNative {
     @JvmStatic
     fun onClient(name: ByteArray, model: ByteArray) {
         clientListener?.invoke(String(name, Charsets.UTF_8), String(model, Charsets.UTF_8))
+    }
+
+    @JvmStatic
+    fun onFeedback() {
+        feedbackListener?.invoke()
     }
 
     @JvmStatic

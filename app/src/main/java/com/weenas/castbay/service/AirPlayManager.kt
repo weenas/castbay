@@ -13,6 +13,9 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_WIDTH = 1920
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
+        private const val HEARTBEAT_CHECK_MS = 1000L
+        /** Two heartbeats missed (they come every two seconds; the TCL's gaps stayed under 2.6 s). */
+        private const val HEARTBEAT_TIMEOUT_MS = 5000L
         private const val DLNA_PROGRESS_MS = 500L
         private const val DLNA_SKIP_SEC = 10
         private const val MAX_COVER_BYTES = 5 * 1024 * 1024
@@ -49,6 +52,7 @@ class AirPlayManager private constructor(private val context: Context) {
             hlsPlayer.setVolume(gain)
         },
         onRemoteControl = { dacpId, activeRemote -> dacp.setSender(dacpId, activeRemote) },
+        onFeedback = ::onSenderHeartbeat,
         onClient = { name, model ->
             Log.i(TAG, "AirPlay sender: $name ($model)")
             airPlaySender = name.trim()
@@ -383,6 +387,7 @@ class AirPlayManager private constructor(private val context: Context) {
     }
 
     fun onNativeStreamStopped() {
+        lastHeartbeatAtMs = 0L
         videoRenderer.stop()
         audioRenderer.stop()
         nowPlaying = NowPlaying()
@@ -461,6 +466,41 @@ class AirPlayManager private constructor(private val context: Context) {
         }
     }
 
+    /** When the sender's last heartbeat arrived; 0 when none is expected (no AirPlay sender). */
+    @Volatile private var lastHeartbeatAtMs = 0L
+
+    private fun onSenderHeartbeat() {
+        val first = lastHeartbeatAtMs == 0L
+        lastHeartbeatAtMs = android.os.SystemClock.elapsedRealtime()
+        if (first) mainHandler.post {
+            mainHandler.removeCallbacks(heartbeatWatchdog)
+            mainHandler.postDelayed(heartbeatWatchdog, HEARTBEAT_CHECK_MS)
+        }
+    }
+
+    /**
+     * Ends casting when the sender's heartbeats stop: a phone that leaves Wi-Fi or gives up on
+     * AirPlay (and plays on itself) sends nothing more, not even a disconnect, and the TV
+     * would otherwise stay on its last screen. Only for music and mirroring, whose senders
+     * beat every two seconds even while paused; missing two means it has gone.
+     */
+    private val heartbeatWatchdog = object : Runnable {
+        override fun run() {
+            val last = lastHeartbeatAtMs
+            if (last == 0L) return
+            val stream = currentStreamInfo
+            val watched = currentState == AirPlayConnectionState.Streaming && !stream.isDlna &&
+                (stream.isAudioOnly || stream.isMirroring)
+            val silentMs = android.os.SystemClock.elapsedRealtime() - last
+            if (watched && silentMs > HEARTBEAT_TIMEOUT_MS) {
+                Log.i(TAG, "No heartbeat from the AirPlay sender for $silentMs ms: it has gone")
+                endCasting()
+                return
+            }
+            mainHandler.postDelayed(this, HEARTBEAT_CHECK_MS)
+        }
+    }
+
     /** A "stats for nerds" snapshot of the current stream. Main thread; null when idle. */
     fun playbackStats(): PlaybackStats? {
         val stream = currentStreamInfo
@@ -528,6 +568,7 @@ class AirPlayManager private constructor(private val context: Context) {
             onVideoStopped(null)
             return
         }
+        lastHeartbeatAtMs = 0L
         nativeBridge.disconnect()
         // Leave the screen now rather than when the connections have closed.
         videoRenderer.stop()

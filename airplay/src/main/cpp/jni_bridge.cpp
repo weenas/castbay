@@ -46,6 +46,7 @@ jmethodID g_on_video_stop = nullptr;
 jmethodID g_playback_info = nullptr;
 jmethodID g_on_remote_control = nullptr;
 jmethodID g_on_client = nullptr;
+jmethodID g_on_feedback = nullptr;
 /* raop keeps a pointer to this for HLS audio/subtitle selection; it must outlive g_raop. */
 std::string g_lang_system;
 /* Client-access password senders must enter; empty = open access. Read on protocol threads. */
@@ -154,6 +155,9 @@ void connectionStopped(void *) {
     LOGI("AirPlay sender disconnected");
     castbay::dispatchSessionEnd();
 }
+
+/* The sender's heartbeat (POST /feedback, every two seconds while it is connected). */
+void connFeedback(void *) { callStatic(g_on_feedback); }
 
 void connectionReset(void *, int reason) {
     LOGI("AirPlay connection reset (reason %d)", reason);
@@ -438,7 +442,7 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
     callbacks.video_process = videoProcess;
     callbacks.video_pause = noop;
     callbacks.video_resume = noop;
-    callbacks.conn_feedback = noop;
+    callbacks.conn_feedback = connFeedback;
     callbacks.conn_reset = connectionReset;
     callbacks.video_reset = videoReset;
     callbacks.conn_init = connectionStarted;
@@ -634,8 +638,10 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     g_playback_info = env->GetStaticMethodID(local, "playbackInfo", "()[D");
     g_on_remote_control = env->GetStaticMethodID(local, "onRemoteControl", "(Ljava/lang/String;Ljava/lang/String;)V");
     g_on_client = env->GetStaticMethodID(local, "onClient", "([B[B)V");
+    g_on_feedback = env->GetStaticMethodID(local, "onFeedback", "()V");
     if (!g_on_connection_started || !g_on_video_play || !g_on_video_scrub || !g_on_video_rate ||
-        !g_on_video_stop || !g_playback_info || !g_on_remote_control || !g_on_client) return JNI_ERR;
+        !g_on_video_stop || !g_playback_info || !g_on_remote_control || !g_on_client ||
+        !g_on_feedback) return JNI_ERR;
     env->DeleteLocalRef(local);
     return JNI_VERSION_1_6;
 }

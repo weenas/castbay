@@ -12,7 +12,6 @@ import androidx.media3.common.Format
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.trackselection.AdaptiveTrackSelection
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
-import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.util.EventLogger
 import com.weenas.castbay.BuildConfig
@@ -160,7 +159,6 @@ class HlsPlayer(
         // A stop() queued just before this play() has reset the snapshot.
         snapshot = Snapshot(positionSec = startPositionSec.toDouble(), state = AirPlayNative.PLAYBACK_ACTIVE)
         val exo = player ?: ExoPlayer.Builder(appContext)
-            .setBandwidthMeter(bandwidthMeter())
             .setTrackSelector(DefaultTrackSelector(appContext, AdaptiveTrackSelection.Factory(
                 QUALITY_INCREASE_AFTER_MS, 25_000, 25_000, 0.7f
             )))
@@ -324,22 +322,13 @@ class HlsPlayer(
         )
     }
 
-    /**
-     * YouTube offers AirPlay up to 4K (VP9, even HDR), but ExoPlayer starts from a guess of the
-     * network's speed that on the Sony picked 1080p and hadn't moved up after 19 s. A TV is on
-     * home Wi-Fi or Ethernet, so it starts from a higher guess; measured speed corrects it
-     * (down too, if the network can't keep up).
-     */
-    private fun bandwidthMeter() = DefaultBandwidthMeter.Builder(appContext)
-        .setInitialBitrateEstimate(C.NETWORK_TYPE_ETHERNET, HOME_NETWORK_START_BPS)
-        .setInitialBitrateEstimate(C.NETWORK_TYPE_WIFI, HOME_NETWORK_START_BPS)
-        .build()
-
     private companion object {
         const val TAG = "CastBayHls"
-        /** A home connection's speed to start from (4K VP9 needs about 31 Mbps). */
-        const val HOME_NETWORK_START_BPS = 30_000_000L
-        /** Buffered before moving up a quality (ExoPlayer's default is 10 s). */
+        /**
+         * Buffered before moving up a quality (ExoPlayer's default is 10 s), so a video climbs
+         * sooner to what the network allows (YouTube offers up to 4K). Starting higher instead
+         * was worse: on the Sony, 1440p took 6.9 s to start, not 1.5–3.5 s, and fell back.
+         */
         const val QUALITY_INCREASE_AFTER_MS = 5_000
         const val PROGRESS_INTERVAL_MS = 250L
     }

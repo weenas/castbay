@@ -21,6 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Audio is played as it arrives rather than scheduled by timestamp. Both paths write from
  * the same thread, so they share one track, torn down when the session ends.
+ *
+ * Mirroring audio plays at once, to stay with the picture. Music has no picture to keep up
+ * with, but arrives only just in time: any wait for a Wi-Fi resend drained the track and was
+ * heard as a stutter (the TCL logged its queue at 0 and repeated underruns). So music starts,
+ * and restarts after an underrun or a flush, only once [MUSIC_LEAD_FRAMES] are buffered.
  */
 class AudioRenderer {
     private val lock = Any()
@@ -47,6 +52,10 @@ class AudioRenderer {
     private var loggedUnderruns = 0
     private var lowestQueue = Int.MAX_VALUE
     private var queueLoggedAtMs = 0L
+    /** The current track plays music (buffered before playing) rather than mirroring audio. */
+    private var musicTrack = false
+    /** Frames written to the music track since it was created or flushed. Audio thread only. */
+    private var musicFramesWritten = 0L
 
     fun render(frame: ByteArray) {
         if (frame.isEmpty()) return
@@ -81,14 +90,38 @@ class AudioRenderer {
             pendingPcm.decrementAndGet()
             if (queuedIn != generation.get()) return@post
             val output = synchronized(lock) {
-                track ?: createTrack(SAMPLE_RATE, CHANNELS).also {
+                // A mirroring track (small, playing at once) can't buffer music: replace it.
+                if (track != null && !musicTrack) {
+                    track?.release()
+                    track = null
+                }
+                track ?: createTrack(SAMPLE_RATE, CHANNELS, bufferMs = MUSIC_BUFFER_MS, play = false).also {
                     track = it
+                    musicTrack = true
+                    musicFramesWritten = 0
                     loggedUnderruns = 0
                 }
             }
-            // Blocking write paces this thread to playback, as in the AAC path.
+            // Blocking once the track's buffer is full, which paces this thread to playback.
             output.write(pcm, 0, pcm.size)
+            musicFramesWritten += pcm.size / BYTES_PER_FRAME
+            keepMusicBuffered(output)
             logMusicHealth(output)
+        }
+    }
+
+    /** Plays once [MUSIC_LEAD_FRAMES] are buffered; after an underrun, pauses to rebuild them. */
+    private fun keepMusicBuffered(output: AudioTrack) {
+        val buffered = musicFramesWritten - (output.playbackHeadPosition.toLong() and 0xFFFFFFFFL)
+        if (output.playState == AudioTrack.PLAYSTATE_PLAYING) {
+            if (output.underrunCount > loggedUnderruns) {
+                // Silence is already heard; one pause to refill beats a run of short gaps.
+                output.pause()
+                Log.i(TAG, "Music ran dry; buffering ${MUSIC_LEAD_FRAMES * 1000 / SAMPLE_RATE} ms again")
+            }
+        } else if (buffered >= minOf(MUSIC_LEAD_FRAMES, output.bufferSizeInFrames * 3 / 4)) {
+            // Never more than the track holds, or a full paused track would block writes for good.
+            output.play()
         }
     }
 
@@ -122,7 +155,8 @@ class AudioRenderer {
                 track?.let {
                     it.pause()
                     it.flush()
-                    it.play()
+                    // Music plays again once buffered (keepMusicBuffered); mirroring at once.
+                    if (musicTrack) musicFramesWritten = 0 else it.play()
                 }
             }
         }
@@ -214,9 +248,14 @@ class AudioRenderer {
         }
     }
 
-    private fun createTrack(sampleRate: Int, channels: Int): AudioTrack {
+    /**
+     * [bufferMs]: 0 for the smallest safe buffer (mirroring), or how much the track holds;
+     * [play]: start at once, or leave it to [keepMusicBuffered].
+     */
+    private fun createTrack(sampleRate: Int, channels: Int, bufferMs: Int = 0, play: Boolean = true): AudioTrack {
         val channelMask = if (channels == 1) AudioFormat.CHANNEL_OUT_MONO else AudioFormat.CHANNEL_OUT_STEREO
         val minBuffer = AudioTrack.getMinBufferSize(sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT)
+        val bufferBytes = maxOf(minBuffer * 2, sampleRate / 1000 * bufferMs * channels * 2)
         return AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -232,11 +271,11 @@ class AudioRenderer {
                     .build()
             )
             .setTransferMode(AudioTrack.MODE_STREAM)
-            .setBufferSizeInBytes(minBuffer * 2)
+            .setBufferSizeInBytes(bufferBytes)
             .build()
             .also {
                 it.setVolume(volume)
-                it.play()
+                if (play) it.play()
             }
     }
 
@@ -269,7 +308,10 @@ class AudioRenderer {
                     Log.w(TAG, "Could not read audio output buffer", error)
                     return
                 }
-                output = track ?: createTrack(SAMPLE_RATE, CHANNELS).also { track = it }
+                output = track ?: createTrack(SAMPLE_RATE, CHANNELS).also {
+                    track = it
+                    musicTrack = false
+                }
             }
             // Blocking write paces this thread to playback without holding the lock, so the
             // protocol thread can keep queueing input meanwhile.
@@ -284,6 +326,7 @@ class AudioRenderer {
                 if (codec !== owner) return
                 track?.release()
                 track = createTrack(sampleRate, channels)
+                musicTrack = false
             }
         }
 
@@ -310,6 +353,12 @@ class AudioRenderer {
          */
         const val MAX_PENDING_PCM = 375
         const val QUEUE_LOG_INTERVAL_MS = 30_000L
+        /** 16-bit stereo. */
+        const val BYTES_PER_FRAME = 4
+        /** Music buffered before it plays: rides out Wi-Fi resends and jitter. */
+        const val MUSIC_LEAD_FRAMES = SAMPLE_RATE / 2
+        /** Music track size: room above the lead, so writes don't block before it plays. */
+        const val MUSIC_BUFFER_MS = 2000
 
         /** AirPlay's fixed ALAC format, decoded by Apple's reference decoder in the app. */
         val ALAC_STATS = AudioStats(

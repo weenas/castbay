@@ -278,7 +278,7 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
     }
 }
 
-/** The home screen's buttons: Settings (focused first), Help and About. */
+/** The home screen's buttons: Settings, Help and About; the one last opened has the focus. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeButtons(viewModel: AirPlayViewModel) {
@@ -288,9 +288,22 @@ private fun HomeButtons(viewModel: AirPlayViewModel) {
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            HomeButton(stringResource(R.string.settings), Modifier.initialFocus(), onClick = { viewModel.navigateToSettings() })
-            HomeButton(stringResource(R.string.help), onClick = { viewModel.navigateToHelp() })
-            HomeButton(stringResource(R.string.about), onClick = { viewModel.navigateToAbout() })
+            val focused = viewModel.homeFocus
+            HomeButton(
+                stringResource(R.string.settings),
+                if (focused == "settings") Modifier.initialFocus() else Modifier,
+                onClick = { viewModel.navigateToSettings() }
+            )
+            HomeButton(
+                stringResource(R.string.help),
+                if (focused == "help") Modifier.initialFocus() else Modifier,
+                onClick = { viewModel.navigateToHelp() }
+            )
+            HomeButton(
+                stringResource(R.string.about),
+                if (focused == "about") Modifier.initialFocus() else Modifier,
+                onClick = { viewModel.navigateToAbout() }
+            )
         }
     }
 }

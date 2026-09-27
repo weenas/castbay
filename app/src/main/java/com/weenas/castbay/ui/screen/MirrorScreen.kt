@@ -840,10 +840,12 @@ private sealed interface LyricsLookup {
     data class Found(val lyrics: Lyrics) : LyricsLookup
 }
 
-/** About one line of lyrics with its padding (180 dp held five). */
+/** A line of lyrics around the sung one (22 sp, with its padding). */
 private val LYRIC_LINE_HEIGHT = 36.dp
+/** The sung line: larger (26 sp, bold). Counting it as an ordinary line clipped the last one. */
+private val SUNG_LYRIC_LINE_HEIGHT = 42.dp
 
-private fun lyricsHeight(contextLines: Int) = LYRIC_LINE_HEIGHT * (contextLines * 2 + 1)
+private fun lyricsHeight(contextLines: Int) = LYRIC_LINE_HEIGHT * (contextLines * 2) + SUNG_LYRIC_LINE_HEIGHT + 4.dp
 /** Below this, the music screen is compact (see AudioPlayback). */
 private const val COMPACT_MUSIC_HEIGHT_DP = 600
 private const val LYRICS_LOOKUP_DELAY_MS = 1500L

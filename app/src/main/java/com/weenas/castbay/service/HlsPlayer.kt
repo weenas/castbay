@@ -10,6 +10,9 @@ import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Format
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.trackselection.AdaptiveTrackSelection
+import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter
 import androidx.media3.exoplayer.analytics.AnalyticsListener
 import androidx.media3.exoplayer.util.EventLogger
 import com.weenas.castbay.BuildConfig
@@ -69,6 +72,15 @@ class HlsPlayer(
             initializedTimestampMs: Long, initializationDurationMs: Long
         ) {
             audioDecoder = decoderName
+        }
+
+        override fun onVideoInputFormatChanged(
+            eventTime: AnalyticsListener.EventTime, format: Format,
+            decoderReuseEvaluation: androidx.media3.exoplayer.DecoderReuseEvaluation?
+        ) {
+            // Adaptive streams change quality as the network allows; this shows how high it went.
+            val mbps = if (format.bitrate > 0) "%.1f Mbps".format(java.util.Locale.US, format.bitrate / 1e6) else "?"
+            Log.i(TAG, "Video quality: ${format.width}x${format.height} · $mbps · ${format.codecs ?: format.sampleMimeType}")
         }
 
         override fun onBandwidthEstimate(
@@ -147,7 +159,12 @@ class HlsPlayer(
         Log.i(TAG, "Playing $url from ${startPositionSec}s")
         // A stop() queued just before this play() has reset the snapshot.
         snapshot = Snapshot(positionSec = startPositionSec.toDouble(), state = AirPlayNative.PLAYBACK_ACTIVE)
-        val exo = player ?: ExoPlayer.Builder(appContext).build().also {
+        val exo = player ?: ExoPlayer.Builder(appContext)
+            .setBandwidthMeter(bandwidthMeter())
+            .setTrackSelector(DefaultTrackSelector(appContext, AdaptiveTrackSelection.Factory(
+                QUALITY_INCREASE_AFTER_MS, 25_000, 25_000, 0.7f
+            )))
+            .build().also {
             it.addListener(listener)
             it.addAnalyticsListener(statsListener)
             // States, selected formats, segment loads and errors, tagged "EventLogger".
@@ -307,8 +324,23 @@ class HlsPlayer(
         )
     }
 
+    /**
+     * YouTube offers AirPlay up to 4K (VP9, even HDR), but ExoPlayer starts from a guess of the
+     * network's speed that on the Sony picked 1080p and hadn't moved up after 19 s. A TV is on
+     * home Wi-Fi or Ethernet, so it starts from a higher guess; measured speed corrects it
+     * (down too, if the network can't keep up).
+     */
+    private fun bandwidthMeter() = DefaultBandwidthMeter.Builder(appContext)
+        .setInitialBitrateEstimate(C.NETWORK_TYPE_ETHERNET, HOME_NETWORK_START_BPS)
+        .setInitialBitrateEstimate(C.NETWORK_TYPE_WIFI, HOME_NETWORK_START_BPS)
+        .build()
+
     private companion object {
         const val TAG = "CastBayHls"
+        /** A home connection's speed to start from (4K VP9 needs about 31 Mbps). */
+        const val HOME_NETWORK_START_BPS = 30_000_000L
+        /** Buffered before moving up a quality (ExoPlayer's default is 10 s). */
+        const val QUALITY_INCREASE_AFTER_MS = 5_000
         const val PROGRESS_INTERVAL_MS = 250L
     }
 }

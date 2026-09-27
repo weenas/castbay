@@ -409,6 +409,8 @@ class AirPlayManager private constructor(private val context: Context) {
 
     private fun onNativeConnectionStarted() {
         currentError = null
+        // A new sender's first poll mustn't be told about a video that finished before it came.
+        hlsPlayer.forgetFinished()
         // DLNA video stays on screen until the AirPlay sender actually streams something.
         if (dlnaOnScreen()) return
         currentState = AirPlayConnectionState.Connecting

@@ -31,6 +31,24 @@ object DlnaSender {
         "kuwo" to KUWO,
     )
 
+    /** Media hosts (lowercase fragments) to the app, for apps that send no User-Agent. */
+    private val HOSTS = listOf(
+        "126.net" to NETEASE_MUSIC,
+        "qqmusic" to QQ_MUSIC,
+        "iqiyi.com" to IQIYI,
+        "bilivideo" to BILIBILI,
+        "kugou" to KUGOU,
+        "kuwo" to KUWO,
+        "youku" to YOUKU,
+        "mgtv" to MANGO_TV,
+    )
+
+    /** The app whose servers [url] is on (NetEase Cloud Music sends no User-Agent), or "". */
+    fun fromUrl(url: String?): String {
+        val host = url?.substringAfter("://")?.substringBefore('/')?.substringBefore(':')?.lowercase() ?: return ""
+        return HOSTS.firstOrNull { (fragment, _) -> fragment in host }?.second.orEmpty()
+    }
+
     /** The app's id, or "" when the User-Agent doesn't name a known one. */
     fun fromUserAgent(userAgent: String?): String {
         val agent = userAgent?.lowercase() ?: return ""

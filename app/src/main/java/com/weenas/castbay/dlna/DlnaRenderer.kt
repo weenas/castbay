@@ -85,7 +85,8 @@ class DlnaRenderer(private val target: Target) {
                 val url = action.args["CurrentURI"]?.trim().orEmpty()
                 if (url.isEmpty()) throw Soap.Fault(714, "Illegal MIME-type")
                 val newMetadata = action.args["CurrentURIMetaData"].orEmpty()
-                target.open(url, DlnaMedia.parse(newMetadata, url).copy(sender = sender))
+                val app = sender.ifEmpty { DlnaSender.fromUrl(url) }
+                target.open(url, DlnaMedia.parse(newMetadata, url).copy(sender = app))
                 uri = url
                 metadata = newMetadata
                 emptyList()

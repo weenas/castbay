@@ -48,4 +48,16 @@ class DlnaMediaTest {
     fun usesTheCreatorWhenThereIsNoArtist() {
         assertEquals("Someone", DlnaMedia.parse("<dc:title>T</dc:title><dc:creator>Someone</dc:creator>", "u").artist)
     }
+
+    @Test
+    fun decodesCharacterReferences() {
+        // NetEase Cloud Music: the title as character references, escaped once more.
+        val didl = "<DIDL-Lite><item><dc:title>&amp;#21508;&amp;#33258;&amp;#23433;&amp;#22909;</dc:title>" +
+            "<upnp:artist>&#x5218;&#x82E5;&#x82F1;</upnp:artist><upnp:class>object.item.audioItem</upnp:class></item></DIDL-Lite>"
+        val media = DlnaMedia.parse(didl, "http://m701.music.126.net/a.m4a")
+        assertEquals("各自安好", media.title)
+        assertEquals("刘若英", media.artist)
+        assertEquals("Tom & Jerry", DlnaMedia.unescape("Tom &amp; Jerry"))
+        assertEquals("&#xZZ; stays", DlnaMedia.unescape("&#xZZ; stays"))
+    }
 }

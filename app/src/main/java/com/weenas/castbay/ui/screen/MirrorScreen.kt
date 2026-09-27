@@ -155,6 +155,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                         onSkip = viewModel::skipMusic,
                         canChangeTrack = !stream.isDlna,
                         lyrics = lyrics,
+                        lyricsEnabled = settings.showLyrics,
                         modifier = contentModifier
                     )
                 }
@@ -519,6 +520,11 @@ fun AudioPlayback(
     /** Previous/next track: AirPlay senders can; a DLNA sender's playlist is its own. */
     canChangeTrack: Boolean = true,
     lyrics: Lyrics? = null,
+    /**
+     * Lyrics are on: their space is kept while a song's are looked up (or if it has none), so
+     * the layout doesn't jump when a new song starts and again when its lyrics arrive.
+     */
+    lyricsEnabled: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val cover = remember(nowPlaying.coverArt) {
@@ -585,9 +591,14 @@ fun AudioPlayback(
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(it, fontSize = 24.sp, color = MUSIC_TEXT_TERTIARY, maxLines = 1, modifier = Modifier.marquee())
                 }
-                if (lyrics != null) {
+                if (lyrics != null || lyricsEnabled) {
+                    val contextLines = if (compact) 1 else 2
                     Spacer(modifier = Modifier.height(if (compact) 14.dp else 20.dp))
-                    LyricsView(lyrics, nowPlaying.currentPositionSec(now), contextLines = if (compact) 1 else 2)
+                    if (lyrics != null) {
+                        LyricsView(lyrics, nowPlaying.currentPositionSec(now), contextLines)
+                    } else {
+                        Spacer(modifier = Modifier.height(lyricsHeight(contextLines)))
+                    }
                 }
                 if (nowPlaying.durationSec > 0) {
                     val position = nowPlaying.currentPositionSec(now)
@@ -780,7 +791,7 @@ private fun LyricsView(lyrics: Lyrics, positionSec: Double, contextLines: Int) {
     val current = lyrics.indexAt(positionSec)
     val first = (current - contextLines).coerceAtLeast(0)
     // A fixed height, so the controls below don't move as lines come and go.
-    Column(modifier = Modifier.height(LYRIC_LINE_HEIGHT * (contextLines * 2 + 1))) {
+    Column(modifier = Modifier.height(lyricsHeight(contextLines))) {
         for (index in first..(current + contextLines).coerceAtMost(lyrics.lines.lastIndex)) {
             val line = lyrics.lines[index].text.ifEmpty { "♪" }
             val active = index == current
@@ -811,6 +822,8 @@ private fun LyricsView(lyrics: Lyrics, positionSec: Double, contextLines: Int) {
 
 /** About one line of lyrics with its padding (180 dp held five). */
 private val LYRIC_LINE_HEIGHT = 36.dp
+
+private fun lyricsHeight(contextLines: Int) = LYRIC_LINE_HEIGHT * (contextLines * 2 + 1)
 /** Below this, the music screen is compact (see AudioPlayback). */
 private const val COMPACT_MUSIC_HEIGHT_DP = 600
 private const val LYRICS_LOOKUP_DELAY_MS = 1500L

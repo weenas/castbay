@@ -20,6 +20,8 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val HEARTBEAT_TIMEOUT_MS = 5000L
         private const val DLNA_PROGRESS_MS = 500L
         private const val DLNA_SKIP_SEC = 10
+        /** How far a sender's scan (DacpClient.skip) moves, as measured on an iPhone. */
+        private const val AIRPLAY_SKIP_SEC = 11.0
         private const val MAX_COVER_BYTES = 5 * 1024 * 1024
         /** playback-info for an AirPlay sender whose video DLNA replaced: finished, so it ends its session. */
         private val AIRPLAY_VIDEO_REPLACED =
@@ -577,7 +579,18 @@ class AirPlayManager private constructor(private val context: Context) {
     fun skipMusic(forward: Boolean) {
         Log.d(TAG, "Remote control: skip ${if (forward) "forward" else "back"}")
         // DLNA music plays here, so it seeks exactly.
-        if (dlnaMusicPlaying()) hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC) else dacp.skip(forward)
+        if (dlnaMusicPlaying()) {
+            hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC)
+            return
+        }
+        dacp.skip(forward)
+        // Move the progress bar and lyrics now: the sender takes about a second to act, and
+        // corrects this when it reports its position.
+        updateNowPlaying {
+            val now = android.os.SystemClock.elapsedRealtime()
+            val target = it.currentPositionSec(now) + if (forward) AIRPLAY_SKIP_SEC else -AIRPLAY_SKIP_SEC
+            it.copy(positionSec = target.coerceIn(0.0, maxOf(it.durationSec, 0.0)), positionAtMs = now)
+        }
     }
 
     /** Metadata can arrive before the audio does, so it is kept until the screen shows it. */

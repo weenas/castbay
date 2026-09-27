@@ -117,16 +117,19 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         if (updated.needsRestartComparedTo(previous)) manager.restartIfRunning(updated)
     }
 
-    fun navigateToSettings() {
-        _navigateTo.value = "settings"
-    }
+    /** The home screen button that opened the current screen, focused again on the way back. */
+    var homeFocus: String = "settings"
+        private set
 
-    fun navigateToAbout() {
-        _navigateTo.value = "about"
-    }
+    fun navigateToSettings() = navigateTo("settings")
 
-    fun navigateToHelp() {
-        _navigateTo.value = "help"
+    fun navigateToAbout() = navigateTo("about")
+
+    fun navigateToHelp() = navigateTo("help")
+
+    private fun navigateTo(screen: String) {
+        homeFocus = screen
+        _navigateTo.value = screen
     }
 
     fun navigateBack() {

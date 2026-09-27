@@ -339,29 +339,35 @@ class AudioRenderer {
         }
     }
 
-    private companion object {
-        const val TAG = "CastBayAudio"
-        const val SAMPLE_RATE = 44100
-        const val CHANNELS = 2
+    companion object {
+        /**
+         * How much later music is heard than it arrives: the half second buffered before it
+         * plays. The sender's progress is shifted by it, so lyrics match what is heard.
+         */
+        const val MUSIC_LEAD_MS = 500L
+
+        private const val TAG = "CastBayAudio"
+        private const val SAMPLE_RATE = 44100
+        private const val CHANNELS = 2
         /** AudioSpecificConfig for AAC-ELD, 44.1 kHz, stereo, 480-sample frames (as in RPiPlay). */
-        val ELD_AUDIO_SPECIFIC_CONFIG = byteArrayOf(0xF8.toByte(), 0xE8.toByte(), 0x50, 0x00)
+        private val ELD_AUDIO_SPECIFIC_CONFIG = byteArrayOf(0xF8.toByte(), 0xE8.toByte(), 0x50, 0x00)
         /** About half a second of 480-sample frames. */
-        const val MAX_PENDING_FRAMES = 48
+        private const val MAX_PENDING_FRAMES = 48
         /**
          * About three seconds of 352-sample frames: senders stream music about two seconds
          * ahead of playback, and that initial burst must not be dropped.
          */
-        const val MAX_PENDING_PCM = 375
-        const val QUEUE_LOG_INTERVAL_MS = 30_000L
+        private const val MAX_PENDING_PCM = 375
+        private const val QUEUE_LOG_INTERVAL_MS = 30_000L
         /** 16-bit stereo. */
-        const val BYTES_PER_FRAME = 4
+        private const val BYTES_PER_FRAME = 4
         /** Music buffered before it plays: rides out Wi-Fi resends and jitter. */
-        const val MUSIC_LEAD_FRAMES = SAMPLE_RATE / 2
+        private const val MUSIC_LEAD_FRAMES = (SAMPLE_RATE * MUSIC_LEAD_MS / 1000).toInt()
         /** Music track size: room above the lead, so writes don't block before it plays. */
-        const val MUSIC_BUFFER_MS = 2000
+        private const val MUSIC_BUFFER_MS = 2000
 
         /** AirPlay's fixed ALAC format, decoded by Apple's reference decoder in the app. */
-        val ALAC_STATS = AudioStats(
+        private val ALAC_STATS = AudioStats(
             "ALAC", sampleRate = 44100, channels = 2, bitsPerSample = 16, decoder = "Apple ALAC (in app)"
         )
     }

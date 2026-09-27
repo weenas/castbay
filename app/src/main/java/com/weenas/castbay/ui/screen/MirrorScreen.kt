@@ -567,6 +567,9 @@ fun AudioPlayback(
                 }
             }
             Spacer(modifier = Modifier.width(56.dp))
+            // On 540 dp tall TVs (1080p UI, e.g. the Sony) everything below barely fitted, from
+            // the top edge to the bottom: fewer lyric lines and tighter gaps leave a margin.
+            val compact = LocalConfiguration.current.screenHeightDp < COMPACT_MUSIC_HEIGHT_DP
             Column(modifier = Modifier.weight(1f)) {
                 // An explicit line height: the default text style's is 24 sp, so a long title wrapped
                 // onto a second line drawn over the first.
@@ -583,12 +586,12 @@ fun AudioPlayback(
                     Text(it, fontSize = 24.sp, color = MUSIC_TEXT_TERTIARY, maxLines = 1, modifier = Modifier.marquee())
                 }
                 if (lyrics != null) {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    LyricsView(lyrics, nowPlaying.currentPositionSec(now))
+                    Spacer(modifier = Modifier.height(if (compact) 14.dp else 20.dp))
+                    LyricsView(lyrics, nowPlaying.currentPositionSec(now), contextLines = if (compact) 1 else 2)
                 }
                 if (nowPlaying.durationSec > 0) {
                     val position = nowPlaying.currentPositionSec(now)
-                    Spacer(modifier = Modifier.height(28.dp))
+                    Spacer(modifier = Modifier.height(if (compact) 20.dp else 28.dp))
                     // No thumb: it would suggest dragging, and senders can't seek to a time.
                     LinearProgressIndicator(
                         progress = { (position / nowPlaying.durationSec).toFloat() },
@@ -603,7 +606,7 @@ fun AudioPlayback(
                         Text(formatTime(nowPlaying.durationSec), fontSize = 20.sp, color = MUSIC_TEXT_TERTIARY)
                     }
                 }
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(if (compact) 16.dp else 24.dp))
                 // Centred under the progress bar, as in Apple Music. The screen's focus (and so
                 // the remote's OK) starts on play/pause.
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -759,13 +762,16 @@ private const val BACKDROP_FADE_MS = 700
 private const val FALLBACK_VEIL = 0.6f
 private const val GRAIN_ALPHA = 0.04f
 
-/** A few lines of [lyrics] around the one being sung at [positionSec], which is highlighted. */
+/**
+ * The line of [lyrics] sung at [positionSec], highlighted, with [contextLines] before and after.
+ */
 @Composable
-private fun LyricsView(lyrics: Lyrics, positionSec: Double) {
+private fun LyricsView(lyrics: Lyrics, positionSec: Double, contextLines: Int) {
     val current = lyrics.indexAt(positionSec)
-    val first = (current - LYRICS_CONTEXT_LINES).coerceAtLeast(0)
-    Column(modifier = Modifier.height(180.dp)) {
-        for (index in first..(current + LYRICS_CONTEXT_LINES).coerceAtMost(lyrics.lines.lastIndex)) {
+    val first = (current - contextLines).coerceAtLeast(0)
+    // A fixed height, so the controls below don't move as lines come and go.
+    Column(modifier = Modifier.height(LYRIC_LINE_HEIGHT * (contextLines * 2 + 1))) {
+        for (index in first..(current + contextLines).coerceAtMost(lyrics.lines.lastIndex)) {
             val line = lyrics.lines[index].text.ifEmpty { "♪" }
             val active = index == current
             // The sung line is brightest; the others fade the further away they are.
@@ -787,7 +793,10 @@ private fun LyricsView(lyrics: Lyrics, positionSec: Double) {
     }
 }
 
-private const val LYRICS_CONTEXT_LINES = 2
+/** About one line of lyrics with its padding (180 dp held five). */
+private val LYRIC_LINE_HEIGHT = 36.dp
+/** Below this, the music screen is compact (see AudioPlayback). */
+private const val COMPACT_MUSIC_HEIGHT_DP = 600
 private const val LYRICS_LOOKUP_DELAY_MS = 1500L
 
 private fun formatTime(seconds: Double): String {

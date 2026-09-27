@@ -112,11 +112,12 @@ class DlnaHttpServer(
         val action = Soap.parse(request.body, request.headers["soapaction"])
             ?: return Response(400, "Bad Request")
         // Position polling arrives every second; keep it out of the log.
+        val userAgent = request.headers["user-agent"].orEmpty()
         if (action.name !in QUIET_ACTIONS) {
-            Log.i(TAG, "$from → ${service.name}.${action.name} ${action.args.filterKeys { it != "InstanceID" }}")
+            Log.i(TAG, "$from ($userAgent) → ${service.name}.${action.name} ${action.args.filterKeys { it != "InstanceID" }}")
         }
         return try {
-            val out = renderer.handle(service, action)
+            val out = renderer.handle(service, action, DlnaSender.fromUserAgent(userAgent))
             Response(200, "OK", Soap.response(service.type, action.name, out))
         } catch (fault: Soap.Fault) {
             Log.i(TAG, "${service.name}.${action.name} refused: ${fault.code} ${fault.description}")

@@ -26,6 +26,7 @@ import com.weenas.castbay.R
 import com.weenas.castbay.ui.mirroringLabel
 import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.BrandTitle
+import com.weenas.castbay.ui.CastingBadge
 import com.weenas.castbay.ui.Backdrop
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -157,8 +158,13 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 }
                 StreamKind.MIRRORING -> MirroringVideo(viewModel = viewModel, streamInfo = stream, pictureMode = settings.pictureMode, modifier = contentModifier)
             }
+            if (kind == StreamKind.AUDIO) {
+                CastingBadge(stream, Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 24.dp))
+            }
             if (settings.showStats) {
-                StatsOverlay(viewModel, Modifier.align(Alignment.TopStart).padding(24.dp))
+                // On the music screen the top left holds the casting badge.
+                val corner = if (kind == StreamKind.AUDIO) Alignment.TopEnd else Alignment.TopStart
+                StatsOverlay(viewModel, Modifier.align(corner).padding(24.dp))
             }
             if (backArmed) {
                 Text(
@@ -535,7 +541,8 @@ fun AudioPlayback(
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 56.dp),
+                // The top is kept for the casting badge (CastingBadge), even on 540 dp tall TVs.
+                .padding(start = 56.dp, end = 56.dp, top = MUSIC_TOP_INSET, bottom = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -683,6 +690,9 @@ private fun MediaButton(
 }
 
 private val MEDIA_BUTTON_SIZE = 60.dp
+
+/** Room above the music screen's content for the casting badge. */
+private val MUSIC_TOP_INSET = 88.dp
 
 /** Scrolls text that doesn't fit, pausing before each pass; text that fits stays still. */
 @OptIn(ExperimentalFoundationApi::class)

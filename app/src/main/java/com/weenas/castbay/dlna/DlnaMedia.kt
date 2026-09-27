@@ -11,7 +11,9 @@ data class DlnaMedia(
     /** An http(s) URL of the cover image. */
     val albumArtUrl: String? = null,
     /** Sound only (a song), shown on the music screen rather than as video. */
-    val isAudio: Boolean = false
+    val isAudio: Boolean = false,
+    /** The casting app, from [DlnaSender.fromUserAgent]; empty when unknown. */
+    val sender: String = ""
 ) {
     companion object {
         private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "aac", "flac", "wav", "ogg", "opus", "wma", "ape")

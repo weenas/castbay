@@ -23,6 +23,8 @@ public:
 private:
     std::unique_ptr<ALACDecoder> decoder_;
     bool ready_ = false;
+    /** The frame being decoded, followed by zeros: see decode(). */
+    std::vector<uint8_t> input_;
 };
 
 }  // namespace castbay

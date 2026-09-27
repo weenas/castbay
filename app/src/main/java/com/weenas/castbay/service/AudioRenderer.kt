@@ -56,6 +56,8 @@ class AudioRenderer {
     private var musicTrack = false
     /** Frames written to the music track since it was created or flushed. Audio thread only. */
     private var musicFramesWritten = 0L
+    /** Music paused from the TV, ahead of the sender, which takes about a second to stop. */
+    private var musicHeld = false
 
     fun render(frame: ByteArray) {
         if (frame.isEmpty()) return
@@ -119,7 +121,7 @@ class AudioRenderer {
                 output.pause()
                 Log.i(TAG, "Music ran dry; buffering ${MUSIC_LEAD_FRAMES * 1000 / SAMPLE_RATE} ms again")
             }
-        } else if (buffered >= minOf(MUSIC_LEAD_FRAMES, output.bufferSizeInFrames * 3 / 4)) {
+        } else if (!musicHeld && buffered >= minOf(MUSIC_LEAD_FRAMES, output.bufferSizeInFrames * 3 / 4)) {
             // Never more than the track holds, or a full paused track would block writes for good.
             output.play()
         }
@@ -141,6 +143,18 @@ class AudioRenderer {
         }
     }
 
+    /**
+     * Pauses music at once ([hold]) when it is paused from the TV, rather than a second later
+     * when the sender stops sending; audio still arriving is kept and plays on release.
+     */
+    fun holdMusic(hold: Boolean) {
+        handler.post {
+            musicHeld = hold
+            val output = synchronized(lock) { track?.takeIf { musicTrack } } ?: return@post
+            if (hold) output.pause() else keepMusicBuffered(output)
+        }
+    }
+
     fun setVolume(gain: Float) {
         volume = gain
         synchronized(lock) { track?.setVolume(gain) }
@@ -156,7 +170,13 @@ class AudioRenderer {
                     it.pause()
                     it.flush()
                     // Music plays again once buffered (keepMusicBuffered); mirroring at once.
-                    if (musicTrack) musicFramesWritten = 0 else it.play()
+                    // A flush means new audio from the sender (a resume, seek or new song).
+                    if (musicTrack) {
+                        musicFramesWritten = 0
+                        musicHeld = false
+                    } else {
+                        it.play()
+                    }
                 }
             }
         }
@@ -341,10 +361,10 @@ class AudioRenderer {
 
     companion object {
         /**
-         * How much later music is heard than it arrives: the half second buffered before it
-         * plays. The sender's progress is shifted by it, so lyrics match what is heard.
+         * How much later music is heard than it arrives: what is buffered before it plays.
+         * Resends came back within 10 ms on the TCL; 0.5 s made pausing and resuming slow. The sender's progress is shifted by it, so lyrics match what is heard.
          */
-        const val MUSIC_LEAD_MS = 500L
+        const val MUSIC_LEAD_MS = 300L
 
         private const val TAG = "CastBayAudio"
         private const val SAMPLE_RATE = 44100

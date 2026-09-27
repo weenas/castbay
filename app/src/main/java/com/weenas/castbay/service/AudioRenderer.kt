@@ -107,8 +107,14 @@ class AudioRenderer {
             // Blocking once the track's buffer is full, which paces this thread to playback.
             output.write(pcm, 0, pcm.size)
             musicFramesWritten += pcm.size / BYTES_PER_FRAME
-            keepMusicBuffered(output)
-            logMusicHealth(output)
+            // The session can end (stop() releases the track) while this runs; a released track
+            // throws from its getters, which crashed the app on the TCL.
+            try {
+                keepMusicBuffered(output)
+                logMusicHealth(output)
+            } catch (released: IllegalStateException) {
+                Log.d(TAG, "Music track released while playing")
+            }
         }
     }
 
@@ -151,7 +157,11 @@ class AudioRenderer {
         handler.post {
             musicHeld = hold
             val output = synchronized(lock) { track?.takeIf { musicTrack } } ?: return@post
-            if (hold) output.pause() else keepMusicBuffered(output)
+            try {
+                if (hold) output.pause() else keepMusicBuffered(output)
+            } catch (released: IllegalStateException) {
+                Log.d(TAG, "Music track released while holding")
+            }
         }
     }
 

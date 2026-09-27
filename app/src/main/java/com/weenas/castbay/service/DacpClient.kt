@@ -37,6 +37,9 @@ class DacpClient(context: Context) {
     private var port = 0
     private var discovery: NsdManager.DiscoveryListener? = null
     private var resolving = false
+    /** A command pressed before the sender's server was found, sent once it is (if soon). */
+    private var pending: (() -> Unit)? = null
+    private var pendingAtMs = 0L
 
     /** Called when a sender identifies itself; starts looking for its DACP server. */
     fun setSender(dacpId: String, activeRemote: String) = synchronized(lock) {
@@ -51,6 +54,7 @@ class DacpClient(context: Context) {
 
     fun clear() = synchronized(lock) {
         stopDiscoveryLocked()
+        pending = null
         dacpId = null
         activeRemote = null
         host = null
@@ -58,8 +62,23 @@ class DacpClient(context: Context) {
     }
 
     fun send(command: Command) {
-        val endpoint = endpoint(command) ?: return
+        val endpoint = endpoint(command) ?: return later { send(command) }
         executor.execute { request(command, endpoint) }
+    }
+
+    /**
+     * The sender's server isn't known yet: on the TCL, discovery sometimes found nothing for a
+     * whole session and every button did nothing. Search afresh, and send [action] if the
+     * server turns up within [PENDING_MS].
+     */
+    private fun later(action: () -> Unit) = synchronized(lock) {
+        if (dacpId == null) return
+        pending = action
+        pendingAtMs = android.os.SystemClock.elapsedRealtime()
+        Log.i(TAG, "Sender remote control not found yet; searching again")
+        stopDiscoveryLocked()
+        resolving = false
+        startDiscoveryLocked()
     }
 
     /**
@@ -69,7 +88,7 @@ class DacpClient(context: Context) {
      */
     fun skip(forward: Boolean) {
         val begin = if (forward) Command.BEGIN_FAST_FORWARD else Command.BEGIN_REWIND
-        val endpoint = endpoint(begin) ?: return
+        val endpoint = endpoint(begin) ?: return later { skip(forward) }
         executor.execute {
             request(begin, endpoint)
             Thread.sleep(SCAN_MS)
@@ -140,6 +159,11 @@ class DacpClient(context: Context) {
                 port = resolved.port
                 Log.i(TAG, "Sender remote control at ${resolved.host}:${resolved.port}")
                 stopDiscoveryLocked()
+                val action = pending
+                pending = null
+                if (action != null && android.os.SystemClock.elapsedRealtime() - pendingAtMs <= PENDING_MS) {
+                    executor.execute(action)
+                }
             }
 
             override fun onResolveFailed(failed: NsdServiceInfo, errorCode: Int) {
@@ -163,6 +187,7 @@ class DacpClient(context: Context) {
     companion object {
         private const val TAG = "CastBayDacp"
         private const val SERVICE_TYPE = "_dacp._tcp"
+        private const val PENDING_MS = 3000L
         private const val TIMEOUT_MS = 3000
         /** How long to scan per skip: about 11 s of music on an iPhone. */
         private const val SCAN_MS = 250L

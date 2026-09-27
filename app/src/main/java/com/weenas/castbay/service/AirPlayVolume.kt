@@ -16,6 +16,9 @@ object AirPlayVolume {
     const val MIN_DB = -30f
     const val MUTE_DB = -144f
 
+    /** Where the sender's slider is, 0 to 1 (0 when muted), for the TV's volume display. */
+    fun toSlider(db: Float): Float = ((db - MIN_DB) / -MIN_DB).coerceIn(0f, 1f)
+
     fun toGain(db: Float): Float {
         if (db <= MIN_DB) return 0f  // includes mute
         if (db >= 0f) return 1f

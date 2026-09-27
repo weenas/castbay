@@ -42,6 +42,12 @@ class AudioRenderer {
     /** Linear gain from the sender's volume slider; kept across track re-creation. */
     @Volatile private var volume = 1f
 
+    // Music (ALAC) health, logged: the track's underruns and how low the queue ran, which is
+    // the cushion left against Wi-Fi resends. Audio thread only.
+    private var loggedUnderruns = 0
+    private var lowestQueue = Int.MAX_VALUE
+    private var queueLoggedAtMs = 0L
+
     fun render(frame: ByteArray) {
         if (frame.isEmpty()) return
         inputRate.record(frame.size)
@@ -74,9 +80,31 @@ class AudioRenderer {
         handler.post {
             pendingPcm.decrementAndGet()
             if (queuedIn != generation.get()) return@post
-            val output = synchronized(lock) { track ?: createTrack(SAMPLE_RATE, CHANNELS).also { track = it } }
+            val output = synchronized(lock) {
+                track ?: createTrack(SAMPLE_RATE, CHANNELS).also {
+                    track = it
+                    loggedUnderruns = 0
+                }
+            }
             // Blocking write paces this thread to playback, as in the AAC path.
             output.write(pcm, 0, pcm.size)
+            logMusicHealth(output)
+        }
+    }
+
+    private fun logMusicHealth(output: AudioTrack) {
+        lowestQueue = minOf(lowestQueue, pendingPcm.get())
+        val underruns = output.underrunCount
+        if (underruns > loggedUnderruns) {
+            Log.i(TAG, "Music underrun (${underruns - loggedUnderruns} more, $underruns in all); queue ${pendingPcm.get()} frames")
+            loggedUnderruns = underruns
+        }
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - queueLoggedAtMs >= QUEUE_LOG_INTERVAL_MS) {
+            // 352-sample frames: 8 ms each.
+            Log.i(TAG, "Music queue: lowest $lowestQueue frames (${lowestQueue * 8} ms) in the last ${QUEUE_LOG_INTERVAL_MS / 1000} s")
+            lowestQueue = Int.MAX_VALUE
+            queueLoggedAtMs = now
         }
     }
 
@@ -281,6 +309,7 @@ class AudioRenderer {
          * ahead of playback, and that initial burst must not be dropped.
          */
         const val MAX_PENDING_PCM = 375
+        const val QUEUE_LOG_INTERVAL_MS = 30_000L
 
         /** AirPlay's fixed ALAC format, decoded by Apple's reference decoder in the app. */
         val ALAC_STATS = AudioStats(

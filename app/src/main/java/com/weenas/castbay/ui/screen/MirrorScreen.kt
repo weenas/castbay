@@ -28,6 +28,7 @@ import com.weenas.castbay.ui.mirroringLabel
 import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.BrandTitle
 import com.weenas.castbay.ui.CastingBadge
+import com.weenas.castbay.ui.VolumeIndicator
 import com.weenas.castbay.ui.Backdrop
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -162,6 +163,8 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             if (kind == StreamKind.AUDIO) {
                 CastingBadge(stream, Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 20.dp))
             }
+            val senderVolume by viewModel.senderVolume.collectAsState()
+            VolumeIndicator(senderVolume, Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 40.dp))
             if (settings.showStats) {
                 // On the music screen the top left holds the casting badge.
                 val corner = if (kind == StreamKind.AUDIO) Alignment.TopEnd else Alignment.TopStart
@@ -624,7 +627,7 @@ private fun MusicControls(
     playModifier: Modifier
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        MediaButton(MediaIcons.Rewind, R.string.music_rewind, MEDIA_BUTTON_SIZE) { onSkip(false) }
+        MediaButton(MediaIcons.Back10, R.string.music_rewind, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(false) }
         if (canChangeTrack) {
             MediaButton(MediaIcons.Previous, R.string.music_previous, MEDIA_BUTTON_SIZE) {
                 onCommand(DacpClient.Command.PREVIOUS)
@@ -639,7 +642,7 @@ private fun MusicControls(
         if (canChangeTrack) {
             MediaButton(MediaIcons.Next, R.string.music_next, MEDIA_BUTTON_SIZE) { onCommand(DacpClient.Command.NEXT) }
         }
-        MediaButton(MediaIcons.FastForward, R.string.music_fast_forward, MEDIA_BUTTON_SIZE) { onSkip(true) }
+        MediaButton(MediaIcons.Ahead10, R.string.music_fast_forward, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(true) }
     }
 }
 
@@ -649,6 +652,8 @@ private fun MediaButton(
     description: Int,
     size: Dp,
     modifier: Modifier = Modifier,
+    /** The icon's share of the button; detailed icons (the "10" ones) need more. */
+    iconScale: Float = 0.42f,
     onClick: () -> Unit
 ) {
     val interaction = remember { MutableInteractionSource() }
@@ -688,7 +693,7 @@ private fun MediaButton(
             .clickable(interactionSource = interaction, indication = null, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = stringResource(description), tint = Color.White, modifier = Modifier.size(size * 0.42f))
+        Icon(icon, contentDescription = stringResource(description), tint = Color.White, modifier = Modifier.size(size * iconScale))
     }
 }
 

@@ -32,6 +32,8 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     private val networkMonitor = com.weenas.castbay.service.NetworkMonitor(application).also { it.start() }
     /** The TV's network (type, Wi-Fi name, IP) for the home screen. */
     val network: StateFlow<com.weenas.castbay.service.NetworkStatus> = networkMonitor.status
+    /** The sender's volume, as it changes: the TV shows it briefly (VolumeIndicator). */
+    val senderVolume get() = manager.senderVolume
     val appVersion: String = com.weenas.castbay.util.AppVersion.name(application)
 
     fun canReadWifiName() = networkMonitor.canReadSsid()

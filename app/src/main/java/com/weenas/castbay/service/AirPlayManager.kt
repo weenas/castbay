@@ -14,8 +14,11 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
         private const val HEARTBEAT_CHECK_MS = 1000L
-        /** A pause from the TV the sender hasn't acted on by then is undone. */
-        private const val HOLD_TIMEOUT_MS = 3000L
+        /**
+         * A pause from the TV the sender hasn't acted on by then is undone. iPhones stop in
+         * about 0.8 s; longer, and what they keep sending overflows the paused track.
+         */
+        private const val HOLD_TIMEOUT_MS = 1500L
         /** Two heartbeats missed (they come every two seconds; the TCL's gaps stayed under 2.6 s). */
         private const val HEARTBEAT_TIMEOUT_MS = 5000L
         private const val DLNA_PROGRESS_MS = 500L
@@ -552,7 +555,9 @@ class AirPlayManager private constructor(private val context: Context) {
             }
             return
         }
-        if (command == DacpClient.Command.PLAY_PAUSE && currentStreamInfo.isAudioOnly) {
+        // Only when the command can reach the sender: pausing here alone would leave the phone
+        // playing, its audio piling up behind the pause.
+        if (command == DacpClient.Command.PLAY_PAUSE && currentStreamInfo.isAudioOnly && dacp.isReady()) {
             // Pause here at once: the sender takes about a second to stop sending, and until
             // then the TV would keep playing. It resumes once the sender sends audio again.
             if (nowPlaying.playing) {

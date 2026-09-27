@@ -61,6 +61,9 @@ class DacpClient(context: Context) {
         port = 0
     }
 
+    /** Whether commands can go to the sender now (its server has been found). */
+    fun isReady(): Boolean = synchronized(lock) { host != null && port != 0 && activeRemote != null }
+
     fun send(command: Command) {
         val endpoint = endpoint(command) ?: return later { send(command) }
         executor.execute { request(command, endpoint) }
@@ -129,8 +132,8 @@ class DacpClient(context: Context) {
     private fun startDiscoveryLocked() {
         val listener = object : NsdManager.DiscoveryListener {
             override fun onServiceFound(info: NsdServiceInfo) {
-                val wanted = synchronized(lock) { dacpId }?.let(::serviceNameFor) ?: return
-                if (info.serviceName.equals(wanted, ignoreCase = true)) resolve(info)
+                val id = synchronized(lock) { dacpId } ?: return
+                if (isServiceFor(info.serviceName, id)) resolve(info)
             }
 
             override fun onServiceLost(info: NsdServiceInfo) = Unit
@@ -154,7 +157,7 @@ class DacpClient(context: Context) {
         nsd.resolveService(info, object : NsdManager.ResolveListener {
             override fun onServiceResolved(resolved: NsdServiceInfo) = synchronized(lock) {
                 resolving = false
-                if (!resolved.serviceName.equals(dacpId?.let(::serviceNameFor), ignoreCase = true)) return
+                if (dacpId?.let { isServiceFor(resolved.serviceName, it) } != true) return
                 host = resolved.host
                 port = resolved.port
                 Log.i(TAG, "Sender remote control at ${resolved.host}:${resolved.port}")
@@ -193,6 +196,18 @@ class DacpClient(context: Context) {
         private const val SCAN_MS = 250L
 
         fun serviceNameFor(dacpId: String) = "iTunes_Ctrl_$dacpId"
+
+        /**
+         * Whether [serviceName] is the DACP server of the sender with [dacpId], compared as
+         * numbers: iPhones send the ID without leading zeros ("299EB26EDEDD5A7") but advertise
+         * it with them ("iTunes_Ctrl_0299EB26EDEDD5A7"), and a text match never found those.
+         */
+        fun isServiceFor(serviceName: String, dacpId: String): Boolean {
+            val prefix = "iTunes_Ctrl_"
+            if (!serviceName.startsWith(prefix, ignoreCase = true)) return false
+            val advertised = serviceName.substring(prefix.length).toULongOrNull(16) ?: return false
+            return advertised == dacpId.toULongOrNull(16)
+        }
 
         /** HTTP Host value; IPv6 literals are bracketed and lose their zone. */
         fun hostHeader(address: InetAddress, port: Int): String {

@@ -1,6 +1,8 @@
 package com.weenas.castbay.service
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Assert.assertFalse
 import org.junit.Test
 import java.net.InetAddress
 
@@ -31,5 +33,13 @@ class DacpClientTest {
             "[fe80:0:0:0:491:7d31:145c:ea65]:3689",
             DacpClient.hostHeader(InetAddress.getByName("fe80::491:7d31:145c:ea65"), 3689)
         )
+    }
+
+    @Test
+    fun matchesServicesWhateverTheLeadingZeros() {
+        assertTrue(DacpClient.isServiceFor("iTunes_Ctrl_0299EB26EDEDD5A7", "299EB26EDEDD5A7"))
+        assertTrue(DacpClient.isServiceFor("iTunes_Ctrl_503E8EBBE4DD2AAC", "503e8ebbe4dd2aac"))
+        assertFalse(DacpClient.isServiceFor("iTunes_Ctrl_0299EB26EDEDD5A8", "299EB26EDEDD5A7"))
+        assertFalse(DacpClient.isServiceFor("Other_0299EB26EDEDD5A7", "299EB26EDEDD5A7"))
     }
 }

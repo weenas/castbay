@@ -140,22 +140,28 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 StreamKind.AUDIO -> {
                     val song = stream.nowPlaying
                     // Waits a moment before looking up: the length usually arrives after the title.
-                    val lyrics by produceState<Lyrics?>(null, settings.showLyrics, song.title, song.artist, song.durationSec.toInt()) {
-                        value = null
+                    val lyrics by produceState<LyricsLookup>(LyricsLookup.Pending, settings.showLyrics, song.title, song.artist, song.durationSec.toInt()) {
+                        value = LyricsLookup.Pending
                         val title = song.title
-                        if (!settings.showLyrics || title.isNullOrBlank()) return@produceState
+                        if (!settings.showLyrics) return@produceState
+                        if (title.isNullOrBlank()) {
+                            value = LyricsLookup.None
+                            return@produceState
+                        }
                         delay(LYRICS_LOOKUP_DELAY_MS)
-                        value = withContext(Dispatchers.IO) {
+                        val found = withContext(Dispatchers.IO) {
                             viewModel.findLyrics(title, song.artist, song.album, song.durationSec)
                         }
+                        value = if (found != null) LyricsLookup.Found(found) else LyricsLookup.None
                     }
                     AudioPlayback(
                         nowPlaying = song,
                         onCommand = viewModel::remoteControl,
                         onSkip = viewModel::skipMusic,
                         canChangeTrack = !stream.isDlna,
-                        lyrics = lyrics,
+                        lyrics = (lyrics as? LyricsLookup.Found)?.lyrics,
                         lyricsEnabled = settings.showLyrics,
+                        noLyrics = lyrics == LyricsLookup.None,
                         modifier = contentModifier
                     )
                 }
@@ -525,6 +531,8 @@ fun AudioPlayback(
      * the layout doesn't jump when a new song starts and again when its lyrics arrive.
      */
     lyricsEnabled: Boolean = false,
+    /** The song has no lyrics to show (not merely still being looked up). */
+    noLyrics: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val cover = remember(nowPlaying.coverArt) {
@@ -597,7 +605,12 @@ fun AudioPlayback(
                     if (lyrics != null) {
                         LyricsView(lyrics, nowPlaying.currentPositionSec(now), contextLines)
                     } else {
-                        Spacer(modifier = Modifier.height(lyricsHeight(contextLines)))
+                        // Blank while looking up; a faint note once it's known there are none.
+                        Box(modifier = Modifier.height(lyricsHeight(contextLines)), contentAlignment = Alignment.CenterStart) {
+                            if (noLyrics) {
+                                Text(stringResource(R.string.lyrics_none), fontSize = 22.sp, color = Color.White.copy(alpha = 0.35f))
+                            }
+                        }
                     }
                 }
                 if (nowPlaying.durationSec > 0) {
@@ -818,6 +831,13 @@ private fun LyricsView(lyrics: Lyrics, positionSec: Double, contextLines: Int) {
             }
         }
     }
+}
+
+/** A song's lyrics: being looked up, found, or known to be unavailable. */
+private sealed interface LyricsLookup {
+    data object Pending : LyricsLookup
+    data object None : LyricsLookup
+    data class Found(val lyrics: Lyrics) : LyricsLookup
 }
 
 /** About one line of lyrics with its padding (180 dp held five). */

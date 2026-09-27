@@ -45,10 +45,36 @@ data class DlnaMedia(
         /** The text of the first <[name]> element, entities decoded, or null if absent or blank. */
         private fun tag(didl: String, name: String): String? {
             val match = Regex("<$name(?:\\s[^>]*)?>(.*?)</$name>", RegexOption.DOT_MATCHES_ALL).find(didl) ?: return null
-            return match.groupValues[1]
-                .replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"")
-                .replace("&apos;", "'").replace("&amp;", "&")
-                .trim().takeIf { it.isNotEmpty() }
+            return unescape(match.groupValues[1]).trim().takeIf { it.isNotEmpty() }
+        }
+
+        private val ENTITY = Regex("&(#[0-9]+|#[xX][0-9a-fA-F]+|lt|gt|quot|apos|amp);")
+
+        /**
+         * Decodes XML entities, numeric ones too: NetEase Cloud Music sends its titles as
+         * character references ("&#21508;&#33258;..."), escaped once more than the rest of the
+         * DIDL, so what is still an entity after one pass is decoded again.
+         */
+        internal fun unescape(text: String): String {
+            var decoded = text
+            repeat(2) {
+                if ('&' !in decoded) return decoded
+                decoded = ENTITY.replace(decoded) { entity ->
+                    when (val name = entity.groupValues[1]) {
+                        "lt" -> "<"
+                        "gt" -> ">"
+                        "quot" -> "\""
+                        "apos" -> "'"
+                        "amp" -> "&"
+                        else -> {
+                            val code = if (name[1] == 'x' || name[1] == 'X') name.substring(2).toIntOrNull(16)
+                            else name.substring(1).toIntOrNull()
+                            code?.takeIf { Character.isValidCodePoint(it) }?.let { String(Character.toChars(it)) } ?: entity.value
+                        }
+                    }
+                }
+            }
+            return decoded
         }
     }
 }

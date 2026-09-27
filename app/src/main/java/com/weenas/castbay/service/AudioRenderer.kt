@@ -24,8 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger
  *
  * Mirroring audio plays at once, to stay with the picture. Music has no picture to keep up
  * with, but arrives only just in time: any wait for a Wi-Fi resend drained the track and was
- * heard as a stutter (the TCL logged its queue at 0 and repeated underruns). So music starts,
- * and restarts after an underrun or a flush, only once [MUSIC_LEAD_FRAMES] are buffered.
+ * heard as a stutter (the TCL logged its queue at 0 and repeated underruns). So music plays
+ * from a track [MUSIC_LEAD_MS] long, which starts once full and keeps that much in hand.
  */
 class AudioRenderer {
     private val lock = Any()
@@ -54,8 +54,8 @@ class AudioRenderer {
     private var queueLoggedAtMs = 0L
     /** The current track plays music (buffered before playing) rather than mirroring audio. */
     private var musicTrack = false
-    /** Frames written to the music track since it was created or flushed. Audio thread only. */
-    private var musicFramesWritten = 0L
+    /** Frames written to the music track since it was created or flushed; written on the audio thread. */
+    @Volatile private var musicFramesWritten = 0L
     /** Music paused from the TV, ahead of the sender, which takes about a second to stop. */
     private var musicHeld = false
 
@@ -91,6 +91,10 @@ class AudioRenderer {
         handler.post {
             pendingPcm.decrementAndGet()
             if (queuedIn != generation.get()) return@post
+            // Paused from the TV: what the sender plays on for the second it takes to stop is
+            // dropped. Kept, it would be heard on resuming, adding its length to the delay at
+            // every pause (lyrics drift ahead, then the track overflows into gaps).
+            if (musicHeld) return@post
             val output = synchronized(lock) {
                 // A mirroring track (small, playing at once) can't buffer music: replace it.
                 if (track != null && !musicTrack) {
@@ -163,6 +167,13 @@ class AudioRenderer {
                 Log.d(TAG, "Music track released while holding")
             }
         }
+    }
+
+    /** How far behind arrival music is heard: what the track holds (for tests and logs). */
+    fun bufferedMusicMs(): Long = synchronized(lock) {
+        val output = track?.takeIf { musicTrack } ?: return 0
+        val head = output.playbackHeadPosition.toLong() and 0xFFFFFFFFL
+        (musicFramesWritten - head).coerceAtLeast(0) * 1000 / SAMPLE_RATE
     }
 
     fun setVolume(gain: Float) {
@@ -393,8 +404,12 @@ class AudioRenderer {
         private const val BYTES_PER_FRAME = 4
         /** Music buffered before it plays: rides out Wi-Fi resends and jitter. */
         private const val MUSIC_LEAD_FRAMES = (SAMPLE_RATE * MUSIC_LEAD_MS / 1000).toInt()
-        /** Music track size: room above the lead, so writes don't block before it plays. */
-        private const val MUSIC_BUFFER_MS = 2000
+        /**
+         * Music track size: the lead itself. A streaming track only starts once its buffer is
+         * full, so a 2 s track (1.0.43) delayed music by 2 s whatever the lead, as an on-device
+         * test showed; sized to the lead, it starts then, and stays about that full while playing.
+         */
+        private const val MUSIC_BUFFER_MS = MUSIC_LEAD_MS.toInt()
 
         /** AirPlay's fixed ALAC format, decoded by Apple's reference decoder in the app. */
         private val ALAC_STATS = AudioStats(

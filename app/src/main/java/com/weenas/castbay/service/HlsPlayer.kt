@@ -206,6 +206,11 @@ class HlsPlayer(
         main.post { release() }
     }
 
+    /** Drops a finished video's "finished", once told or when a new sender connects. */
+    fun forgetFinished() {
+        if (snapshot.state == AirPlayNative.PLAYBACK_FINISHED) snapshot = Snapshot()
+    }
+
     /** Where playback is, for senders that poll (DLNA). Thread-safe. */
     data class Progress(
         val positionSec: Double,
@@ -228,8 +233,15 @@ class HlsPlayer(
         )
     }
 
-    /** Thread-safe; see [com.weenas.castbay.protocol.VideoPlaybackListener.playbackInfo]. */
-    fun playbackInfo(): DoubleArray = snapshot.let {
+    /**
+     * Thread-safe; see [com.weenas.castbay.protocol.VideoPlaybackListener.playbackInfo].
+     * "Finished" is told once: the sender ends its session on seeing it. Kept, it answered the
+     * next video's first poll, which comes before that video's playlist has even arrived, and
+     * the sender gave up: YouTube failed to cast on the Sony after an earlier video.
+     */
+    fun playbackInfo(): DoubleArray = snapshot.also {
+        if (it.state == AirPlayNative.PLAYBACK_FINISHED) forgetFinished()
+    }.let {
         doubleArrayOf(
             it.durationSec,
             it.positionSec,
@@ -275,7 +287,7 @@ class HlsPlayer(
         videoDecoder = null
         audioDecoder = null
         bandwidthBps = 0
-        // Keep "finished" until the next play(): the sender needs one poll to see it.
+        // Keep "finished" for the sender's next poll (see playbackInfo).
         if (snapshot.state != AirPlayNative.PLAYBACK_FINISHED) snapshot = Snapshot()
     }
 

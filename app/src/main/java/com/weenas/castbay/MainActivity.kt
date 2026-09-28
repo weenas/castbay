@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.ImageBitmap
@@ -12,6 +13,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.weenas.castbay.service.AppLanguage
 import com.weenas.castbay.ui.LocalBackgroundImage
+import com.weenas.castbay.ui.PairingPinDialog
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
 import com.weenas.castbay.ui.screen.AboutScreen
@@ -73,10 +75,14 @@ private fun Screens() {
         currentScreen = "mirror"
     }
 
-    when (currentScreen) {
-        "mirror" -> MirrorScreen(viewModel = viewModel)
-        "settings" -> SettingsScreen(viewModel = viewModel)
-        "help" -> HelpScreen(viewModel = viewModel)
-        "about" -> AboutScreen(viewModel = viewModel)
+    Box {
+        when (currentScreen) {
+            "mirror" -> MirrorScreen(viewModel = viewModel)
+            "settings" -> SettingsScreen(viewModel = viewModel)
+            "help" -> HelpScreen(viewModel = viewModel)
+            "about" -> AboutScreen(viewModel = viewModel)
+        }
+        val pairingPin by viewModel.pairingPin.collectAsState()
+        PairingPinDialog(pairingPin, onDismiss = viewModel::dismissPairingPin)
     }
 }

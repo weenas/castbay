@@ -478,7 +478,7 @@ fun ReceiverInfo(viewModel: AirPlayViewModel) {
         val mirroring = remember(settings) { viewModel.mirroringProfile(settings) }
         InfoRow(stringResource(R.string.info_mirroring), mirroringLabel(mirroring))
         InfoRow(stringResource(R.string.info_dlna), stringResource(if (settings.dlnaEnabled) R.string.on else R.string.off))
-        InfoRow(stringResource(R.string.info_password), stringResource(if (settings.requirePassword) R.string.setting_password_on else R.string.setting_password_off))
+        InfoRow(stringResource(R.string.info_access), accessLabel(settings.access))
         InfoRow(stringResource(R.string.info_second_device), stringResource(if (settings.allowTakeover) R.string.info_takes_over else R.string.info_refused))
         if (network.type == NetworkStatus.Type.NONE) {
             Spacer(modifier = Modifier.height(12.dp))

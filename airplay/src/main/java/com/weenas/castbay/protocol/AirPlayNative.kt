@@ -58,13 +58,19 @@ object AirPlayNative {
     var clientListener: ((String, String) -> Unit)? = null
     /** The sender's heartbeat, every two seconds while it is connected. */
     var feedbackListener: (() -> Unit)? = null
+    /** A PIN for a new sender to enter (PIN pairing), to show on the TV. */
+    var pinListener: ((String) -> Unit)? = null
+    /** (publicKey, deviceId, name) of a sender that has just paired with a PIN; to keep. */
+    var pairedListener: ((String, String, String) -> Unit)? = null
 
     /**
      * Starts the protocol server and returns its port, or 0 on failure. [keyFile] stores the
      * pairing key (created on first use) so senders see the same identity after restarts.
      * [language] (BCP 47, e.g. "zh-CN") picks audio and subtitle tracks in AirPlay video.
      * The display size and [maxFps] are what senders mirror to; a non-empty [password]
-     * (at least 4 characters) must be entered by every sender. With [allowTakeover], a new
+     * (at least 4 characters) must be entered by every sender. Otherwise with [usePin], a new
+     * sender enters a PIN shown on the TV ([pinListener]) once, and is then remembered: the
+     * app keeps the [pairedKeys] of senders that did ([pairedListener]). With [allowTakeover], a new
      * sender replaces a connected one; otherwise it is refused (409). [enableH265] offers
      * H.265 mirroring (only when the TV decodes HEVC in hardware).
      */
@@ -77,6 +83,8 @@ object AirPlayNative {
         displayHeight: Int,
         maxFps: Int,
         password: String,
+        usePin: Boolean,
+        pairedKeys: Array<String>,
         allowTakeover: Boolean,
         enableH265: Boolean,
         /** Tried first (0 = any); another free port is used when it is taken. */
@@ -86,7 +94,7 @@ object AirPlayNative {
         require(password.isEmpty() || password.length >= 4) { "AirPlay passwords need at least 4 characters" }
         return nativeStart(
             deviceName, hardwareAddress, keyFile, language, displayWidth, displayHeight, maxFps, password,
-            allowTakeover, enableH265, preferredPort
+            usePin, pairedKeys, allowTakeover, enableH265, preferredPort
         )
     }
 
@@ -154,6 +162,16 @@ object AirPlayNative {
     }
 
     @JvmStatic
+    fun onPin(pin: String) {
+        pinListener?.invoke(pin)
+    }
+
+    @JvmStatic
+    fun onPaired(publicKey: String, deviceId: String, name: ByteArray) {
+        pairedListener?.invoke(publicKey, deviceId, String(name, Charsets.UTF_8))
+    }
+
+    @JvmStatic
     fun playbackInfo(): DoubleArray = videoPlaybackListener?.playbackInfo() ?: NOT_PLAYING
 
     const val PLAYBACK_NOT_STARTED = -1.0
@@ -164,8 +182,8 @@ object AirPlayNative {
 
     @JvmStatic private external fun nativeStart(
         deviceName: String, hardwareAddress: ByteArray, keyFile: String, language: String,
-        displayWidth: Int, displayHeight: Int, maxFps: Int, password: String, allowTakeover: Boolean,
-        enableH265: Boolean, preferredPort: Int
+        displayWidth: Int, displayHeight: Int, maxFps: Int, password: String, usePin: Boolean,
+        pairedKeys: Array<String>, allowTakeover: Boolean, enableH265: Boolean, preferredPort: Int
     ): Int
     @JvmStatic private external fun nativeStop()
     @JvmStatic private external fun nativeDisconnect()

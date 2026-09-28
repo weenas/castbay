@@ -35,7 +35,6 @@
     <string name="info_ip">IP 地址</string>
     <string name="info_mirroring">屏幕镜像</string>
     <string name="info_dlna">DLNA 投屏</string>
-    <string name="info_password">密码</string>
     <string name="info_second_device">其他设备投屏</string>
     <string name="info_takes_over">接管</string>
     <string name="info_refused">拒绝</string>
@@ -89,7 +88,7 @@
     <string name="setting_reset">恢复默认设置</string>
     <string name="setting_reset_action">恢复</string>
     <string name="setting_reset_confirm">再按一次确认</string>
-    <string name="setting_reset_note">设备名称、投屏密码等所有设置都会恢复为刚安装时的状态。</string>
+    <string name="setting_reset_note">设备名称、投屏验证等所有设置都会恢复为刚安装时的状态。</string>
     <string name="section_playback">播放</string>
     <string name="section_playback_note">立即生效。投屏时按遥控器的下键或菜单键也可以修改。</string>
     <string name="setting_device_name">设备名称</string>
@@ -98,9 +97,6 @@
     <string name="setting_codec">编码</string>
     <string name="setting_codec_h264_only">仅 H.264</string>
     <string name="setting_dlna">DLNA 投屏（App 自带投屏按钮）</string>
-    <string name="setting_password">投屏密码</string>
-    <string name="setting_password_off">不需要</string>
-    <string name="setting_password_on">需要</string>
     <string name="setting_password_field">密码</string>
     <string name="setting_password_too_short">至少 %1$d 位数字。</string>
     <string name="setting_password_help">设备用 AirPlay 投屏到电视时需要输入这个密码。</string>
@@ -171,4 +167,16 @@
     <string name="help_not_found">• 手机和电视连接同一个 Wi-Fi，不要用访客网络。\n• 确认映湾已打开，主界面显示“等待投屏连接”。\n• 路由器开启了“AP 隔离”时，设备之间互相看不到，需要关闭。\n• 重新打开映湾或重启电视后再试。</string>
     <string name="help_video_title">视频无法播放？</string>
     <string name="help_video">AirPlay 和 DLNA 视频由电视直接从网上获取。如果手机要通过代理或 VPN 才能打开（例如 YouTube），电视也需要。\n设置了投屏密码时，在手机上输入设置中的密码。</string>
+    <string name="info_access">投屏验证</string>
+    <string name="setting_access">投屏验证</string>
+    <string name="access_open">不需要</string>
+    <string name="access_pin">PIN 码</string>
+    <string name="access_password">密码</string>
+    <string name="setting_pin_note">设备第一次投屏时，需要输入电视上显示的 PIN 码，之后会记住这台设备。</string>
+    <string name="setting_paired_devices">已配对设备：%1$d 台</string>
+    <string name="setting_forget_devices">全部忘记</string>
+    <string name="setting_forget_confirm">再按一次确认</string>
+    <string name="pairing_pin_title">请在设备上输入 PIN 码</string>
+    <string name="pairing_pin_help">只需输入一次，之后会记住这台设备。</string>
+    <string name="close">关闭</string>
 </resources>

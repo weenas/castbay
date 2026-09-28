@@ -47,6 +47,16 @@ jmethodID g_playback_info = nullptr;
 jmethodID g_on_remote_control = nullptr;
 jmethodID g_on_client = nullptr;
 jmethodID g_on_feedback = nullptr;
+jmethodID g_on_pin = nullptr;
+jmethodID g_on_paired = nullptr;
+/*
+ * PIN pairing (UxPlay's pin_pw = 1): a new sender enters a PIN shown on the TV, once. The
+ * public keys of senders that did are kept (by the app, passed in at start), and only they
+ * may skip the PIN; any other client claiming to be paired is refused.
+ */
+std::atomic<bool> g_use_pin{false};
+std::mutex g_register_mutex;
+std::vector<std::string> g_registered_keys;
 /* raop keeps a pointer to this for HLS audio/subtitle selection; it must outlive g_raop. */
 std::string g_lang_system;
 /* Client-access password senders must enter; empty = open access. Read on protocol threads. */
@@ -335,9 +345,47 @@ void reportClientRequest(void *, char *, char *model, char *name, bool *admit) {
     if (jname) env->DeleteLocalRef(jname);
     if (jmodel) env->DeleteLocalRef(jmodel);
 }
-void displayPin(void *, char *) {}
-void registerClient(void *, const char *, const char *, const char *) {}
-bool checkRegister(void *, const char *) { return true; /* no registration list is kept */ }
+/* A new sender asked to pair: the TV shows [pin] for it to enter. */
+void displayPin(void *, char *pin) {
+    if (!pin) return;
+    LOGI("Showing a pairing PIN");
+    JNIEnv *env = currentEnv();
+    if (!env) return;
+    jstring text = env->NewStringUTF(pin);
+    if (text) callStatic(g_on_pin, text);
+    if (text) env->DeleteLocalRef(text);
+}
+/* Every admitted session reports its sender; one that has just paired is remembered. */
+void registerClient(void *, const char *device_id, const char *pk, const char *name) {
+    if (!g_use_pin.load() || !pk) return;
+    {
+        std::lock_guard<std::mutex> lock(g_register_mutex);
+        for (const auto &key : g_registered_keys) {
+            if (key == pk) return;
+        }
+        g_registered_keys.emplace_back(pk);
+    }
+    LOGI("Paired a new sender");
+    JNIEnv *env = currentEnv();
+    if (!env) return;
+    jstring key = env->NewStringUTF(pk);
+    jstring id = env->NewStringUTF(device_id ? device_id : "");
+    jbyteArray jname = utf8Bytes(env, name);
+    if (key && id && jname) callStatic(g_on_paired, key, id, jname);
+    if (key) env->DeleteLocalRef(key);
+    if (id) env->DeleteLocalRef(id);
+    if (jname) env->DeleteLocalRef(jname);
+}
+/* A sender that says it paired before: only if it really did (its key is on the list). */
+bool checkRegister(void *, const char *pk) {
+    if (!g_use_pin.load()) return true;
+    std::lock_guard<std::mutex> lock(g_register_mutex);
+    for (const auto &key : g_registered_keys) {
+        if (pk && key == pk) return true;
+    }
+    LOGI("Refused a sender that is not paired with this TV");
+    return false;
+}
 /* Password mode (UxPlay's pin_pw = 2): every sender enters the same password. */
 const char *passwd(void *, int *len) {
     if (g_password.empty()) {
@@ -424,7 +472,7 @@ extern "C" JNIEXPORT jint JNICALL
 Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
     JNIEnv *env, jclass, jstring deviceName, jbyteArray hardwareAddress, jstring keyFile,
     jstring language, jint displayWidth, jint displayHeight, jint maxFps, jstring password,
-    jboolean allowTakeover, jboolean enableH265, jint preferredPort) {
+    jboolean usePin, jobjectArray pairedKeys, jboolean allowTakeover, jboolean enableH265, jint preferredPort) {
     std::lock_guard<std::mutex> lock(g_server_mutex);
     stopLocked();
     if (!deviceName || !hardwareAddress || !keyFile || !language || !password ||
@@ -432,6 +480,23 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
     const char *pw = env->GetStringUTFChars(password, nullptr);
     g_password = pw ? pw : "";
     if (pw) env->ReleaseStringUTFChars(password, pw);
+    // A password, when set, is the access control; otherwise a PIN if chosen.
+    g_use_pin = usePin == JNI_TRUE && g_password.empty();
+    {
+        std::lock_guard<std::mutex> registerLock(g_register_mutex);
+        g_registered_keys.clear();
+        const jsize count = pairedKeys ? env->GetArrayLength(pairedKeys) : 0;
+        for (jsize i = 0; i < count; i++) {
+            auto item = reinterpret_cast<jstring>(env->GetObjectArrayElement(pairedKeys, i));
+            if (!item) continue;
+            const char *text = env->GetStringUTFChars(item, nullptr);
+            if (text) {
+                g_registered_keys.emplace_back(text);
+                env->ReleaseStringUTFChars(item, text);
+            }
+            env->DeleteLocalRef(item);
+        }
+    }
     g_open_connections = 0;
 
     static std::once_flag ntp_once;
@@ -507,6 +572,8 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
 
     // AirPlay video (HLS): the YouTube app and similar in-app players.
     raop_set_plist(g_raop, "hls", 1);
+    // 0: a new random PIN for each pairing.
+    if (g_use_pin) raop_set_plist(g_raop, "pin", 0);
     // Music senders time playback about 1.75 s out, plus the output latency a receiver
     // reports (UxPlay's default 0.25 s). The app times music to the frame against its own
     // output, so it reports none, and pause, resume and seeks are heard that much sooner.
@@ -528,7 +595,8 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
         return 0;
     }
     int dnsError = 0;
-    const unsigned char pinPw = g_password.empty() ? 0 : 2;  // 2 = password (advertised as pw=true)
+    // 2 = password (advertised as pw=true), 1 = PIN shown on the TV, 0 = open.
+    const unsigned char pinPw = !g_password.empty() ? 2 : (g_use_pin ? 1 : 0);
     g_dnssd = dnssd_init(name, static_cast<int>(strlen(name)), address, 6, pinPw, &dnsError);
     env->ReleaseStringUTFChars(deviceName, name);
     if (!g_dnssd) {
@@ -651,9 +719,11 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     g_on_remote_control = env->GetStaticMethodID(local, "onRemoteControl", "(Ljava/lang/String;Ljava/lang/String;)V");
     g_on_client = env->GetStaticMethodID(local, "onClient", "([B[B)V");
     g_on_feedback = env->GetStaticMethodID(local, "onFeedback", "()V");
+    g_on_pin = env->GetStaticMethodID(local, "onPin", "(Ljava/lang/String;)V");
+    g_on_paired = env->GetStaticMethodID(local, "onPaired", "(Ljava/lang/String;Ljava/lang/String;[B)V");
     if (!g_on_connection_started || !g_on_video_play || !g_on_video_scrub || !g_on_video_rate ||
         !g_on_video_stop || !g_playback_info || !g_on_remote_control || !g_on_client ||
-        !g_on_feedback) return JNI_ERR;
+        !g_on_feedback || !g_on_pin || !g_on_paired) return JNI_ERR;
     env->DeleteLocalRef(local);
     return JNI_VERSION_1_6;
 }

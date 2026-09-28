@@ -13,10 +13,14 @@ data class ReceiverSettings(
     val frameRate: String = FRAME_RATE_AUTO,
     /** "Auto" offers H.265 when the TV decodes it in hardware; otherwise H.264 only. */
     val videoCodec: String = CODEC_AUTO,
-    /** Whether senders must enter [pin]; otherwise anyone on the network can cast. */
-    val requirePassword: Boolean = false,
-    /** The password (digits) used when [requirePassword] is on; kept when it is turned off. */
-    val pin: String = "",
+    /**
+     * Who may cast: [ACCESS_OPEN] anyone on the network; [ACCESS_PIN] a new device enters a PIN
+     * shown on the TV, once, and is remembered ([PairedDevices]); [ACCESS_PASSWORD] every device
+     * enters [password].
+     */
+    val access: String = ACCESS_OPEN,
+    /** The password (digits) for [ACCESS_PASSWORD]; kept while another access is chosen. */
+    val password: String = "",
     /**
      * What happens when another device casts while one is connected: true = it takes over
      * (the current one is disconnected), false = it is refused.
@@ -72,8 +76,11 @@ data class ReceiverSettings(
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
     fun maxFps(): Int = if (frameRate == "30 FPS") 30 else 60
 
-    /** The client-access password to enforce, or "" when access is open. */
-    fun requiredPin(): String = pin.takeIf { requirePassword && isValidPin(it) }.orEmpty()
+    /** The client-access password to enforce, or "" when there is none. */
+    fun requiredPassword(): String = password.takeIf { access == ACCESS_PASSWORD && isValidPassword(it) }.orEmpty()
+
+    /** Whether new devices pair with a PIN shown on the TV. */
+    fun usesPin(): Boolean = access == ACCESS_PIN
 
     companion object {
         const val LANGUAGE_SYSTEM = "system"
@@ -96,10 +103,15 @@ data class ReceiverSettings(
         const val CODEC_H264_ONLY = "H.264 only"
         val VIDEO_CODECS = listOf(CODEC_AUTO, CODEC_H264_ONLY)
 
-        /** UxPlay requires client-access passwords of at least 4 characters. */
-        const val MIN_PIN_LENGTH = 4
+        const val ACCESS_OPEN = "open"
+        const val ACCESS_PIN = "pin"
+        const val ACCESS_PASSWORD = "password"
+        val ACCESS_MODES = listOf(ACCESS_OPEN, ACCESS_PIN, ACCESS_PASSWORD)
 
-        fun isValidPin(pin: String) = pin.length >= MIN_PIN_LENGTH && pin.all { it.isDigit() }
+        /** UxPlay requires client-access passwords of at least 4 characters. */
+        const val MIN_PASSWORD_LENGTH = 4
+
+        fun isValidPassword(password: String) = password.length >= MIN_PASSWORD_LENGTH && password.all { it.isDigit() }
     }
 }
 
@@ -120,12 +132,10 @@ class ReceiverSettingsStore(context: Context) {
             ?.takeIf { it in ReceiverSettings.FRAME_RATES } ?: ReceiverSettings.FRAME_RATE_AUTO,
         videoCodec = preferences.getString("video_codec", null)
             ?.takeIf { it in ReceiverSettings.VIDEO_CODECS } ?: ReceiverSettings.CODEC_AUTO,
-        pin = preferences.getString("pin", "").orEmpty(),
-        // Before this setting existed, a saved PIN meant "required".
-        requirePassword = preferences.getBoolean(
-            "require_password",
-            ReceiverSettings.isValidPin(preferences.getString("pin", "").orEmpty())
-        ),
+        // Stored as "pin" by older versions, when the password was called a PIN.
+        password = preferences.getString("pin", "").orEmpty(),
+        access = preferences.getString("access", null)?.takeIf { it in ReceiverSettings.ACCESS_MODES }
+            ?: legacyAccess(),
         allowTakeover = preferences.getBoolean("allow_takeover", false),
         dlnaEnabled = preferences.getBoolean("dlna_enabled", true),
         showStats = preferences.getBoolean("show_stats", false),
@@ -137,6 +147,13 @@ class ReceiverSettingsStore(context: Context) {
         checkUpdates = preferences.getBoolean("check_updates", true)
     )
 
+    /** Before the access setting: a password switch, and before that a saved password alone. */
+    private fun legacyAccess(): String {
+        val saved = ReceiverSettings.isValidPassword(preferences.getString("pin", "").orEmpty())
+        val required = preferences.getBoolean("require_password", saved)
+        return if (required) ReceiverSettings.ACCESS_PASSWORD else ReceiverSettings.ACCESS_OPEN
+    }
+
     fun save(settings: ReceiverSettings) {
         preferences.edit()
             .putString("device_name", settings.deviceName.trim().ifBlank { DeviceName.BRAND })
@@ -144,8 +161,9 @@ class ReceiverSettingsStore(context: Context) {
             .putString("resolution", settings.resolution)
             .putString("frame_rate", settings.frameRate)
             .putString("video_codec", settings.videoCodec)
-            .putString("pin", settings.pin)
-            .putBoolean("require_password", settings.requirePassword)
+            .putString("pin", settings.password)
+            .putString("access", settings.access)
+            .remove("require_password")
             .putBoolean("allow_takeover", settings.allowTakeover)
             .putBoolean("dlna_enabled", settings.dlnaEnabled)
             // Receiving can no longer be turned off (Back twice on the home screen quits).

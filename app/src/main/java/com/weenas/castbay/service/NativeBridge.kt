@@ -26,6 +26,8 @@ class NativeBridge(
     private val onRemoteControl: (dacpId: String, activeRemote: String) -> Unit,
     private val onClient: (name: String, model: String) -> Unit,
     private val onFeedback: () -> Unit,
+    private val onPin: (pin: String) -> Unit,
+    private val onPaired: (PairedDevice) -> Unit,
     private val onSessionEnd: () -> Unit
 ) {
     companion object {
@@ -51,6 +53,14 @@ class NativeBridge(
     private var ports: android.content.SharedPreferences? = null
     private var language = "en"
 
+    /**
+     * Makes a new pairing identity (the key file is created afresh at the next start): senders
+     * paired with the old one pair again with a PIN instead of failing to connect.
+     */
+    fun resetIdentity() {
+        keyFile?.let { java.io.File(it).delete() }
+    }
+
     fun initialize(context: Context) {
         Log.d(TAG, "Initializing native bridge")
         keyFile = java.io.File(context.noBackupFilesDir, "airplay_pairing_key.pem").absolutePath
@@ -62,6 +72,8 @@ class NativeBridge(
         AirPlayNative.remoteControlListener = onRemoteControl
         AirPlayNative.clientListener = onClient
         AirPlayNative.feedbackListener = onFeedback
+        AirPlayNative.pinListener = onPin
+        AirPlayNative.pairedListener = { key, id, name -> onPaired(PairedDevice(key, id, name)) }
         AirPlayNative.setVideoSink(object : VideoSink {
             override fun onVideoData(data: ByteArray, presentationTimeUs: Long, isH265: Boolean) {
                 // Qualified: an unqualified call resolves to this override and recurses.
@@ -102,6 +114,8 @@ class NativeBridge(
         profile: MirroringProfile,
         maxFps: Int,
         password: String,
+        usePin: Boolean,
+        pairedKeys: List<String>,
         allowTakeover: Boolean
     ): Int {
         val key = keyFile ?: return 0
@@ -111,7 +125,8 @@ class NativeBridge(
             val preferred = ports?.getInt(KEY_AIRPLAY_PORT, AIRPLAY_DEFAULT_PORT) ?: AIRPLAY_DEFAULT_PORT
             AirPlayNative.start(
                 deviceName, hardwareAddress, key, language,
-                profile.width, profile.height, maxFps, password, allowTakeover, profile.h265, preferred
+                profile.width, profile.height, maxFps, password, usePin, pairedKeys.toTypedArray(),
+                allowTakeover, profile.h265, preferred
             ).also { port ->
                 if (port > 0 && port != preferred) ports?.edit()?.putInt(KEY_AIRPLAY_PORT, port)?.apply()
             }

@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,18 +41,30 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.PressInteraction
 import com.weenas.castbay.viewmodel.AirPlayViewModel
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
-    // Starts below the device name: focusing the text field opens the keyboard.
+    // Starts on the device name: its keyboard opens only on OK (TextSetting), not on focus.
     val firstChoice = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { firstChoice.requestFocus() } }
+    val listState = rememberLazyListState()
+    LaunchedEffect(Unit) {
+        runCatching { firstChoice.requestFocus() }
+        // Focusing the field scrolls it into view over the next frames, pushing the title
+        // half off the top; once that has settled, back to the top.
+        delay(FOCUS_SCROLL_SETTLE_MS)
+        listState.scrollToItem(0)
+    }
     // Same look as the home screen: no app bar, a title with a button beside it.
     AppBackground {
         LazyColumn(
+            state = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 48.dp, vertical = 24.dp)
@@ -74,13 +87,12 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
             item { SectionTitle(stringResource(R.string.section_connection), stringResource(R.string.section_connection_note)) }
             item {
                 SettingsCard(Segment.Top) {
-                    DeviceNameSetting(value = settings.deviceName) { name ->
+                    DeviceNameSetting(value = settings.deviceName, modifier = Modifier.focusRequester(firstChoice)) { name ->
                         viewModel.updateSettings { it.copy(deviceName = name) }
                     }
                     SwitchSetting(
                         stringResource(R.string.setting_append_tv_name),
-                        settings.appendTvName,
-                        Modifier.focusRequester(firstChoice)
+                        settings.appendTvName
                     ) { enabled ->
                         viewModel.updateSettings { it.copy(appendTvName = enabled) }
                     }
@@ -202,6 +214,8 @@ private fun SectionTitle(title: String, note: String?) {
     }
 }
 
+private const val FOCUS_SCROLL_SETTLE_MS = 250L
+
 /** Where a list item sits in its group's card: the card is drawn a piece per item. */
 private enum class Segment { Single, Top, Middle, Bottom }
 
@@ -257,9 +271,10 @@ fun ChoiceSetting(
 }
 
 @Composable
-fun DeviceNameSetting(value: String, onSaved: (String) -> Unit) {
+fun DeviceNameSetting(value: String, modifier: Modifier = Modifier, onSaved: (String) -> Unit) {
     TextSetting(
         value = value,
+        modifier = modifier,
         label = stringResource(R.string.setting_device_name),
         canSave = { it.isNotBlank() },
         onSaved = onSaved
@@ -281,15 +296,25 @@ private fun TextSetting(
     password: Boolean = false,
     filter: (String) -> String = { it },
     supportingText: (@Composable (String) -> Unit)? = null,
-    isError: (String) -> Boolean = { false }
+    isError: (String) -> Boolean = { false },
+    modifier: Modifier = Modifier
 ) {
     var editing by remember(value) { mutableStateOf(TextFieldValue(value, TextRange(value.length))) }
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
+    // As on TV settings screens, focus alone doesn't open the keyboard (which covers half the
+    // screen): the field is read-only until OK is pressed on it (or it is tapped).
+    var typing by remember { mutableStateOf(false) }
+    LaunchedEffect(typing) { if (typing) keyboard?.show() }
+    val interaction = remember { MutableInteractionSource() }
+    LaunchedEffect(interaction) {
+        interaction.interactions.collect { if (it is PressInteraction.Release) typing = true }
+    }
     val savable = canSave(editing.text) && editing.text != value
     val save = {
         if (savable) onSaved(editing.text)
         keyboard?.hide()
+        typing = false
     }
     Row(verticalAlignment = Alignment.CenterVertically) {
         OutlinedTextField(
@@ -302,17 +327,24 @@ private fun TextSetting(
             supportingText = supportingText?.let { content -> { content(editing.text) } },
             isError = isError(editing.text),
             singleLine = true,
+            readOnly = !typing,
+            interactionSource = interaction,
             visualTransformation = if (password) PasswordVisualTransformation() else VisualTransformation.None,
             keyboardOptions = KeyboardOptions(
                 keyboardType = if (password) KeyboardType.NumberPassword else KeyboardType.Text,
                 imeAction = ImeAction.Done
             ),
             keyboardActions = KeyboardActions(onDone = { save() }),
-            modifier = Modifier
+            modifier = modifier
                 .weight(1f)
+                .onFocusChanged { if (!it.isFocused) typing = false }
                 .onPreviewKeyEvent { event ->
                     val atEnd = editing.selection.collapsed && editing.selection.end == editing.text.length
-                    if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionRight && atEnd) {
+                    val ok = event.key == Key.DirectionCenter || event.key == Key.Enter || event.key == Key.NumPadEnter
+                    if (!typing && ok) {
+                        if (event.type == KeyEventType.KeyUp) typing = true
+                        true
+                    } else if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionRight && atEnd) {
                         focusManager.moveFocus(FocusDirection.Right)
                     } else {
                         false

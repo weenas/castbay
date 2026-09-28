@@ -1,6 +1,11 @@
 package com.weenas.castbay.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
@@ -63,118 +68,184 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     HomeButton(stringResource(R.string.action_back), onClick = onBack)
                 }
             }
+            item { Spacer(modifier = Modifier.height(20.dp)) }
             item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SwitchSetting(
-                    stringResource(R.string.setting_receiver),
-                    settings.receiverEnabled,
-                    Modifier.focusRequester(firstChoice)
-                ) { viewModel.setReceiverEnabled(it) }
-                Text(stringResource(R.string.setting_receiver_note), color = Color.Gray, fontSize = 14.sp)
+                SettingsCard(Segment.Single) {
+                    SwitchSetting(
+                        stringResource(R.string.setting_receiver),
+                        settings.receiverEnabled,
+                        Modifier.focusRequester(firstChoice)
+                    ) { viewModel.setReceiverEnabled(it) }
+                    Text(stringResource(R.string.setting_receiver_note), color = Color.Gray, fontSize = 14.sp)
+                }
             }
             // Connection settings change what senders see, so the receiver restarts for them;
             // playback settings apply live and are also in the quick menu during playback.
+            item { SectionTitle(stringResource(R.string.section_connection), stringResource(R.string.section_connection_note)) }
             item {
-                SectionHeader(stringResource(R.string.section_connection), stringResource(R.string.section_connection_note))
-                DeviceNameSetting(value = settings.deviceName) { name ->
-                    viewModel.updateSettings { it.copy(deviceName = name) }
-                }
-                SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
-                    viewModel.updateSettings { it.copy(appendTvName = enabled) }
-                }
-                Text(
-                    stringResource(R.string.setting_append_tv_name_note, settings.advertisedName),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-            }
-            item {
-                SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
-                    viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
+                SettingsCard(Segment.Top) {
+                    DeviceNameSetting(value = settings.deviceName) { name ->
+                        viewModel.updateSettings { it.copy(deviceName = name) }
+                    }
+                    SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
+                        viewModel.updateSettings { it.copy(appendTvName = enabled) }
+                    }
+                    Text(
+                        stringResource(R.string.setting_append_tv_name_note, settings.advertisedName),
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
             }
-            item { AccessSetting(settings, viewModel) }
             item {
-                ChoiceSetting(
-                    stringResource(R.string.setting_takeover),
-                    if (settings.allowTakeover) TAKEOVER_ALLOW else TAKEOVER_REFUSE,
-                    listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
-                    display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
-                ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
+                SettingsCard(Segment.Middle) {
+                    SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
+                        viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
+                    }
+                }
+            }
+            item {
+                SettingsCard(Segment.Middle) {
+                    AccessSetting(settings, viewModel)
+                }
+            }
+            item {
+                SettingsCard(Segment.Bottom) {
+                    ChoiceSetting(
+                        stringResource(R.string.setting_takeover),
+                        if (settings.allowTakeover) TAKEOVER_ALLOW else TAKEOVER_REFUSE,
+                        listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
+                        display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
+                    ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
+                }
             }
             // Screen mirroring only: apps' AirPlay and DLNA video and music aren't affected. Each
             // Auto names what it gives on this TV with the other settings.
+            item { SectionTitle(stringResource(R.string.section_mirroring), stringResource(R.string.section_mirroring_note)) }
             item {
-                SectionHeader(stringResource(R.string.section_mirroring), stringResource(R.string.section_mirroring_note))
-                val autoProfile = remember(settings) {
-                    viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
-                }
-                val autoLabel = stringResource(R.string.auto_with, "${autoProfile.height}p")
-                ChoiceSetting(
-                    stringResource(R.string.setting_resolution),
-                    settings.resolution,
-                    ReceiverSettings.RESOLUTIONS,
-                    display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
-                ) {
-                    viewModel.updateSettings { current -> current.copy(resolution = it) }
+                SettingsCard(Segment.Top) {
+                    val autoProfile = remember(settings) {
+                        viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
+                    }
+                    val autoLabel = stringResource(R.string.auto_with, "${autoProfile.height}p")
+                    ChoiceSetting(
+                        stringResource(R.string.setting_resolution),
+                        settings.resolution,
+                        ReceiverSettings.RESOLUTIONS,
+                        display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
+                    ) {
+                        viewModel.updateSettings { current -> current.copy(resolution = it) }
+                    }
                 }
             }
             item {
-                val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
-                val autoLabel = stringResource(R.string.auto_with, stringResource(R.string.frame_rate_fps, autoFps))
-                ChoiceSetting(
-                    stringResource(R.string.setting_frame_rate),
-                    settings.frameRate,
-                    ReceiverSettings.FRAME_RATES,
-                    display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) autoLabel else settingValueLabel(it) }
-                ) {
-                    viewModel.updateSettings { current -> current.copy(frameRate = it) }
+                SettingsCard(Segment.Middle) {
+                    val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
+                    val autoLabel = stringResource(R.string.auto_with, stringResource(R.string.frame_rate_fps, autoFps))
+                    ChoiceSetting(
+                        stringResource(R.string.setting_frame_rate),
+                        settings.frameRate,
+                        ReceiverSettings.FRAME_RATES,
+                        display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) autoLabel else settingValueLabel(it) }
+                    ) {
+                        viewModel.updateSettings { current -> current.copy(frameRate = it) }
+                    }
                 }
             }
             item {
-                // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
-                val autoProfile = remember(settings) {
-                    viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
+                SettingsCard(Segment.Bottom) {
+                    // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
+                    val autoProfile = remember(settings) {
+                        viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
+                    }
+                    val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
+                    ChoiceSetting(
+                        stringResource(R.string.setting_codec),
+                        settings.videoCodec,
+                        ReceiverSettings.VIDEO_CODECS,
+                        display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
+                    ) {
+                        viewModel.updateSettings { current -> current.copy(videoCodec = it) }
+                    }
                 }
-                val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
-                ChoiceSetting(
-                    stringResource(R.string.setting_codec),
-                    settings.videoCodec,
-                    ReceiverSettings.VIDEO_CODECS,
-                    display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
-                ) {
-                    viewModel.updateSettings { current -> current.copy(videoCodec = it) }
+            }
+            item { SectionTitle(stringResource(R.string.section_playback), stringResource(R.string.section_playback_note)) }
+            item {
+                SettingsCard(Segment.Top) {
+                    SwitchSetting(stringResource(R.string.setting_stats), settings.showStats) { enabled ->
+                        viewModel.updateSettings { it.copy(showStats = enabled) }
+                    }
                 }
             }
             item {
-                SectionHeader(stringResource(R.string.section_playback), stringResource(R.string.section_playback_note))
-                SwitchSetting(stringResource(R.string.setting_stats), settings.showStats) { enabled ->
-                    viewModel.updateSettings { it.copy(showStats = enabled) }
+                SettingsCard(Segment.Middle) {
+                    SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics) { enabled ->
+                        viewModel.updateSettings { it.copy(showLyrics = enabled) }
+                    }
+                    Text(stringResource(R.string.setting_lyrics_note), color = Color.Gray, fontSize = 14.sp)
                 }
             }
             item {
-                SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics) { enabled ->
-                    viewModel.updateSettings { it.copy(showLyrics = enabled) }
-                }
-                Text(stringResource(R.string.setting_lyrics_note), color = Color.Gray, fontSize = 14.sp)
-            }
-            item {
-                ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
-                    viewModel.updateSettings { current -> current.copy(pictureMode = it) }
+                SettingsCard(Segment.Bottom) {
+                    ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
+                        viewModel.updateSettings { current -> current.copy(pictureMode = it) }
+                    }
                 }
             }
-        }
+}
     }
 }
 
+/**
+ * A group's title, above its card: larger than the settings' names and in the accent colour,
+ * so the groups stand apart; its note says what the group's settings affect.
+ */
 @Composable
-private fun SectionHeader(title: String, note: String?) {
-    Spacer(modifier = Modifier.height(24.dp))
-    Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
-    note?.let { Text(it, color = Color.Gray, fontSize = 14.sp) }
-    Spacer(modifier = Modifier.height(8.dp))
+private fun SectionTitle(title: String, note: String?) {
+    Column(modifier = Modifier.padding(start = 8.dp, top = 32.dp, bottom = 10.dp)) {
+        Text(title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = SECTION_ACCENT)
+        note?.let { Text(it, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp)) }
+    }
 }
+
+/** Where a list item sits in its group's card: the card is drawn a piece per item. */
+private enum class Segment { Single, Top, Middle, Bottom }
+
+/**
+ * A group's settings on one card, like the home screen's info panel. Each list item draws
+ * its piece ([segment]), with a thin line between settings.
+ */
+@Composable
+private fun SettingsCard(segment: Segment, content: @Composable ColumnScope.() -> Unit) {
+    val radius = 20.dp
+    val shape = when (segment) {
+        Segment.Single -> RoundedCornerShape(radius)
+        Segment.Top -> RoundedCornerShape(topStart = radius, topEnd = radius)
+        Segment.Middle -> RectangleShape
+        Segment.Bottom -> RoundedCornerShape(bottomStart = radius, bottomEnd = radius)
+    }
+    val first = segment == Segment.Single || segment == Segment.Top
+    val last = segment == Segment.Single || segment == Segment.Bottom
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .background(CARD_BACKGROUND)
+            .drawBehind {
+                if (!first) {
+                    val inset = 24.dp.toPx()
+                    drawLine(CARD_DIVIDER, Offset(inset, 0f), Offset(size.width - inset, 0f), strokeWidth = 1.dp.toPx())
+                }
+            }
+            .padding(start = 24.dp, end = 16.dp, top = if (first) 12.dp else 6.dp, bottom = if (last) 12.dp else 6.dp),
+        content = content
+    )
+}
+
+private val SECTION_ACCENT = Color(0xFFB9A6FF)
+/** As the home screen's info panel. */
+private val CARD_BACKGROUND = Color(0x1FFFFFFF)
+private val CARD_DIVIDER = Color(0x14FFFFFF)
 
 @Composable
 fun ChoiceSetting(

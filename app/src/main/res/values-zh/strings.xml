@@ -12,6 +12,7 @@
     <string name="on">开</string>
     <string name="off">关</string>
     <string name="auto">自动</string>
+    <string name="auto_with">自动（%1$s）</string>
     <string name="unknown_error">未知错误</string>
 
     <!-- Home and status screens -->
@@ -85,7 +86,7 @@
     <string name="section_playback">播放</string>
     <string name="section_playback_note">立即生效。投屏时按遥控器的下键或菜单键也可以修改。</string>
     <string name="setting_device_name">设备名称</string>
-    <string name="setting_resolution">镜像分辨率</string>
+    <string name="setting_resolution">镜像最高分辨率</string>
     <string name="setting_frame_rate">镜像帧率</string>
     <string name="setting_codec">镜像编码</string>
     <string name="setting_codec_h264_only">仅 H.264</string>

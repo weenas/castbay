@@ -11,6 +11,7 @@
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="auto">Auto</string>
+    <string name="auto_with">Auto (%1$s)</string>
     <string name="unknown_error">Unknown error</string>
 
     <!-- Home and status screens -->
@@ -84,7 +85,7 @@
     <string name="section_playback">Playback</string>
     <string name="section_playback_note">These apply right away. While casting, press Down or Menu on the remote to change them.</string>
     <string name="setting_device_name">Device Name</string>
-    <string name="setting_resolution">Mirroring Resolution</string>
+    <string name="setting_resolution">Maximum Mirroring Resolution</string>
     <string name="setting_frame_rate">Mirroring Frame Rate</string>
     <string name="setting_codec">Mirroring Codec</string>
     <string name="setting_codec_h264_only">H.264 only</string>

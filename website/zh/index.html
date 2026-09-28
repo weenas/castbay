@@ -114,7 +114,7 @@
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
           <h3>音乐</h3>
-          <p>专辑封面模糊背景、滚动歌词（可选）、圆形播放控制，AirPlay 音乐以无损 ALAC 播放。</p>
+          <p>专辑封面模糊背景、滚动歌词（可选）、圆形播放控制。AirPlay 音乐以无损 ALAC 播放，像 Apple TV 一样按手机的时间播出，歌词始终同步。</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></div>
@@ -129,12 +129,12 @@
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><circle cx="12" cy="8" r="2"/><path d="M12 14v3"/></svg></div>
           <h3>为遥控器设计</h3>
-          <p>播放时按下键打开快捷菜单：画面比例、播放统计、音轨字幕。连按两次返回结束投屏，按主页键可在后台继续播放。</p>
+          <p>播放时按下键打开快捷菜单：画面比例、播放统计（屏幕镜像时还有手机端的帧率和网络状况）、音轨字幕。连按两次返回结束投屏，按主页键可在后台继续播放。</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
           <h3>安心使用</h3>
-          <p>可设置投屏密码，可选择拒绝或允许其他设备接管。无需账号，不收集任何数据，代码完全开源。</p>
+          <p>可选择谁能投屏：所有人、在电视上确认的设备、输入电视显示的 PIN 码（和 Apple TV 一样）或密码，还能拒绝任意设备。无需账号，不收集任何数据，代码完全开源。</p>
         </article>
       </div>
     </div>
@@ -215,6 +215,14 @@
         <details>
           <summary>为什么哔哩哔哩投屏只有 720P？</summary>
           <p>哔哩哔哩只把 1080P 及以上的清晰度开放给它的官方电视 App，投到第三方设备最高是 720P。想看 1080P 可以用屏幕镜像。</p>
+        </details>
+        <details>
+          <summary>能阻止别人投屏到我的电视吗？</summary>
+          <p>可以。在设置 → 连接 → 投屏验证中选择"电视确认"（新设备投屏前电视会询问）、"PIN 码"（新设备第一次投屏时输入电视显示的 PIN 码）或"密码"。投屏过的设备也可以在那里单独拒绝。</p>
+        </details>
+        <details>
+          <summary>能从 Mac 投音乐吗？</summary>
+          <p>Mac 的屏幕镜像可以用。Mac 上"音乐"App 的投送暂不支持：它使用的加密方式，映湾所基于的开源 AirPlay 库无法兼容。</p>
         </details>
         <details>
           <summary>怎么用遥控器结束投屏？</summary>

@@ -53,6 +53,7 @@ private val TOPICS = listOf(
     HelpTopic(R.string.help_android_title, R.string.help_android),
     HelpTopic(R.string.help_mac_title, R.string.help_mac),
     HelpTopic(R.string.help_remote_title, R.string.help_remote),
+    HelpTopic(R.string.help_access_title, R.string.help_access),
     HelpTopic(R.string.help_not_found_title, R.string.help_not_found),
     HelpTopic(R.string.help_video_title, R.string.help_video),
 )

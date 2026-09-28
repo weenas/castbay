@@ -17,6 +17,7 @@
     <!-- Home and status screens -->
     <string name="waiting_title">等待投屏连接…</string>
     <string name="starting">启动中…</string>
+    <string name="stopping">停止中…</string>
     <string name="advertising_only_title">映湾已在局域网中可见</string>
     <string name="advertising_only_detail">仅可被发现，暂不支持 AirPlay 投屏。</string>
     <string name="connecting">正在连接…</string>

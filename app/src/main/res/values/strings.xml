@@ -16,6 +16,7 @@
     <!-- Home and status screens -->
     <string name="waiting_title">Waiting for a connection…</string>
     <string name="starting">Starting…</string>
+    <string name="stopping">Stopping…</string>
     <string name="advertising_only_title">CastBay is visible on the local network</string>
     <string name="advertising_only_detail">Discovery preview only — AirPlay streaming is not available yet.</string>
     <string name="connecting">Connecting…</string>

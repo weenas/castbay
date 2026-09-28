@@ -48,8 +48,6 @@
     <string name="network_other">Connected</string>
     <string name="network_none">Not connected</string>
 
-    <!-- Mirroring profile, e.g. "H.265 · up to 4K" or "H.264 · 1080p (1080p screen)" -->
-    <string name="mirroring_up_to_4k">up to 4K</string>
 
     <!-- Playback -->
     <string name="press_back_again">Press Back again to stop casting</string>

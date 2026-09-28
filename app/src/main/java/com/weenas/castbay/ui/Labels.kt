@@ -20,9 +20,5 @@ fun settingValueLabel(value: String): String = when (value) {
     else -> value.removeSuffix(" FPS").toIntOrNull()?.let { stringResource(R.string.frame_rate_fps, it) } ?: value
 }
 
-/** E.g. "H.265 · up to 4K" or "H.264 · 1080p", in the TV's language. */
-@Composable
-fun mirroringLabel(profile: MirroringProfile): String {
-    val size = if (profile.upTo4k) stringResource(R.string.mirroring_up_to_4k) else "${profile.height}p"
-    return "${profile.codec} · $size"
-}
+/** E.g. "H.265 · 2160p" or "H.264 · 1080p", as in Settings (2160p rather than 4K, like 1080p). */
+fun mirroringLabel(profile: MirroringProfile): String = "${profile.codec} · ${profile.height}p"

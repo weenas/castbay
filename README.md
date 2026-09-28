@@ -14,11 +14,11 @@ CastBay (Chinese: 映湾) turns an Android TV into a receiver for iPhone, iPad a
 ## Features
 
 - **Screen mirroring** from iPhone, iPad and Mac, up to 60 fps; H.265 up to 4K on 4K TVs with hardware HEVC decoding.
-- **Music**: a blurred-cover backdrop, optional synced lyrics (via lrclib.net) and round playback controls; AirPlay music is lossless ALAC.
+- **Music**: a blurred-cover backdrop, optional synced lyrics (via lrclib.net) and round playback controls; AirPlay music is lossless ALAC, played when the phone means it heard (as on an Apple TV), so lyrics stay in sync and pausing and resuming pick up where they left off.
 - **Video casting**: apps' AirPlay video (e.g. YouTube, iQiyi) plays straight from the source, with audio track and subtitle choices.
 - **DLNA**: the cast button in apps such as Bilibili, iQiyi, NetEase Cloud Music and QQ Music, from iPhone and Android phones.
-- **Made for the remote**: a quick menu while playing (picture fit, playback stats, audio/subtitles), Back twice to stop, Home keeps playing.
-- **Private**: optional casting password, refuse or allow a second device, no account and no data collection.
+- **Made for the remote**: a quick menu while playing (picture fit, playback stats, audio/subtitles), Back twice to stop, Home keeps playing. For mirroring, the stats include the phone's own report: frames sent and dropped, round trip, packet loss and bandwidth.
+- **Private**: choose who can cast (anyone, devices allowed on the TV, a PIN shown on the TV the first time as on an Apple TV, or a password), allow or block each device, refuse or allow a second device; no account and no data collection.
 - English and Chinese.
 
 ## Requirements
@@ -28,6 +28,8 @@ CastBay (Chinese: 映湾) turns an Android TV into a receiver for iPhone, iPad a
 
 Tested on TCL (Android 9) and Sony BRAVIA (Android 12) TVs with iPhones.
 
+Mac screen mirroring works, but music from the Mac's Music app can't be sent to CastBay: it uses a FairPlay type (2) that UxPlay can't handle ([UxPlay#570](https://github.com/FDH2/UxPlay/issues/570)).
+
 AirPlay and DLNA video are fetched by the TV itself (as on an Apple TV), so the TV must be able to reach the video source directly. For YouTube that means `googlevideo.com`; on networks where the phone only reaches it through a proxy or VPN, the TV needs one too.
 
 ## Technical Implementation
@@ -35,7 +37,7 @@ AirPlay and DLNA video are fetched by the TV itself (as on an Apple TV), so the 
 - **AirPlay Protocol**: UxPlay's `lib/` (RAOP/RTSP/RTP, pairing, FairPlay, AirPlay video with FCUP)
 - **JNI Bridge**: Native C code interfaces with Android Java/Kotlin layer
 - **Video Decoding**: Android MediaCodec (hardware accelerated)
-- **Audio Output**: AudioTrack for low-latency audio
+- **Audio Output**: AudioTrack; AirPlay music is played at each frame's NTP time, mirroring audio as it arrives
 - **Video casting**: Media3/ExoPlayer for AirPlay (HLS) and DLNA video and music
 - **DLNA**: an in-app UPnP media renderer (SSDP, AVTransport/RenderingControl, GENA events)
 - **mDNS Discovery**: Android NsdManager, publishing the TXT records UxPlay builds

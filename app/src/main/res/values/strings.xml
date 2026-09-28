@@ -158,13 +158,13 @@
     <string name="help_android_title">Android phones</string>
     <string name="help_android">Cast video and music with apps\' own cast button, as in “Apps\' own cast button”.\nAndroid\'s built-in screen mirroring (Miracast, Google Cast) isn\'t supported yet.</string>
     <string name="help_mac_title">Mac</string>
-    <string name="help_mac">Click Control Center in the menu bar → Screen Mirroring and pick “%1$s”.\nMusic and video apps can also send to it with their AirPlay icon.</string>
+    <string name="help_mac">Click Control Center in the menu bar → Screen Mirroring and pick “%1$s”.\nMusic from the Mac’s Music app can’t be sent to CastBay: it uses an encryption the open-source AirPlay library doesn’t support.</string>
     <string name="help_remote_title">The remote</string>
     <string name="help_remote">Video: OK pauses or resumes; Left and Right skip back or ahead 10 seconds.\nMusic: Left and Right choose a button; OK presses it.\nDown or Menu: the playback menu (picture, audio, subtitles, lyrics…).\nBack twice: stop casting. Home: keep playing in the background.</string>
     <string name="help_not_found_title">Your phone can\'t find this TV?</string>
     <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that CastBay is open, showing “Waiting for a connection”.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
     <string name="help_video_title">A video won\'t play?</string>
-    <string name="help_video">AirPlay and DLNA videos are fetched by the TV itself. If your phone needs a proxy or VPN to open them (e.g. YouTube), so does the TV.\nIf a casting password is set, enter the one from Settings on your phone.</string>
+    <string name="help_video">AirPlay and DLNA videos are fetched by the TV itself. If your phone needs a proxy or VPN to open them (e.g. YouTube), so does the TV.</string>
     <string name="info_access">Verification</string>
     <string name="setting_access">Casting verification</string>
     <string name="access_open">Not required</string>
@@ -187,4 +187,6 @@
     <string name="device_request_try_again">Cast again from the device to start.</string>
     <string name="access_confirm">Confirm</string>
     <string name="setting_confirm_note">The first time a device casts, it must be allowed on the TV, then cast again.</string>
+    <string name="help_access_title">Who can cast</string>
+    <string name="help_access">Choose in Settings → Connection → Casting verification:\n• Confirm: the first time a device casts, the TV asks whether to allow it; once allowed, cast again from the device.\n• PIN: the first time a device casts, enter the 4-digit PIN the TV shows.\n• Password: every device enters the password set in Settings.\nUnder “Devices that have cast”, you can block a device, or remove them all.</string>
 </resources>

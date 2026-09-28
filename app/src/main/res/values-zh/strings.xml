@@ -51,10 +51,6 @@
 
     <!-- Mirroring profile -->
     <string name="mirroring_up_to_4k">最高 4K</string>
-    <string name="mirroring_note_screen">%1$dp 屏幕</string>
-    <string name="mirroring_note_decoder">解码器不支持 4K</string>
-    <string name="mirroring_note_needs_h265">4K 需要 H.265</string>
-    <string name="mirroring_note_no_hw_decoder">没有支持 4K 的 H.265 硬件解码器</string>
 
     <!-- Playback -->
     <string name="press_back_again">再按一次返回键结束投屏</string>
@@ -90,7 +86,6 @@
     <string name="setting_frame_rate">镜像帧率</string>
     <string name="setting_codec">镜像编码</string>
     <string name="setting_codec_h264_only">仅 H.264</string>
-    <string name="setting_this_tv">本机：%1$s</string>
     <string name="setting_dlna">DLNA 投屏（App 自带投屏按钮）</string>
     <string name="setting_password">投屏密码</string>
     <string name="setting_password_off">不需要</string>

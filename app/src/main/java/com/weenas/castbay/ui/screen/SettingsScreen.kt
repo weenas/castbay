@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.sp
 import com.weenas.castbay.service.ReceiverSettings
 import androidx.compose.ui.res.stringResource
 import com.weenas.castbay.R
-import com.weenas.castbay.ui.mirroringLabel
 import com.weenas.castbay.ui.settingValueLabel
 import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.SegmentedChoice
@@ -108,17 +107,20 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
         }
             item { ChoiceSetting(stringResource(R.string.setting_frame_rate), settings.frameRate, ReceiverSettings.FRAME_RATES) { viewModel.updateSettings { current -> current.copy(frameRate = it) } } }
             item {
-                ChoiceSetting(stringResource(R.string.setting_codec), settings.videoCodec, ReceiverSettings.VIDEO_CODECS) {
+                // Auto names what it picks with the other settings: H.265 only for 4K mirroring, on
+                // a 4K screen with a hardware HEVC decoder ("Auto (H.265)"), else "Auto (H.264)".
+                val autoProfile = remember(settings) {
+                    viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
+                }
+                val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
+                ChoiceSetting(
+                    stringResource(R.string.setting_codec),
+                    settings.videoCodec,
+                    ReceiverSettings.VIDEO_CODECS,
+                    display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
+                ) {
                     viewModel.updateSettings { current -> current.copy(videoCodec = it) }
                 }
-            }
-            item {
-                // Auto only offers H.265 for 4K mirroring on a 4K screen with a hardware HEVC decoder.
-                Text(
-                    stringResource(R.string.setting_this_tv, mirroringLabel(viewModel.mirroringProfile(settings))),
-                    color = Color.Gray,
-                    fontSize = 14.sp
-                )
             }
             item {
                 SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->

@@ -11,7 +11,6 @@ import android.os.HandlerThread
 import com.weenas.castbay.util.Log
 import java.nio.ByteBuffer
 import java.util.ArrayDeque
-import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Plays AirPlay audio through an [AudioTrack]:
@@ -19,13 +18,8 @@ import java.util.concurrent.atomic.AtomicInteger
  *   decoded with MediaCodec, created lazily on the first frame;
  * - [renderPcm]: PCM the native layer already decoded (ALAC from audio streaming).
  *
- * Audio is played as it arrives rather than scheduled by timestamp. Both paths write from
- * the same thread, so they share one track, torn down when the session ends.
- *
- * Mirroring audio plays at once, to stay with the picture. Music has no picture to keep up
- * with, but arrives only just in time: any wait for a Wi-Fi resend drained the track and was
- * heard as a stutter (the TCL logged its queue at 0 and repeated underruns). So music plays
- * from a track [MUSIC_LEAD_MS] long, which starts once full and keeps that much in hand.
+ * Mirroring audio plays as it arrives, to stay with the picture. Music is played by
+ * [MusicPlayer] when the sender means it to be heard.
  */
 class AudioRenderer {
     private val lock = Any()
@@ -41,23 +35,10 @@ class AudioRenderer {
     private val freeInputs = ArrayDeque<Int>()
     private var droppedFrames = 0L
 
-    /** Bumped by [flush] and [stop], so PCM queued before them is skipped. */
-    private val generation = AtomicInteger()
-    private val pendingPcm = AtomicInteger()
     /** Linear gain from the sender's volume slider; kept across track re-creation. */
     @Volatile private var volume = 1f
 
-    // Music (ALAC) health, logged: the track's underruns and how low the queue ran, which is
-    // the cushion left against Wi-Fi resends. Audio thread only.
-    private var loggedUnderruns = 0
-    private var lowestQueue = Int.MAX_VALUE
-    private var queueLoggedAtMs = 0L
-    /** The current track plays music (buffered before playing) rather than mirroring audio. */
-    private var musicTrack = false
-    /** Frames written to the music track since it was created or flushed; written on the audio thread. */
-    @Volatile private var musicFramesWritten = 0L
-    /** Music paused from the TV, ahead of the sender, which takes about a second to stop. */
-    private var musicHeld = false
+    private val music = MusicPlayer { volume }
 
     fun render(frame: ByteArray) {
         if (frame.isEmpty()) return
@@ -76,128 +57,40 @@ class AudioRenderer {
         }
     }
 
-    /** Plays interleaved S16 stereo PCM at 44.1 kHz. */
-    /** [compressedBytes]: size of the ALAC frame [pcm] was decoded from, for the bitrate stat. */
-    fun renderPcm(pcm: ByteArray, compressedBytes: Int = 0) {
+    /**
+     * Plays interleaved S16 stereo PCM at 44.1 kHz (ALAC decoded from audio streaming) when the
+     * sender means it heard: [playAtUs], in [System.currentTimeMillis] time (µs), 0 if unknown.
+     * [compressedBytes]: size of the ALAC frame [pcm] was decoded from, for the bitrate stat.
+     */
+    fun renderPcm(pcm: ByteArray, playAtUs: Long, compressedBytes: Int = 0) {
         if (pcm.isEmpty()) return
         inputRate.record(compressedBytes)
         if (activeStats?.codec != ALAC_STATS.codec) activeStats = ALAC_STATS
-        if (pendingPcm.get() >= MAX_PENDING_PCM) {
-            synchronized(lock) { droppedFrames++ }
-            return
-        }
-        val queuedIn = generation.get()
-        pendingPcm.incrementAndGet()
-        handler.post {
-            pendingPcm.decrementAndGet()
-            if (queuedIn != generation.get()) return@post
-            // Paused from the TV: what the sender plays on for the second it takes to stop is
-            // dropped. Kept, it would be heard on resuming, adding its length to the delay at
-            // every pause (lyrics drift ahead, then the track overflows into gaps).
-            if (musicHeld) return@post
-            val output = synchronized(lock) {
-                // A mirroring track (small, playing at once) can't buffer music: replace it.
-                if (track != null && !musicTrack) {
-                    track?.release()
-                    track = null
-                }
-                track ?: createTrack(SAMPLE_RATE, CHANNELS, bufferMs = MUSIC_BUFFER_MS, play = false).also {
-                    track = it
-                    musicTrack = true
-                    musicFramesWritten = 0
-                    loggedUnderruns = 0
-                }
-            }
-            // Blocking once the track's buffer is full, which paces this thread to playback.
-            output.write(pcm, 0, pcm.size)
-            musicFramesWritten += pcm.size / BYTES_PER_FRAME
-            // The session can end (stop() releases the track) while this runs; a released track
-            // throws from its getters, which crashed the app on the TCL.
-            try {
-                keepMusicBuffered(output)
-                logMusicHealth(output)
-            } catch (released: IllegalStateException) {
-                Log.d(TAG, "Music track released while playing")
-            }
-        }
+        music.queue(pcm, playAtUs)
     }
 
-    /** Plays once [MUSIC_LEAD_FRAMES] are buffered; after an underrun, pauses to rebuild them. */
-    private fun keepMusicBuffered(output: AudioTrack) {
-        val buffered = musicFramesWritten - (output.playbackHeadPosition.toLong() and 0xFFFFFFFFL)
-        if (output.playState == AudioTrack.PLAYSTATE_PLAYING) {
-            if (output.underrunCount > loggedUnderruns) {
-                // Silence is already heard; one pause to refill beats a run of short gaps.
-                output.pause()
-                Log.i(TAG, "Music ran dry; buffering ${MUSIC_LEAD_FRAMES * 1000 / SAMPLE_RATE} ms again")
-            }
-        } else if (!musicHeld && buffered >= minOf(MUSIC_LEAD_FRAMES, output.bufferSizeInFrames * 3 / 4)) {
-            // Never more than the track holds, or a full paused track would block writes for good.
-            output.play()
-        }
-    }
+    /** How long music is heard after it arrives, as the sender times it. */
+    fun musicDelayMs(): Long = music.delayMs
 
-    private fun logMusicHealth(output: AudioTrack) {
-        lowestQueue = minOf(lowestQueue, pendingPcm.get())
-        val underruns = output.underrunCount
-        if (underruns > loggedUnderruns) {
-            Log.i(TAG, "Music underrun (${underruns - loggedUnderruns} more, $underruns in all); queue ${pendingPcm.get()} frames")
-            loggedUnderruns = underruns
-        }
-        val now = android.os.SystemClock.elapsedRealtime()
-        if (now - queueLoggedAtMs >= QUEUE_LOG_INTERVAL_MS) {
-            // 352-sample frames: 8 ms each.
-            Log.i(TAG, "Music queue: lowest $lowestQueue frames (${lowestQueue * 8} ms) in the last ${QUEUE_LOG_INTERVAL_MS / 1000} s")
-            lowestQueue = Int.MAX_VALUE
-            queueLoggedAtMs = now
-        }
-    }
-
-    /**
-     * Pauses music at once ([hold]) when it is paused from the TV, rather than a second later
-     * when the sender stops sending; audio still arriving is kept and plays on release.
-     */
-    fun holdMusic(hold: Boolean) {
-        handler.post {
-            musicHeld = hold
-            val output = synchronized(lock) { track?.takeIf { musicTrack } } ?: return@post
-            try {
-                if (hold) output.pause() else keepMusicBuffered(output)
-            } catch (released: IllegalStateException) {
-                Log.d(TAG, "Music track released while holding")
-            }
-        }
-    }
-
-    /** How far behind arrival music is heard: what the track holds (for tests and logs). */
-    fun bufferedMusicMs(): Long = synchronized(lock) {
-        val output = track?.takeIf { musicTrack } ?: return 0
-        val head = output.playbackHeadPosition.toLong() and 0xFFFFFFFFL
-        (musicFramesWritten - head).coerceAtLeast(0) * 1000 / SAMPLE_RATE
-    }
+    /** How far off the sender's timing music was last heard (late if positive), for tests. */
+    fun musicSyncErrorMs(): Long = music.syncErrorUs / 1000
 
     fun setVolume(gain: Float) {
         volume = gain
         synchronized(lock) { track?.setVolume(gain) }
+        music.setVolume(gain)
     }
 
     /** Drops audio not yet played, e.g. when the sender pauses, seeks or skips a track. */
     fun flush() {
-        generation.incrementAndGet()
         synchronized(lock) { pendingFrames.clear() }
+        music.flush()
         handler.post {
             synchronized(lock) {
                 track?.let {
                     it.pause()
                     it.flush()
-                    // Music plays again once buffered (keepMusicBuffered); mirroring at once.
-                    // A flush means new audio from the sender (a resume, seek or new song).
-                    if (musicTrack) {
-                        musicFramesWritten = 0
-                        musicHeld = false
-                    } else {
-                        it.play()
-                    }
+                    it.play()
                 }
             }
         }
@@ -207,7 +100,7 @@ class AudioRenderer {
     fun stats(): AudioStats? = activeStats?.copy(bitrateBps = inputRate.bitsPerSecond())
 
     fun stop() {
-        generation.incrementAndGet()
+        music.stop()
         activeStats = null
         inputRate.reset()
         synchronized(lock) {
@@ -289,14 +182,11 @@ class AudioRenderer {
         }
     }
 
-    /**
-     * [bufferMs]: 0 for the smallest safe buffer (mirroring), or how much the track holds;
-     * [play]: start at once, or leave it to [keepMusicBuffered].
-     */
-    private fun createTrack(sampleRate: Int, channels: Int, bufferMs: Int = 0, play: Boolean = true): AudioTrack {
+    /** A track with the smallest safe buffer, playing at once: mirroring audio keeps up with the picture. */
+    private fun createTrack(sampleRate: Int, channels: Int): AudioTrack {
         val channelMask = if (channels == 1) AudioFormat.CHANNEL_OUT_MONO else AudioFormat.CHANNEL_OUT_STEREO
         val minBuffer = AudioTrack.getMinBufferSize(sampleRate, channelMask, AudioFormat.ENCODING_PCM_16BIT)
-        val bufferBytes = maxOf(minBuffer * 2, sampleRate / 1000 * bufferMs * channels * 2)
+        val bufferBytes = minBuffer * 2
         return AudioTrack.Builder()
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -316,7 +206,7 @@ class AudioRenderer {
             .build()
             .also {
                 it.setVolume(volume)
-                if (play) it.play()
+                it.play()
             }
     }
 
@@ -351,7 +241,6 @@ class AudioRenderer {
                 }
                 output = track ?: createTrack(SAMPLE_RATE, CHANNELS).also {
                     track = it
-                    musicTrack = false
                 }
             }
             // Blocking write paces this thread to playback without holding the lock, so the
@@ -367,7 +256,6 @@ class AudioRenderer {
                 if (codec !== owner) return
                 track?.release()
                 track = createTrack(sampleRate, channels)
-                musicTrack = false
             }
         }
 
@@ -381,12 +269,6 @@ class AudioRenderer {
     }
 
     companion object {
-        /**
-         * How much later music is heard than it arrives: what is buffered before it plays.
-         * Resends came back within 10 ms on the TCL; 0.5 s made pausing and resuming slow. The sender's progress is shifted by it, so lyrics match what is heard.
-         */
-        const val MUSIC_LEAD_MS = 300L
-
         private const val TAG = "CastBayAudio"
         private const val SAMPLE_RATE = 44100
         private const val CHANNELS = 2
@@ -394,23 +276,6 @@ class AudioRenderer {
         private val ELD_AUDIO_SPECIFIC_CONFIG = byteArrayOf(0xF8.toByte(), 0xE8.toByte(), 0x50, 0x00)
         /** About half a second of 480-sample frames. */
         private const val MAX_PENDING_FRAMES = 48
-        /**
-         * About three seconds of 352-sample frames: senders stream music about two seconds
-         * ahead of playback, and that initial burst must not be dropped.
-         */
-        private const val MAX_PENDING_PCM = 375
-        private const val QUEUE_LOG_INTERVAL_MS = 30_000L
-        /** 16-bit stereo. */
-        private const val BYTES_PER_FRAME = 4
-        /** Music buffered before it plays: rides out Wi-Fi resends and jitter. */
-        private const val MUSIC_LEAD_FRAMES = (SAMPLE_RATE * MUSIC_LEAD_MS / 1000).toInt()
-        /**
-         * Music track size: the lead itself. A streaming track only starts once its buffer is
-         * full, so a 2 s track (1.0.43) delayed music by 2 s whatever the lead, as an on-device
-         * test showed; sized to the lead, it starts then, and stays about that full while playing.
-         */
-        private const val MUSIC_BUFFER_MS = MUSIC_LEAD_MS.toInt()
-
         /** AirPlay's fixed ALAC format, decoded by Apple's reference decoder in the app. */
         private val ALAC_STATS = AudioStats(
             "ALAC", sampleRate = 44100, channels = 2, bitsPerSample = 16, decoder = "Apple ALAC (in app)"

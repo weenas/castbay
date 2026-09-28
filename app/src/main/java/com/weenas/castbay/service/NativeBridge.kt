@@ -77,8 +77,8 @@ class NativeBridge(
                 this@NativeBridge.onAudioData(data, presentationTimeUs)
             }
 
-            override fun onPcmData(data: ByteArray, presentationTimeUs: Long, compressedBytes: Int) {
-                this@NativeBridge.onPcmData(data, presentationTimeUs, compressedBytes)
+            override fun onPcmData(data: ByteArray, playAtUs: Long, compressedBytes: Int) {
+                this@NativeBridge.onPcmData(data, playAtUs, compressedBytes)
             }
 
             override fun onAudioFlush() {

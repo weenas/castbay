@@ -82,7 +82,14 @@ void audioProcess(void *, raop_ntp_t *, audio_decode_struct *data) {
         static castbay::AlacDecoder decoder;
         static std::vector<int16_t> pcm;
         if (decoder.decode(data->data, data->data_len, pcm)) {
-            castbay::dispatchPcm(pcm.data(), static_cast<int>(pcm.size()), ptsUs, data->data_len);
+            // When the sender means it to be heard, on this device's wall clock (CLOCK_REALTIME):
+            // its sync packets place it about two seconds on, which the sender allows for.
+            // UxPlay never marks its NTP as answered, so ntp_time_local stays 0; but the sender's
+            // clock it reads is already shifted onto ours at the first NTP reply, leaving only
+            // the few milliseconds its sync offset would correct.
+            const uint64_t playAtNs = data->ntp_time_local ? data->ntp_time_local : data->ntp_time_remote;
+            const auto playAtUs = static_cast<int64_t>(playAtNs / 1000);
+            castbay::dispatchPcm(pcm.data(), static_cast<int>(pcm.size()), playAtUs, data->data_len);
         } else {
             LOGE("Dropped a corrupt ALAC frame (%d bytes)", data->data_len);
         }
@@ -500,6 +507,10 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
 
     // AirPlay video (HLS): the YouTube app and similar in-app players.
     raop_set_plist(g_raop, "hls", 1);
+    // Music senders time playback about 1.75 s out, plus the output latency a receiver
+    // reports (UxPlay's default 0.25 s). The app times music to the frame against its own
+    // output, so it reports none, and pause, resume and seeks are heard that much sooner.
+    raop_set_plist(g_raop, "audio_delay_micros", 0);
     // The display reported in /info; senders size and pace mirroring to it. UxPlay's default
     // maxFPS of 30 suits a Raspberry Pi; TVs decode in hardware.
     raop_set_plist(g_raop, "width", displayWidth);

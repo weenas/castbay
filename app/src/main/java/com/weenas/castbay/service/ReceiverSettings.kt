@@ -80,7 +80,11 @@ data class ReceiverSettings(
         const val RESOLUTION_AUTO = "Auto"
         const val FRAME_RATE_AUTO = "Auto"
         val RESOLUTIONS = listOf(RESOLUTION_AUTO, "720p", "1080p")
-        val FRAME_RATES = listOf(FRAME_RATE_AUTO, "30 FPS", "60 FPS")
+        /**
+         * Auto is 60, the most senders mirror at, so there is no separate 60 FPS; a stored
+         * "60 FPS" from older versions loads as Auto, the same.
+         */
+        val FRAME_RATES = listOf(FRAME_RATE_AUTO, "30 FPS")
         const val PICTURE_FIT = "Fit"
         const val PICTURE_FILL = "Fill"
         const val PICTURE_STRETCH = "Stretch"

@@ -50,7 +50,6 @@
     <string name="network_none">未连接</string>
 
     <!-- Mirroring profile -->
-    <string name="mirroring_up_to_4k">最高 4K</string>
 
     <!-- Playback -->
     <string name="press_back_again">再按一次返回键结束投屏</string>

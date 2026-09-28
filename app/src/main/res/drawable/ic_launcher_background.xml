@@ -1,8 +1,2 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Launcher icon background: the app's deep violet night, lighter toward the top. -->
-<shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <gradient
-        android:angle="270"
-        android:startColor="#FF2A2040"
-        android:endColor="#FF110D1A" />
-</shape>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#181225" /></shape>

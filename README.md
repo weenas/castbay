@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="branding/cb-wordmark-inline-dark.png">
-    <img src="branding/cb-wordmark-inline-light.png" alt="CastBay 映湾" width="480">
+    <source media="(prefers-color-scheme: dark)" srcset="branding/castbay-signal-final/inline-dark.png">
+    <img src="branding/castbay-signal-final/inline-light.png" alt="CastBay 映湾" width="480">
   </picture>
 </p>
 

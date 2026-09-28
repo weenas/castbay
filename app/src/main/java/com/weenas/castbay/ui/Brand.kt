@@ -35,3 +35,17 @@ fun BrandTitle(modifier: Modifier = Modifier) {
         )
     }
 }
+
+/** The slogan (一投即达，自在映湾), in the app's lighter purple, under [BrandTitle]. */
+@Composable
+fun BrandSlogan(modifier: Modifier = Modifier, fontSize: androidx.compose.ui.unit.TextUnit = 24.sp) {
+    Text(
+        text = stringResource(R.string.app_slogan),
+        fontSize = fontSize,
+        fontWeight = FontWeight.SemiBold,
+        color = SLOGAN_COLOR,
+        modifier = modifier
+    )
+}
+
+private val SLOGAN_COLOR = Color(0xFFA48BF5)

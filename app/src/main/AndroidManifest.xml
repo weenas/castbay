@@ -27,6 +27,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:banner="@drawable/banner"
+        android:appCategory="video"
         android:theme="@style/Theme.CastBay"
         android:networkSecurityConfig="@xml/network_security_config"
         tools:ignore="GoogleAppIndexingWarning">

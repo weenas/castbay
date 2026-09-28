@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>使用说明 – 映湾 CastBay</title>
+  <meta name="description" content="映湾的使用说明：安装与更新、从 iPhone、iPad、Mac 和安卓手机投屏、遥控器和快捷菜单，以及每一个设置项。">
+  <link rel="canonical" href="https://castbay.weenas.com/zh/guide">
+  <link rel="alternate" hreflang="en" href="https://castbay.weenas.com/guide">
+  <link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/guide">
+  <link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/guide">
+  <meta name="theme-color" content="#0b0910">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CastBay">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta property="og:title" content="使用说明 – 映湾 CastBay">
+  <meta property="og:description" content="映湾的使用说明：安装与更新、从 iPhone、iPad、Mac 和安卓手机投屏、遥控器和快捷菜单，以及每一个设置项。">
+  <meta property="og:url" content="https://castbay.weenas.com/zh/guide">
+  <meta property="og:image" content="https://castbay.weenas.com/assets/og.jpg?v=2">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/logo.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/site.js"></script>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/zh/"><img class="wm-dark" src="/assets/wordmark@2x.png?v=2" srcset="/assets/wordmark@2x.png?v=2 2x, /assets/wordmark@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"><img class="wm-light" src="/assets/wordmark-light@2x.png?v=2" srcset="/assets/wordmark-light@2x.png?v=2 2x, /assets/wordmark-light@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"></a>
+    <nav class="nav">
+      <a href="/zh/">主页</a>
+      <a href="https://github.com/weenas/castbay">GitHub</a>
+    </nav>
+    <button id="theme-btn" class="theme" type="button" title="深色或浅色" aria-label="切换到浅色" data-to-light="切换到浅色" data-to-dark="切换到深色"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"/></svg></button>
+    <a class="lang" href="/guide" hreflang="en" lang="en" data-lang-link="en">English</a>
+  </div>
+</header>
+
+<main class="wrap doc">
+    <h1>使用说明</h1>
+    <p class="date">从安装到每一个设置，映湾的完整用法。遇到问题可以看<a href="/zh/#faq">常见问题</a>，想了解原理可以看<a href="/zh/tech">技术原理</a>。</p>
+
+    <h2>准备</h2>
+    <ul>
+      <li>一台 Android 8.0 及以上的 Android TV 或 Google TV 设备（电视或电视盒子都可以）。</li>
+      <li>电视和手机连接同一个网络，不要用访客网络。电视用网线、手机用 Wi-Fi 也可以，只要在同一个路由器下。</li>
+    </ul>
+
+    <h2>安装和更新</h2>
+    <ol>
+      <li>在 <a href="https://github.com/weenas/castbay/releases">GitHub 发布页</a>下载最新的 <code>CastBay-版本号.apk</code>。</li>
+      <li>把 APK 拷到 U 盘插到电视上，或用电视上的文件管理器（例如 ES 文件浏览器）打开它安装。第一次安装时，电视可能会提示允许"安装未知来源的应用"，按提示允许即可。</li>
+      <li>在电视的应用列表里打开映湾。打开后就开始接收投屏，以后电视开机也会自动就绪。</li>
+    </ol>
+    <p><strong>更新</strong>：有新版本时，主界面的"关于"按钮上会出现红点，"关于"页会显示新版本号和二维码，用手机扫码即可打开下载页。下载新的 APK 直接覆盖安装，所有设置都会保留。</p>
+
+    <h2>主界面</h2>
+    <ul>
+      <li><strong>左侧</strong>：映湾的标志和当前状态。显示"等待投屏连接…"时，手机就能找到这台电视。下面是"设置""帮助""关于"三个按钮。</li>
+      <li><strong>右侧信息栏</strong>：手机上看到的电视名称、网络类型和 IP 地址、屏幕镜像能力（例如 H.265 · 2160p）、DLNA 投屏是否开启、投屏验证方式，以及另一台设备投屏时是拒绝还是接管。</li>
+      <li><strong>退出</strong>：在主界面连按两次返回键退出映湾。退出后不再接收投屏，重新打开即可。</li>
+    </ul>
+
+    <h2>从 iPhone、iPad 投屏</h2>
+    <h3>屏幕镜像</h3>
+    <ol>
+      <li>从屏幕右上角向下轻扫，打开控制中心，点"屏幕镜像"。</li>
+      <li>选择映湾的名称（默认是"CastBay"加电视名称，可以在设置里修改）。</li>
+      <li>手机的画面和声音会出现在电视上。结束时在控制中心点"停止镜像"，或在电视上连按两次返回键。</li>
+    </ol>
+    <h3>在 App 里投送视频</h3>
+    <p>在 YouTube、爱奇艺等 App 的播放界面点 AirPlay 图标（一个带三角的矩形），选择映湾。视频由电视直接从网上播放，手机可以锁屏或去做别的事。</p>
+    <h3>投送音乐</h3>
+    <p>在 Apple Music、网易云音乐等 App 里点 AirPlay 图标，或在控制中心的音乐卡片上点 AirPlay 图标，选择映湾。音乐会在约两秒后开始播放，这是为了和手机保持同步，歌词也因此能对得上（原因见<a href="/zh/tech">技术原理</a>）。</p>
+
+    <h2>从 Mac 投屏</h2>
+    <p>点菜单栏的控制中心 → 屏幕镜像，选择映湾。Mac 上"音乐"App 的投送暂不支持。</p>
+
+    <h2>从安卓手机投屏</h2>
+    <p>安卓手机使用 App 自带的投屏按钮（DLNA）：在哔哩哔哩、爱奇艺、网易云音乐、QQ 音乐等 App 的播放界面点投屏按钮（通常是一个电视图标），选择映湾。需要在设置里打开"DLNA 投屏"（默认已打开）。iPhone 上的这些 App 也可以这样投。</p>
+
+    <h2>第一次连接时的验证</h2>
+    <p>如果在设置里开启了投屏验证，新设备第一次投屏时：</p>
+    <ul>
+      <li><strong>电视确认</strong>：这次投屏会先被拒绝，电视上弹出"某某想要投屏到这台电视"。选"允许"后，在设备上重新投屏一次即可；选"拒绝"则这台设备以后都无法投屏。</li>
+      <li><strong>PIN 码</strong>：电视上显示 4 位 PIN 码，手机上弹出输入框，输入后开始投屏。只需输入一次，之后会记住这台设备。PIN 窗口可以用确认键或返回键关闭，设备下次尝试时会生成新的 PIN。</li>
+      <li><strong>密码</strong>：手机上弹出输入框，输入设置里的密码。手机会记住密码，密码改了才需要重新输入。</li>
+    </ul>
+
+    <h2>播放时用遥控器</h2>
+    <ul>
+      <li><strong>App 投送的视频</strong>：确认键或播放键暂停/继续，左右键快退、快进 10 秒。</li>
+      <li><strong>音乐</strong>：左右键在按钮之间移动，确认键按下。AirPlay 音乐的按钮是上一首、播放/暂停、下一首，指令会发回手机执行；DLNA 音乐的按钮是快退 10 秒、播放/暂停、快进 10 秒。遥控器上的播放/暂停键也可以直接用。</li>
+      <li><strong>屏幕镜像</strong>：画面由手机控制，遥控器只用来打开菜单和结束投屏。</li>
+      <li><strong>下键或菜单键</strong>：打开快捷菜单，确认键切换选项，返回键关闭。</li>
+      <li><strong>连按两次返回键</strong>：结束投屏，回到主界面。</li>
+      <li><strong>主页键</strong>：回到电视桌面，投屏在后台继续播放。</li>
+      <li><strong>音量</strong>：在手机上调节，电视右下角会短暂显示音量条。</li>
+    </ul>
+
+    <h2>快捷菜单</h2>
+    <p>播放时按下键或菜单键打开，按内容显示不同选项：</p>
+    <ul>
+      <li><strong>播放统计信息</strong>：显示编码、分辨率、帧率、码率等；屏幕镜像时还有手机端的帧率和网络状况（各项含义见<a href="/zh/tech">技术原理</a>）。</li>
+      <li><strong>画面</strong>（视频和屏幕镜像）：适应（完整显示，可能有黑边）、填充（铺满屏幕，边缘可能被裁掉）、拉伸（铺满屏幕，比例可能变形）。</li>
+      <li><strong>歌词</strong>（音乐）：打开或关闭歌词。</li>
+      <li><strong>音轨</strong>、<strong>字幕</strong>（App 投送的视频，有多条可选时）：切换语言或关闭字幕。</li>
+      <li><strong>结束投屏</strong>。</li>
+    </ul>
+
+    <h2>音乐界面</h2>
+    <p>背景是模糊的专辑封面，中间是封面、歌名、歌手、专辑和进度条，下面是播放按钮。打开歌词后，右侧会显示随音乐滚动的歌词；找不到歌词时显示"暂无歌词"。左上角显示正在投屏的设备名称。</p>
+
+    <h2>设置</h2>
+    <p>主界面点"设置"，用左右键在顶部四个标签之间切换。文本框（如设备名称）按确认键才会打开键盘。</p>
+    <h3>连接</h3>
+    <p>修改这里的设置会重启接收器，正在投屏的设备需要重新连接。</p>
+    <ul>
+      <li><strong>设备名称</strong>：手机上看到的名字，默认是"CastBay"。</li>
+      <li><strong>名称后附加电视名称</strong>：在名称后面加上电视的型号或名称，家里有多台电视时容易分辨。下面会显示手机上实际看到的完整名称。</li>
+      <li><strong>DLNA 投屏</strong>：是否接收 App 自带投屏按钮的投屏。</li>
+      <li><strong>投屏验证</strong>：不需要、电视确认、PIN 码、密码四选一，说明见上文"第一次连接时的验证"。选"密码"时需要设置至少 4 位数字的密码。</li>
+      <li><strong>其他设备投屏时</strong>：已有设备在投屏时，另一台设备来投：拒绝它，或让它接管（结束当前投屏）。</li>
+      <li><strong>投屏过的设备</strong>：每台投屏过的设备都可以单独选择允许或拒绝，被拒绝的设备无法投屏。"全部移除"按两次生效，所有设备再投屏时视为新设备。</li>
+    </ul>
+    <h3>屏幕镜像</h3>
+    <p>只影响屏幕镜像，不影响 App 投送的视频和音乐。修改后会重启接收器。</p>
+    <ul>
+      <li><strong>最高分辨率</strong>：自动（按电视能力，4K 电视配合 H.265 为 2160p，否则 1080p）、720p、1080p。</li>
+      <li><strong>最大帧率</strong>：自动（60 帧/秒）或 30 帧/秒。网络较差时选 30 可以更流畅。</li>
+      <li><strong>编码</strong>：自动（电视支持硬件解码时用 H.265）或仅 H.264。遇到 H.265 画面异常时可以改成仅 H.264。</li>
+    </ul>
+    <h3>播放</h3>
+    <p>立即生效，投屏时也可以在快捷菜单里修改。</p>
+    <ul>
+      <li><strong>显示播放统计信息</strong>。</li>
+      <li><strong>播放音乐时显示歌词</strong>：会把歌名和歌手发送到 lrclib.net 查询歌词，默认关闭。</li>
+      <li><strong>画面</strong>：适应、填充、拉伸。</li>
+    </ul>
+    <h3>通用</h3>
+    <ul>
+      <li><strong>语言</strong>：跟随系统、中文或 English。</li>
+      <li><strong>检查更新</strong>：每天检查一次 GitHub 上是否有新版本。</li>
+      <li><strong>恢复默认设置</strong>：按两次生效，所有设置恢复为刚安装时的状态。</li>
+    </ul>
+
+    <h2>帮助和关于</h2>
+    <p>"帮助"页列出各种投屏方式的操作步骤和常见问题，可以在电视上直接查看。"关于"页显示版本号、官网、隐私政策和源代码地址，以及可以用手机扫码打开的官网二维码；有新版本时，这里会显示新版本号，二维码改为指向下载页。</p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© 2026 映湾 CastBay · <a href="https://weenas.com">Weenas</a> 出品</div>
+    <div class="links">
+      <a href="/zh/">主页</a>
+      <a href="/zh/tech">技术原理</a>
+      <a href="/zh/privacy">隐私政策</a>
+      <a href="https://github.com/weenas/castbay">GitHub</a>
+    </div>
+  </div>
+</footer>
+</body>
+</html>

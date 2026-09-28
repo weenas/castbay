@@ -207,10 +207,14 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
     // Back twice on the home screen stops receiving and quits; Home leaves it receiving.
     val activity = LocalContext.current as? android.app.Activity
     var quitArmed by remember { mutableStateOf(false) }
+    // Quitting: "Stopping…" while the app closes, rather than "Starting…" as the stopped
+    // receiver goes idle.
+    var quitting by remember { mutableStateOf(false) }
     BackHandler {
         if (quitArmed) {
-            viewModel.stopServer()
+            quitting = true
             activity?.finish()
+            viewModel.stopServer()
         } else {
             quitArmed = true
         }
@@ -244,7 +248,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 )
             }
             when (state.connectionState) {
-                AirPlayConnectionState.Idle -> IdleScreen(viewModel = viewModel)
+                AirPlayConnectionState.Idle -> IdleScreen(viewModel = viewModel, stopping = quitting)
                 AirPlayConnectionState.Discovering -> DiscoveringScreen(
                     viewModel = viewModel,
                     lastError = state.errorMessage
@@ -276,15 +280,16 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
 }
 
 
-/** Before the receiver is up: starting (it starts when the app opens), or turned off in Settings. */
+/** Before the receiver is up: starting as the app opens, or [stopping] as it quits. */
 @Composable
-fun IdleScreen(viewModel: AirPlayViewModel) {
-    val settings by viewModel.settings.collectAsState()
+fun IdleScreen(viewModel: AirPlayViewModel, stopping: Boolean = false) {
     HomeScreen(viewModel) {
+        // As "Waiting for a connection…", which it turns into a moment later.
         Text(
-            stringResource(R.string.starting),
+            stringResource(if (stopping) R.string.stopping else R.string.starting),
             color = Color.White,
-            fontSize = 18.sp
+            fontSize = 28.sp,
+            lineHeight = 36.sp
         )
     }
 }

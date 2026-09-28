@@ -44,3 +44,6 @@ debug.keystore
 # Signing keys never go in the repository (release builds read them from the environment).
 *.jks
 *.keystore
+
+# Designers' asset archives: what they contain is committed unpacked (branding/).
+*.zip

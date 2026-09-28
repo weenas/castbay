@@ -90,39 +90,6 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             item {
-            // Auto names what it picks on this TV: "Auto (4K)", "Auto (1080p)".
-            val autoProfile = remember(settings) {
-                viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
-            }
-            val autoSize = if (autoProfile.upTo4k) "4K" else "${autoProfile.height}p"
-            val autoLabel = stringResource(R.string.auto_with, autoSize)
-            ChoiceSetting(
-                stringResource(R.string.setting_resolution),
-                settings.resolution,
-                ReceiverSettings.RESOLUTIONS,
-                display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
-            ) {
-                viewModel.updateSettings { current -> current.copy(resolution = it) }
-            }
-        }
-            item { ChoiceSetting(stringResource(R.string.setting_frame_rate), settings.frameRate, ReceiverSettings.FRAME_RATES) { viewModel.updateSettings { current -> current.copy(frameRate = it) } } }
-            item {
-                // Auto names what it picks with the other settings: H.265 only for 4K mirroring, on
-                // a 4K screen with a hardware HEVC decoder ("Auto (H.265)"), else "Auto (H.264)".
-                val autoProfile = remember(settings) {
-                    viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
-                }
-                val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
-                ChoiceSetting(
-                    stringResource(R.string.setting_codec),
-                    settings.videoCodec,
-                    ReceiverSettings.VIDEO_CODECS,
-                    display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
-                ) {
-                    viewModel.updateSettings { current -> current.copy(videoCodec = it) }
-                }
-            }
-            item {
                 SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
                     viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
                 }
@@ -135,6 +102,50 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
                     display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
                 ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
+            }
+            // Screen mirroring only: apps' AirPlay and DLNA video and music aren't affected. Each
+            // Auto names what it gives on this TV with the other settings.
+            item {
+                SectionHeader(stringResource(R.string.section_mirroring), stringResource(R.string.section_mirroring_note))
+                val autoProfile = remember(settings) {
+                    viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
+                }
+                val autoLabel = stringResource(R.string.auto_with, "${autoProfile.height}p")
+                ChoiceSetting(
+                    stringResource(R.string.setting_resolution),
+                    settings.resolution,
+                    ReceiverSettings.RESOLUTIONS,
+                    display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
+                ) {
+                    viewModel.updateSettings { current -> current.copy(resolution = it) }
+                }
+            }
+            item {
+                val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
+                val autoLabel = stringResource(R.string.auto_with, stringResource(R.string.frame_rate_fps, autoFps))
+                ChoiceSetting(
+                    stringResource(R.string.setting_frame_rate),
+                    settings.frameRate,
+                    ReceiverSettings.FRAME_RATES,
+                    display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) autoLabel else settingValueLabel(it) }
+                ) {
+                    viewModel.updateSettings { current -> current.copy(frameRate = it) }
+                }
+            }
+            item {
+                // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
+                val autoProfile = remember(settings) {
+                    viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
+                }
+                val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
+                ChoiceSetting(
+                    stringResource(R.string.setting_codec),
+                    settings.videoCodec,
+                    ReceiverSettings.VIDEO_CODECS,
+                    display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
+                ) {
+                    viewModel.updateSettings { current -> current.copy(videoCodec = it) }
+                }
             }
             item {
                 SectionHeader(stringResource(R.string.section_playback), stringResource(R.string.section_playback_note))

@@ -31,7 +31,9 @@ data class ReceiverSettings(
     /** Look up and show synced lyrics for AirPlay music (sends the song's title to lrclib.net). */
     val showLyrics: Boolean = false,
     /** The app's language: [LANGUAGE_SYSTEM] (the TV's), [LANGUAGE_ZH] or [LANGUAGE_EN]. */
-    val language: String = LANGUAGE_SYSTEM
+    val language: String = LANGUAGE_SYSTEM,
+    /** Look for a newer CastBay on GitHub once a day (UpdateChecker). */
+    val checkUpdates: Boolean = true
 ) {
     /**
      * The display size advertised to senders, which they size mirroring to. "Auto" is the
@@ -65,7 +67,7 @@ data class ReceiverSettings(
     fun needsRestartComparedTo(previous: ReceiverSettings): Boolean =
         withoutLiveSettings() != previous.withoutLiveSettings()
 
-    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM)
+    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true)
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
     fun maxFps(): Int = if (frameRate == "30 FPS") 30 else 60
@@ -131,7 +133,8 @@ class ReceiverSettingsStore(context: Context) {
             ?.takeIf { it in ReceiverSettings.PICTURE_MODES } ?: ReceiverSettings.PICTURE_FIT,
         showLyrics = preferences.getBoolean("show_lyrics", false),
         language = preferences.getString("language", null)
-            ?.takeIf { it in ReceiverSettings.LANGUAGES } ?: ReceiverSettings.LANGUAGE_SYSTEM
+            ?.takeIf { it in ReceiverSettings.LANGUAGES } ?: ReceiverSettings.LANGUAGE_SYSTEM,
+        checkUpdates = preferences.getBoolean("check_updates", true)
     )
 
     fun save(settings: ReceiverSettings) {
@@ -151,6 +154,7 @@ class ReceiverSettingsStore(context: Context) {
             .putString("picture_mode", settings.pictureMode)
             .putBoolean("show_lyrics", settings.showLyrics)
             .putString("language", settings.language)
+            .putBoolean("check_updates", settings.checkUpdates)
             .remove("audio_latency")
             .apply()
     }

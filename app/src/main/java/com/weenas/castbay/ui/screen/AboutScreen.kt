@@ -21,6 +21,7 @@ import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.BrandTitle
 import com.weenas.castbay.ui.QrCode
 import com.weenas.castbay.util.AppVersion
+import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 const val WEBSITE_URL = "https://castbay.weenas.com"
 private const val PRIVACY_URL = "castbay.weenas.com/privacy"
@@ -31,10 +32,13 @@ private const val SOURCE_URL = "github.com/weenas/castbay"
  * can't easily open links but a phone can scan one), the privacy policy and the source.
  */
 @Composable
-fun AboutScreen() {
+fun AboutScreen(viewModel: AirPlayViewModel) {
     val context = LocalContext.current
     val version = remember { AppVersion.name(context) }
-    val qr = remember { QrCode.bitmap(WEBSITE_URL, 512)?.asImageBitmap() }
+    val update by viewModel.update.collectAsState()
+    // With a newer version out, the code opens its download page instead of the website.
+    val qrUrl = update?.url ?: WEBSITE_URL
+    val qr = remember(qrUrl) { QrCode.bitmap(qrUrl, 512)?.asImageBitmap() }
 
     AppBackground {
         Row(
@@ -47,6 +51,14 @@ fun AboutScreen() {
                 Text(stringResource(R.string.app_tagline), fontSize = 20.sp, color = Color.White.copy(alpha = 0.7f))
                 Spacer(modifier = Modifier.height(28.dp))
                 AboutLine(stringResource(R.string.info_version), version)
+                update?.let {
+                    Text(
+                        stringResource(R.string.about_update, it.version),
+                        fontSize = 18.sp,
+                        color = UPDATE_COLOR,
+                        modifier = Modifier.padding(start = 120.dp, bottom = 4.dp)
+                    )
+                }
                 AboutLine(stringResource(R.string.about_website), WEBSITE_URL.removePrefix("https://"))
                 AboutLine(stringResource(R.string.about_privacy), PRIVACY_URL)
                 AboutLine(stringResource(R.string.about_source), SOURCE_URL)
@@ -58,7 +70,7 @@ fun AboutScreen() {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Image(
                         bitmap = qr,
-                        contentDescription = WEBSITE_URL,
+                        contentDescription = qrUrl,
                         filterQuality = FilterQuality.None,
                         modifier = Modifier
                             .size(220.dp)
@@ -67,7 +79,11 @@ fun AboutScreen() {
                             .padding(10.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text(stringResource(R.string.about_scan), fontSize = 15.sp, color = Color.White.copy(alpha = 0.7f))
+                    Text(
+                        stringResource(if (update != null) R.string.about_scan_update else R.string.about_scan),
+                        fontSize = 15.sp,
+                        color = if (update != null) UPDATE_COLOR else Color.White.copy(alpha = 0.7f)
+                    )
                 }
             }
         }
@@ -81,3 +97,6 @@ private fun AboutLine(label: String, value: String) {
         Text(value, fontSize = 18.sp, color = Color.White)
     }
 }
+
+/** The new-version notice: the accent purple, bright on the dark background. */
+private val UPDATE_COLOR = Color(0xFFB9A6FF)

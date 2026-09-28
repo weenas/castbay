@@ -84,6 +84,8 @@
     <string name="section_general">通用</string>
     <string name="setting_language">语言</string>
     <string name="language_system">跟随系统</string>
+    <string name="setting_check_updates">检查更新</string>
+    <string name="setting_check_updates_note">每天向 GitHub 查询一次最新版本号，不会发送这台电视的任何信息。</string>
     <string name="setting_reset">恢复默认设置</string>
     <string name="setting_reset_action">恢复</string>
     <string name="setting_reset_confirm">再按一次确认</string>
@@ -120,6 +122,8 @@
     <string name="about_privacy">隐私政策</string>
     <string name="about_source">源代码</string>
     <string name="about_license">以 GPL-3.0 协议开源，基于 UxPlay、libplist、Apple ALAC 和 Media3。</string>
+    <string name="about_update">有新版本 %1$s 可以更新</string>
+    <string name="about_scan_update">用手机扫码下载新版本</string>
     <string name="about_scan">用手机扫码打开官网</string>
 
     <!-- Notification -->

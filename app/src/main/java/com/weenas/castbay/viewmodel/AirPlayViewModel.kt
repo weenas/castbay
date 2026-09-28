@@ -84,6 +84,27 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     private val lyricsClient = com.weenas.castbay.service.LyricsClient(appVersion)
 
+    private val updateChecker = com.weenas.castbay.service.UpdateChecker(application, appVersion)
+    private val _update = MutableStateFlow(if (_settings.value.checkUpdates) updateChecker.known() else null)
+    /** A newer CastBay on GitHub, found by the daily check (off in Settings: none). */
+    val update: StateFlow<com.weenas.castbay.service.AppUpdate?> = _update.asStateFlow()
+
+    private fun checkForUpdate() {
+        if (!_settings.value.checkUpdates) {
+            _update.value = null
+            return
+        }
+        kotlin.concurrent.thread(name = "CastBay-update") {
+            val found = updateChecker.check()
+            if (_settings.value.checkUpdates) _update.value = found
+        }
+    }
+
+    // After the checker above: initialisers and init blocks run in the order written.
+    init {
+        checkForUpdate()
+    }
+
     /** Synced lyrics for a song, or null; looked up online, so call off the main thread. */
     fun findLyrics(title: String, artist: String?, album: String?, durationSec: Double) =
         lyricsClient.find(title, artist, album, durationSec)
@@ -101,6 +122,12 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     fun setVideoSurface(surface: Surface?) {
         manager.setVideoSurface(surface)
+    }
+
+    /** Turns the daily update check on or off; on checks now (if it hasn't today). */
+    fun setCheckUpdates(enabled: Boolean) {
+        updateSettings { it.copy(checkUpdates = enabled) }
+        checkForUpdate()
     }
 
     /** Every setting back to its default (the TV's own name is kept: it isn't a setting). */

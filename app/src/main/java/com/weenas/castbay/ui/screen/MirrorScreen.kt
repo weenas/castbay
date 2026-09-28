@@ -35,6 +35,7 @@ import com.weenas.castbay.ui.Backdrop
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.basicMarquee
 import com.weenas.castbay.ui.MediaIcons
@@ -356,20 +357,32 @@ private fun HomeButtons(viewModel: AirPlayViewModel) {
                 if (focused == "help") Modifier.initialFocus() else Modifier,
                 onClick = { viewModel.navigateToHelp() }
             )
+            val update by viewModel.update.collectAsState()
             HomeButton(
                 stringResource(R.string.about),
                 if (focused == "about") Modifier.initialFocus() else Modifier,
+                badge = update != null,
                 onClick = { viewModel.navigateToAbout() }
             )
         }
     }
 }
 
+/** The update dot on About. */
+private val BADGE_COLOR = Color(0xFFFF453A)
+
 private val LocalHomeButtonMinWidth = staticCompositionLocalOf { 160.dp }
 
 /** A home/Settings button. The focused one gets a white outline, visible from the sofa. */
 @Composable
-fun HomeButton(text: String, modifier: Modifier = Modifier, muted: Boolean = false, onClick: () -> Unit) {
+fun HomeButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    muted: Boolean = false,
+    /** A dot at the top right, e.g. on About when a newer version is out. */
+    badge: Boolean = false,
+    onClick: () -> Unit
+) {
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     Button(
@@ -380,7 +393,13 @@ fun HomeButton(text: String, modifier: Modifier = Modifier, muted: Boolean = fal
         else ButtonDefaults.buttonColors(),
         border = if (focused) BorderStroke(3.dp, Color.White) else null,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-        modifier = modifier.widthIn(min = LocalHomeButtonMinWidth.current)
+        modifier = modifier
+            .widthIn(min = LocalHomeButtonMinWidth.current)
+            .then(if (badge) Modifier.drawWithContent {
+                drawContent()
+                val radius = 6.dp.toPx()
+                drawCircle(BADGE_COLOR, radius, androidx.compose.ui.geometry.Offset(size.width - radius * 2.4f, radius * 2.4f))
+            } else Modifier)
     ) {
         Text(text, fontSize = 20.sp)
     }

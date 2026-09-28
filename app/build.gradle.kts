@@ -22,8 +22,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 70
-        versionName = "1.0.70"
+        versionCode = 71
+        versionName = "1.0.71"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         if (enableNativeBuild.get()) {
@@ -125,6 +125,8 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
+    // Android's org.json is only stubbed in JVM unit tests.
+    testImplementation("org.json:json:20240303")
     // On-device tests of what needs real Android media (AudioTrack timing).
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")

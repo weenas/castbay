@@ -91,7 +91,18 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                 Spacer(modifier = Modifier.height(8.dp))
             }
             item {
-            ChoiceSetting(stringResource(R.string.setting_resolution), settings.resolution, ReceiverSettings.RESOLUTIONS) {
+            // Auto names what it picks on this TV: "Auto (4K)", "Auto (1080p)".
+            val autoProfile = remember(settings) {
+                viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
+            }
+            val autoSize = if (autoProfile.upTo4k) "4K" else "${autoProfile.height}p"
+            val autoLabel = stringResource(R.string.auto_with, autoSize)
+            ChoiceSetting(
+                stringResource(R.string.setting_resolution),
+                settings.resolution,
+                ReceiverSettings.RESOLUTIONS,
+                display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
+            ) {
                 viewModel.updateSettings { current -> current.copy(resolution = it) }
             }
         }

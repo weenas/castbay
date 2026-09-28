@@ -85,6 +85,13 @@
     </ul>
     <p>Whichever you choose, every device that has cast is listed there, and any of them can be blocked. Removing them all makes every device new again; if any had paired with a PIN, the TV also takes a new identity, so phones pair again instead of failing to connect.</p>
 
+    <h2>The remote and the connection</h2>
+    <ul>
+      <li><strong>Controlling the phone's music from the TV remote.</strong> When a music app plays over AirPlay, the TV's play/pause, previous and next go back to the phone, over AirPlay's remote-control channel (DACP), and the phone carries them out, just as with an Apple TV remote. That channel has play, pause and track commands but no "jump to a time", which is why AirPlay music has no skip-10-seconds buttons: seek on the phone instead. (DLNA music plays on the TV itself, so it can skip exactly.)</li>
+      <li><strong>When a second device casts.</strong> Settings → Connection → "When another device casts" decides: <em>Refuse it</em> (the default) keeps the current cast and turns the newcomer away; <em>Let it take over</em> ends the current cast and shows the new device's, name and all.</li>
+      <li><strong>Why a cast ends by itself.</strong> While mirroring or playing music, the phone sends a heartbeat every two seconds, even when paused. If none arrives for five seconds (the phone left the Wi-Fi, ran out of battery, or its app was closed), the TV takes the cast as over and goes back to its home screen rather than freezing on the last picture. Videos cast from apps play on the TV by themselves, so they don't need one.</li>
+    </ul>
+
     <h2>What isn't supported, and why</h2>
     <ul>
       <li><strong>Google Cast (Chromecast)</strong>: only Google-certified devices can receive it.</li>

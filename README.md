@@ -79,10 +79,23 @@ castbay/
 │   └── build.gradle.kts
 ├── airplay/                # Android library, JNI bridge, and native protocol build
 ├── third_party/            # Pinned UxPlay, libplist and ALAC submodules
-├── website/                # castbay.weenas.com (Cloudflare Pages)
+├── site/                   # Website sources: page bodies, the shared header/footer, strings
+├── website/                # castbay.weenas.com as published (built from site/, Cloudflare)
+├── scripts/                # build_website.py, serve_website.py
 ├── branding/               # Logo and wordmark masters (SVG and PNG)
 └── README.md
 ```
+
+### Website
+
+The pages in `website/` are generated: each page's own content is in `site/pages/<lang>/`, and the header, navigation and footer they share are in `site/templates/page.html` and `site/strings.json`. After editing `site/`, rebuild and preview:
+
+```bash
+python3 scripts/build_website.py
+python3 scripts/serve_website.py
+```
+
+Commit both `site/` and the rebuilt `website/`; CI fails if they don't match. Styles, images and scripts (`website/assets/`) and `website/sitemap.xml` are edited directly; add a new page to both `PAGES` in the script and the sitemap.
 
 ## License
 

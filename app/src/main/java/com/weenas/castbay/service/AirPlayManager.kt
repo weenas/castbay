@@ -55,7 +55,9 @@ class AirPlayManager private constructor(private val context: Context) {
         onFeedback = ::onSenderHeartbeat,
         onClient = { name, model ->
             Log.i(TAG, "AirPlay sender: $name ($model)")
+            val previous = airPlaySender
             airPlaySender = name.trim()
+            if (previous.isNotEmpty() && airPlaySender != previous) onSenderTakeover()
         },
         audioInfo = object : AudioInfoListener {
             override fun onMetadata(dmap: ByteArray) {
@@ -554,6 +556,19 @@ class AirPlayManager private constructor(private val context: Context) {
     fun skipMusic(forward: Boolean) {
         Log.d(TAG, "Remote control: skip ${if (forward) "forward" else "back"}")
         if (dlnaMusicPlaying()) hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC)
+    }
+
+    /**
+     * Another device took the session over (Allow takeover): its connection opens before the
+     * first one's closes, so no session ends or starts. What is on screen is the new sender's
+     * now, and what was playing was the old one's.
+     */
+    private fun onSenderTakeover() {
+        Log.i(TAG, "AirPlay session taken over by $airPlaySender")
+        if (currentState != AirPlayConnectionState.Streaming) return
+        updateNowPlaying { NowPlaying() }
+        currentStreamInfo = currentStreamInfo.copy(sender = airPlaySender)
+        notifyStateChange(currentState)
     }
 
     /** Metadata can arrive before the audio does, so it is kept until the screen shows it. */

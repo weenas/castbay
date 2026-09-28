@@ -2,6 +2,7 @@
     <!-- The Chinese name; senders still see the device name, "CastBay" by default. -->
     <string name="app_name">映湾</string>
     <string name="app_tagline">Android TV 上的 AirPlay 和 DLNA 接收器</string>
+    <string name="app_slogan">一投即达，自在映湾</string>
 
     <!-- Common -->
     <string name="action_start">开始</string>

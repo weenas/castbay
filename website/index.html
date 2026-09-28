@@ -1,74 +1,97 @@
 <!doctype html>
-<html lang="zh-CN" data-lang="zh">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>映湾 CastBay：Android 电视投屏接收器</title>
-  <meta name="title-zh" content="映湾 CastBay：Android 电视投屏接收器">
-  <meta name="title-en" content="CastBay: an AirPlay and DLNA receiver for Android TV">
-  <meta name="description" content="CastBay lets your Android TV receive AirPlay screen mirroring, music and video from iPhone, iPad and Mac, and DLNA casts from video and music apps. Free and open source.">
+  <title>CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone</title>
+  <meta name="description" content="Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.">
+  <link rel="canonical" href="https://castbay.weenas.com/">
+  <link rel="alternate" hreflang="en" href="https://castbay.weenas.com/">
+  <link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/">
+  <link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/">
   <meta name="theme-color" content="#0b0910">
-  <meta property="og:title" content="CastBay: an AirPlay and DLNA receiver for Android TV">
-  <meta property="og:description" content="Mirror, stream music and cast video from iPhone to Android TV. Free and open source.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CastBay">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="zh_CN">
+  <meta property="og:title" content="CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone">
+  <meta property="og:description" content="Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.">
+  <meta property="og:url" content="https://castbay.weenas.com/">
   <meta property="og:image" content="https://castbay.weenas.com/assets/og.jpg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:url" content="https://castbay.weenas.com/">
-  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-  <link rel="icon" href="assets/favicon-32.png" sizes="32x32" type="image/png">
-  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
-  <link rel="stylesheet" href="assets/style.css">
-  <script src="assets/site.js"></script>
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
+  <link rel="icon" href="/assets/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/site.js"></script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "CastBay",
+  "alternateName": "映湾",
+  "url": "https://castbay.weenas.com/",
+  "description": "Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.",
+  "inLanguage": "en",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Android TV, Google TV (Android 8.0 or later)",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "downloadUrl": "https://github.com/weenas/castbay/releases",
+  "softwareHelp": "https://github.com/weenas/castbay",
+  "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+  "isAccessibleForFree": true,
+  "image": "https://castbay.weenas.com/assets/og.jpg"
+}
+  </script>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <a class="brand" href="./"><img src="assets/wordmark@2x.png" srcset="assets/wordmark@2x.png 2x, assets/wordmark@3x.png 3x" alt="CastBay 映湾" width="243" height="60"></a>
+    <a class="brand" href="/"><img src="/assets/wordmark@2x.png" srcset="/assets/wordmark@2x.png 2x, /assets/wordmark@3x.png 3x" alt="CastBay 映湾" width="243" height="60"></a>
     <nav class="nav">
-      <a href="#features"><span class="zh">功能</span><span class="en">Features</span></a>
-      <a href="#start"><span class="zh">开始使用</span><span class="en">Get started</span></a>
-      <a href="#faq"><span class="zh">常见问题</span><span class="en">FAQ</span></a>
+      <a href="#features">Features</a>
+      <a href="#start">Get started</a>
+      <a href="#faq">FAQ</a>
       <a href="https://github.com/weenas/castbay">GitHub</a>
     </nav>
-    <button class="lang" type="button" data-switch-lang aria-label="Language / 语言">
-      <span class="zh">English</span><span class="en">中文</span>
-    </button>
+    <a class="lang" href="/zh/" hreflang="zh-CN" lang="zh-CN" data-lang-link="zh">中文</a>
   </div>
 </header>
 
 <main>
   <section class="hero">
     <div class="wrap">
-      <p class="eyebrow"><span class="zh">Android TV 投屏接收器</span><span class="en">A casting receiver for Android TV</span></p>
+      <p class="eyebrow">A casting receiver for Android TV</p>
       <h1>
-        <span class="zh">把 iPhone 的画面和声音，投到你的 Android 电视上</span>
-        <span class="en">Cast your iPhone to your Android TV</span>
+        Cast your iPhone to your Android TV
       </h1>
       <p class="lead">
-        <span class="zh">映湾（CastBay）让 Android 电视接收 AirPlay 屏幕镜像、音乐和视频，也支持视频和音乐 App 自带的投屏按钮（DLNA）。免费、开源、无广告。</span>
-        <span class="en">CastBay lets an Android TV receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.</span>
+        CastBay lets an Android TV receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.
       </p>
       <div class="actions">
         <a class="btn btn-primary" href="https://github.com/weenas/castbay/releases">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
-          <span class="zh">下载 APK</span><span class="en">Download APK</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>Download APK
         </a>
-        <a class="btn btn-ghost" href="https://github.com/weenas/castbay">
-          <span class="zh">查看源码</span><span class="en">View source</span>
+        <a class="btn btn-ghost" href="https://github.com/weenas/castbay">View source
         </a>
       </div>
       <p class="note">
-        <span class="zh">适用于 Android 8.0 及以上的 Android TV / Google TV 设备</span>
-        <span class="en">For Android TV / Google TV devices on Android 8.0 or later</span>
+        For Android TV / Google TV devices on Android 8.0 or later
       </p>
       <div class="chips">
-        <span class="chip"><span class="zh">屏幕镜像</span><span class="en">Screen mirroring</span></span>
-        <span class="chip"><span class="zh">音乐与歌词</span><span class="en">Music &amp; lyrics</span></span>
-        <span class="chip"><span class="zh">视频投屏</span><span class="en">Video casting</span></span>
+        <span class="chip">Screen mirroring</span>
+        <span class="chip">Music &amp; lyrics</span>
+        <span class="chip">Video casting</span>
         <span class="chip">DLNA</span>
         <span class="chip">H.265 · 4K</span>
-        <span class="chip"><span class="zh">中英双语</span><span class="en">English &amp; Chinese</span></span>
+        <span class="chip">English &amp; Chinese</span>
       </div>
     </div>
   </section>
@@ -76,39 +99,39 @@
   <section id="features">
     <div class="wrap">
       <div class="section-head">
-        <h2><span class="zh">电视上该有的投屏体验</span><span class="en">Everything casting to a TV should be</span></h2>
-        <p><span class="zh">为电视和遥控器设计，从手机投过来的画面、音乐和视频都有合适的呈现方式。</span><span class="en">Designed for the big screen and the remote: mirroring, music and video each get a screen made for them.</span></p>
+        <h2>Everything casting to a TV should be</h2>
+        <p>Designed for the big screen and the remote: mirroring, music and video each get a screen made for them.</p>
       </div>
       <div class="grid">
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
-          <h3><span class="zh">屏幕镜像</span><span class="en">Screen mirroring</span></h3>
-          <p><span class="zh">把 iPhone、iPad、Mac 的屏幕实时镜像到电视，最高 60 帧；4K 电视配合硬件 H.265 解码时可达 4K。</span><span class="en">Mirror an iPhone, iPad or Mac in real time at up to 60 fps, and in 4K with H.265 on 4K TVs with hardware HEVC decoding.</span></p>
+          <h3>Screen mirroring</h3>
+          <p>Mirror an iPhone, iPad or Mac in real time at up to 60 fps, and in 4K with H.265 on 4K TVs with hardware HEVC decoding.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></div>
-          <h3><span class="zh">音乐</span><span class="en">Music</span></h3>
-          <p><span class="zh">专辑封面模糊背景、滚动歌词（可选）、圆形播放控制，AirPlay 音乐以无损 ALAC 播放。</span><span class="en">A blurred-cover backdrop, scrolling lyrics (optional) and round playback controls; AirPlay music plays in lossless ALAC.</span></p>
+          <h3>Music</h3>
+          <p>A blurred-cover backdrop, scrolling lyrics (optional) and round playback controls; AirPlay music plays in lossless ALAC.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="m10 9 5 3-5 3z"/></svg></div>
-          <h3><span class="zh">视频投屏</span><span class="en">Video casting</span></h3>
-          <p><span class="zh">从 App 投视频时，由电视直接播放视频源，手机可以锁屏或去做别的事。支持音轨和字幕切换。</span><span class="en">When an app casts a video, the TV plays it straight from the source, so your phone is free. Switch audio tracks and subtitles.</span></p>
+          <h3>Video casting</h3>
+          <p>When an app casts a video, the TV plays it straight from the source, so your phone is free. Switch audio tracks and subtitles.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8.5a15 15 0 0 1 20 0M5.5 12a10 10 0 0 1 13 0M9 15.5a5 5 0 0 1 6 0"/><circle cx="12" cy="19" r="1.2" fill="currentColor"/></svg></div>
-          <h3><span class="zh">App 自带投屏（DLNA）</span><span class="en">Apps' cast button (DLNA)</span></h3>
-          <p><span class="zh">哔哩哔哩、爱奇艺、网易云音乐、QQ 音乐等 App 的投屏按钮都能直接投到映湾，iPhone 和 Android 手机都可以用。</span><span class="en">The cast button in apps like Bilibili, iQiyi, NetEase Cloud Music and QQ Music casts straight to CastBay, from iPhone and Android phones alike.</span></p>
+          <h3>Apps' cast button (DLNA)</h3>
+          <p>The cast button in apps like Bilibili, iQiyi, NetEase Cloud Music and QQ Music casts straight to CastBay, from iPhone and Android phones alike.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><circle cx="12" cy="8" r="2"/><path d="M12 14v3"/></svg></div>
-          <h3><span class="zh">为遥控器设计</span><span class="en">Made for the remote</span></h3>
-          <p><span class="zh">播放时按下键打开快捷菜单：画面比例、播放统计、音轨字幕。连按两次返回结束投屏，按主页键可在后台继续播放。</span><span class="en">Press Down while playing for the quick menu: picture fit, playback stats, audio and subtitles. Back twice ends a cast; Home keeps it playing in the background.</span></p>
+          <h3>Made for the remote</h3>
+          <p>Press Down while playing for the quick menu: picture fit, playback stats, audio and subtitles. Back twice ends a cast; Home keeps it playing in the background.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
-          <h3><span class="zh">安心使用</span><span class="en">Private by design</span></h3>
-          <p><span class="zh">可设置投屏密码，可选择拒绝或允许其他设备接管。无需账号，不收集任何数据，代码完全开源。</span><span class="en">An optional casting password and a choice to refuse or allow another device to take over. No account, no data collection, fully open source.</span></p>
+          <h3>Private by design</h3>
+          <p>An optional casting password and a choice to refuse or allow another device to take over. No account, no data collection, fully open source.</p>
         </article>
       </div>
     </div>
@@ -117,21 +140,21 @@
   <section id="start" class="alt">
     <div class="wrap">
       <div class="section-head">
-        <h2><span class="zh">三步开始使用</span><span class="en">Get started in three steps</span></h2>
-        <p><span class="zh">电视和手机需要连接同一个网络。</span><span class="en">Your TV and phone need to be on the same network.</span></p>
+        <h2>Get started in three steps</h2>
+        <p>Your TV and phone need to be on the same network.</p>
       </div>
       <div class="steps">
         <div class="card step">
-          <h3><span class="zh">在电视上安装</span><span class="en">Install on your TV</span></h3>
-          <p><span class="zh">从 GitHub 下载映湾的 APK，用 U 盘或电视上的文件管理器安装。</span><span class="en">Download the CastBay APK from GitHub and install it from a USB drive or the TV's file manager.</span></p>
+          <h3>Install on your TV</h3>
+          <p>Download the CastBay APK from GitHub and install it from a USB drive or the TV's file manager.</p>
         </div>
         <div class="card step">
-          <h3><span class="zh">打开映湾</span><span class="en">Open CastBay</span></h3>
-          <p><span class="zh">打开就开始接收投屏，以后电视一开机也会自动就绪，不用再手动打开。</span><span class="en">It starts receiving as soon as it opens, and from then on it's ready whenever the TV turns on.</span></p>
+          <h3>Open CastBay</h3>
+          <p>It starts receiving as soon as it opens, and from then on it's ready whenever the TV turns on.</p>
         </div>
         <div class="card step">
-          <h3><span class="zh">从手机投屏</span><span class="en">Cast from your phone</span></h3>
-          <p><span class="zh">在 iPhone 控制中心选"屏幕镜像"，或在 App 里点 AirPlay 图标或投屏按钮，选择"CastBay (电视名称)"（默认名称，可在设置里修改）。</span><span class="en">On an iPhone, choose Screen Mirroring in Control Center, or tap the AirPlay icon or cast button in an app, then pick "CastBay (your TV's name)".</span></p>
+          <h3>Cast from your phone</h3>
+          <p>On an iPhone, choose Screen Mirroring in Control Center, or tap the AirPlay icon or cast button in an app, then pick "CastBay (your TV's name)".</p>
         </div>
       </div>
     </div>
@@ -140,24 +163,24 @@
   <section>
     <div class="wrap">
       <div class="section-head">
-        <h2><span class="zh">两种投屏方式</span><span class="en">Two ways to cast</span></h2>
-        <p><span class="zh">同一个 App 往往两种都支持，按需选择。</span><span class="en">Many apps support both; pick whichever suits you.</span></p>
+        <h2>Two ways to cast</h2>
+        <p>Many apps support both; pick whichever suits you.</p>
       </div>
       <div class="ways">
         <div class="card">
-          <h3>AirPlay<span class="tag"><span class="zh">任何 App</span><span class="en">Any app</span></span></h3>
+          <h3>AirPlay<span class="tag">Any app</span></h3>
           <ul>
-            <li><span class="zh">入口：控制中心的"屏幕镜像"，或 App 里的 AirPlay 图标</span><span class="en">From Control Center's Screen Mirroring, or an app's AirPlay icon</span></li>
-            <li><span class="zh">支持屏幕镜像、音乐、视频</span><span class="en">Mirroring, music and video</span></li>
-            <li><span class="zh">音乐无损传输；可在电视上切换上一首、下一首</span><span class="en">Lossless music; previous and next from the TV</span></li>
+            <li>From Control Center's Screen Mirroring, or an app's AirPlay icon</li>
+            <li>Mirroring, music and video</li>
+            <li>Lossless music; previous and next from the TV</li>
           </ul>
         </div>
         <div class="card">
-          <h3>DLNA<span class="tag"><span class="zh">App 投屏按钮</span><span class="en">Apps' cast button</span></span></h3>
+          <h3>DLNA<span class="tag">Apps' cast button</span></h3>
           <ul>
-            <li><span class="zh">入口：视频或音乐 App 里自带的"投屏"按钮</span><span class="en">From the cast button inside video and music apps</span></li>
-            <li><span class="zh">电视直接播放，手机可以锁屏或离开</span><span class="en">The TV plays it directly; lock your phone or walk away</span></li>
-            <li><span class="zh">iPhone 和 Android 手机都能用</span><span class="en">Works from iPhone and Android phones</span></li>
+            <li>From the cast button inside video and music apps</li>
+            <li>The TV plays it directly; lock your phone or walk away</li>
+            <li>Works from iPhone and Android phones</li>
           </ul>
         </div>
       </div>
@@ -167,36 +190,36 @@
   <section id="faq" class="alt">
     <div class="wrap">
       <div class="section-head">
-        <h2><span class="zh">常见问题</span><span class="en">FAQ</span></h2>
+        <h2>FAQ</h2>
       </div>
       <div class="faq">
         <details>
-          <summary><span class="zh">支持哪些电视？</span><span class="en">Which TVs are supported?</span></summary>
-          <p><span class="zh">Android 8.0 及以上的 Android TV 和 Google TV 设备，包括电视和电视盒子。已在 TCL（Android 9）和索尼（Android 12）电视上测试。</span><span class="en">Android TV and Google TV devices, TVs and boxes alike, on Android 8.0 or later. Tested on TCL (Android 9) and Sony (Android 12) TVs.</span></p>
+          <summary>Which TVs are supported?</summary>
+          <p>Android TV and Google TV devices, TVs and boxes alike, on Android 8.0 or later. Tested on TCL (Android 9) and Sony (Android 12) TVs.</p>
         </details>
         <details>
-          <summary><span class="zh">如何把 APK 安装到电视上？</span><span class="en">How do I install the APK on a TV?</span></summary>
-          <p><span class="zh">把 APK 拷到 U 盘插到电视上，或用电视上的文件管理器（例如 ES 文件浏览器）打开安装。第一次安装时，电视可能会提示允许"安装未知来源的应用"，按提示打开即可。</span><span class="en">Copy the APK to a USB drive, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources.</span></p>
+          <summary>How do I install the APK on a TV?</summary>
+          <p>Copy the APK to a USB drive, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources.</p>
         </details>
         <details>
-          <summary><span class="zh">手机上找不到电视怎么办？</span><span class="en">My phone doesn't find CastBay. What now?</span></summary>
-          <p><span class="zh">确认电视和手机在同一个 Wi-Fi 下，并且映湾已经打开并显示"等待投屏连接"。有些路由器开启了"AP 隔离"，会阻止设备互相发现，需要在路由器设置里关闭。也可以试试把手机的 Wi-Fi 关掉再打开。</span><span class="en">Make sure the TV and phone are on the same Wi-Fi and CastBay is open, waiting for a connection. Some routers enable "AP isolation", which stops devices finding each other; turn it off in the router's settings. Turning the phone's Wi-Fi off and on can also help.</span></p>
+          <summary>My phone doesn't find CastBay. What now?</summary>
+          <p>Make sure the TV and phone are on the same Wi-Fi and CastBay is open, waiting for a connection. Some routers enable "AP isolation", which stops devices finding each other; turn it off in the router's settings. Turning the phone's Wi-Fi off and on can also help.</p>
         </details>
         <details>
-          <summary><span class="zh">支持 Google Cast（Chromecast）或 Miracast 吗？</span><span class="en">Does it support Google Cast (Chromecast) or Miracast?</span></summary>
-          <p><span class="zh">不支持。Google Cast 只能由 Google 认证的设备接收，Miracast 需要电视系统级的权限，普通 App 无法实现。映湾支持的是 AirPlay 和 DLNA。</span><span class="en">No. Only Google-certified devices can receive Google Cast, and Miracast needs system-level access an app doesn't get. CastBay supports AirPlay and DLNA.</span></p>
+          <summary>Does it support Google Cast (Chromecast) or Miracast?</summary>
+          <p>No. Only Google-certified devices can receive Google Cast, and Miracast needs system-level access an app doesn't get. CastBay supports AirPlay and DLNA.</p>
         </details>
         <details>
-          <summary><span class="zh">为什么哔哩哔哩投屏只有 720P？</span><span class="en">Why is Bilibili limited to 720p?</span></summary>
-          <p><span class="zh">哔哩哔哩只把 1080P 及以上的清晰度开放给它的官方电视 App，投到第三方设备最高是 720P。想看 1080P 可以用屏幕镜像。</span><span class="en">Bilibili keeps 1080p and above for its own TV app; casting to other devices tops out at 720p. Use screen mirroring for 1080p.</span></p>
+          <summary>Why is Bilibili limited to 720p?</summary>
+          <p>Bilibili keeps 1080p and above for its own TV app; casting to other devices tops out at 720p. Use screen mirroring for 1080p.</p>
         </details>
         <details>
-          <summary><span class="zh">怎么用遥控器结束投屏？</span><span class="en">How do I stop a cast with the remote?</span></summary>
-          <p><span class="zh">连按两次返回键，或按下键打开快捷菜单，选择"结束投屏"。按主页键则会让投屏在后台继续播放。</span><span class="en">Press Back twice, or press Down for the quick menu and choose Stop casting. Pressing Home keeps the cast playing in the background.</span></p>
+          <summary>How do I stop a cast with the remote?</summary>
+          <p>Press Back twice, or press Down for the quick menu and choose Stop casting. Pressing Home keeps the cast playing in the background.</p>
         </details>
         <details>
-          <summary><span class="zh">映湾会收集我的数据吗？</span><span class="en">Does CastBay collect my data?</span></summary>
-          <p><span class="zh">不会。映湾不需要账号，也没有统计或广告。只有在你打开"显示歌词"时，才会把歌名和歌手发送到 lrclib.net 查询歌词。详见<a href="privacy.html">隐私政策</a>。</span><span class="en">No. There's no account, analytics or ads. Only when you turn on lyrics does it send the song's title and artist to lrclib.net to look them up. See the <a href="privacy.html">privacy policy</a>.</span></p>
+          <summary>Does CastBay collect my data?</summary>
+          <p>No. There's no account, analytics or ads. Only when you turn on lyrics does it send the song's title and artist to lrclib.net to look them up. See the <a href="/privacy">privacy policy</a>.</p>
         </details>
       </div>
     </div>
@@ -205,8 +228,8 @@
   <section>
     <div class="wrap oss">
       <div>
-        <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)"><span class="zh">开源，也欢迎参与</span><span class="en">Open source, and open to you</span></h2>
-        <p><span class="zh">映湾以 GPL-3.0 协议开源，基于 UxPlay、libplist、Apple ALAC 解码器和 Media3 ExoPlayer。欢迎在 GitHub 上提交问题和建议。</span><span class="en">CastBay is open source under GPL-3.0, built on UxPlay, libplist, Apple's ALAC decoder and Media3 ExoPlayer. Issues and ideas are welcome on GitHub.</span></p>
+        <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)">Open source, and open to you</h2>
+        <p>CastBay is open source under GPL-3.0, built on UxPlay, libplist, Apple's ALAC decoder and Media3 ExoPlayer. Issues and ideas are welcome on GitHub.</p>
       </div>
       <a class="btn btn-ghost" href="https://github.com/weenas/castbay">github.com/weenas/castbay</a>
     </div>
@@ -216,15 +239,14 @@
 <footer>
   <div class="wrap">
     <div>
-      <div>© 2026 <span class="zh">映湾 </span>CastBay</div>
+      <div>© 2026CastBay</div>
       <div style="margin-top:6px;max-width:44em">
-        <span class="zh">AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。</span>
-        <span class="en">AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.</span>
+        AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.
       </div>
     </div>
     <div class="links">
-      <a href="privacy.html"><span class="zh">隐私政策</span><span class="en">Privacy</span></a>
-      <a href="https://github.com/weenas/castbay/releases"><span class="zh">版本下载</span><span class="en">Releases</span></a>
+      <a href="/privacy">Privacy</a>
+      <a href="https://github.com/weenas/castbay/releases">Releases</a>
       <a href="https://github.com/weenas/castbay">GitHub</a>
     </div>
   </div>

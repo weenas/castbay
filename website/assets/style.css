@@ -15,10 +15,6 @@
   color-scheme: dark;
 }
 
-/* Only one language shows; site.js sets data-lang before the page paints. */
-[data-lang="zh"] .en,
-[data-lang="en"] .zh { display: none !important; }
-
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
@@ -48,11 +44,12 @@ img { max-width: 100%; display: block; }
 .nav { display: flex; gap: 22px; margin-left: auto; }
 .nav a { color: var(--text-2); font-size: 15px; }
 .nav a:hover { color: var(--text); text-decoration: none; }
+/* The link to the same page in the other language. */
 .lang {
   border: 1px solid var(--card-border); background: var(--card); color: var(--text);
-  border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer;
+  border-radius: 999px; padding: 6px 14px; font-size: 14px;
 }
-.lang:hover { border-color: var(--accent); }
+.lang:hover { border-color: var(--accent); text-decoration: none; }
 
 /* Buttons, in the app's pill style */
 .btn {

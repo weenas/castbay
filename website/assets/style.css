@@ -70,6 +70,7 @@ img { max-width: 100%; display: block; }
 .nav { display: flex; gap: 22px; margin-left: auto; }
 .nav a { color: var(--text-2); font-size: 15px; }
 .nav a:hover { color: var(--text); text-decoration: none; }
+.nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 /* The link to the same page in the other language. */
 .lang {
   border: 1px solid var(--card-border); background: var(--card); color: var(--text);

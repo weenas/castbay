@@ -7,6 +7,8 @@
 
 # 映湾 CastBay: AirPlay and DLNA Receiver for Android TV
 
+**Cast it, it's there. Kick back with CastBay.** · 一投即达，自在映湾
+
 **Website: [castbay.weenas.com](https://castbay.weenas.com)** · **Download: [Releases](https://github.com/weenas/castbay/releases)** · [Privacy policy](https://castbay.weenas.com/privacy)
 
 CastBay (Chinese: 映湾) turns an Android TV into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). Free, open source, no ads.

@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weenas.castbay.R
@@ -47,7 +48,10 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 BrandTitle()
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(12.dp))
+                // The slogan, in the app's lighter purple, over what the app is.
+                Text(stringResource(R.string.app_slogan), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, color = SLOGAN_COLOR)
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(stringResource(R.string.app_tagline), fontSize = 20.sp, color = Color.White.copy(alpha = 0.7f))
                 Spacer(modifier = Modifier.height(28.dp))
                 AboutLine(stringResource(R.string.info_version), version)
@@ -100,3 +104,5 @@ private fun AboutLine(label: String, value: String) {
 
 /** The new-version notice: the accent purple, bright on the dark background. */
 private val UPDATE_COLOR = Color(0xFFB9A6FF)
+
+private val SLOGAN_COLOR = Color(0xFFA48BF5)

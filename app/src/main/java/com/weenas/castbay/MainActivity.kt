@@ -77,6 +77,6 @@ private fun Screens() {
         "mirror" -> MirrorScreen(viewModel = viewModel)
         "settings" -> SettingsScreen(viewModel = viewModel)
         "help" -> HelpScreen(viewModel = viewModel)
-        "about" -> AboutScreen()
+        "about" -> AboutScreen(viewModel = viewModel)
     }
 }

@@ -28,4 +28,18 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/privacy"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/privacy"/>
   </url>
+  <url>
+    <loc>https://castbay.weenas.com/tech</loc>
+    <lastmod>2026-09-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/tech"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/tech"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/tech"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/tech</loc>
+    <lastmod>2026-09-28</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/tech"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/tech"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/tech"/>
+  </url>
 </urlset>

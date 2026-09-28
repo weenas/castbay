@@ -13,6 +13,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import com.weenas.castbay.service.DacpClient
@@ -202,12 +204,45 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
         return
     }
 
+    // Back twice on the home screen stops receiving and quits; Home leaves it receiving.
+    val activity = LocalContext.current as? android.app.Activity
+    var quitArmed by remember { mutableStateOf(false) }
+    BackHandler {
+        if (quitArmed) {
+            viewModel.stopServer()
+            activity?.finish()
+        } else {
+            quitArmed = true
+        }
+    }
+    LaunchedEffect(quitArmed) {
+        if (quitArmed) {
+            delay(BACK_AGAIN_WINDOW_MS)
+            quitArmed = false
+        }
+    }
     // No app bar: the name is on screen already, and Settings sits beside the main button.
     AppBackground {
         Box(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
+            if (quitArmed) {
+                // Below the home buttons (a 540 dp tall screen leaves room only near the edge),
+                // and over them.
+                Text(
+                    stringResource(R.string.press_back_to_quit),
+                    color = Color.White,
+                    fontSize = 20.sp,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 20.dp)
+                        .clip(RoundedCornerShape(24.dp))
+                        .background(Color(0xCC000000))
+                        .padding(horizontal = 28.dp, vertical = 14.dp)
+                )
+            }
             when (state.connectionState) {
                 AirPlayConnectionState.Idle -> IdleScreen(viewModel = viewModel)
                 AirPlayConnectionState.Discovering -> DiscoveringScreen(
@@ -247,7 +282,7 @@ fun IdleScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
     HomeScreen(viewModel) {
         Text(
-            stringResource(if (settings.receiverEnabled) R.string.starting else R.string.receiver_off),
+            stringResource(R.string.starting),
             color = Color.White,
             fontSize = 18.sp
         )

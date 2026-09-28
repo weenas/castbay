@@ -28,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import com.weenas.castbay.R
 import com.weenas.castbay.ui.mirroringLabel
 import com.weenas.castbay.ui.AppBackground
+import com.weenas.castbay.ui.BrandSlogan
 import com.weenas.castbay.ui.BrandTitle
 import com.weenas.castbay.ui.CastingBadge
 import com.weenas.castbay.ui.VolumeIndicator
@@ -323,6 +324,8 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         BrandTitle()
         Spacer(modifier = Modifier.height(12.dp))
+        BrandSlogan(fontSize = 22.sp)
+        Spacer(modifier = Modifier.height(6.dp))
         Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray)
         Spacer(modifier = Modifier.height(16.dp))
         Column(

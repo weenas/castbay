@@ -22,8 +22,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 78
-        versionName = "1.0.78"
+        versionCode = 79
+        versionName = "1.0.79"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         if (enableNativeBuild.get()) {

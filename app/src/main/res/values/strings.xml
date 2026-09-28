@@ -34,7 +34,6 @@
     <string name="info_ip">IP address</string>
     <string name="info_mirroring">Mirroring</string>
     <string name="info_dlna">DLNA casting</string>
-    <string name="info_password">Password</string>
     <string name="info_second_device">Second device</string>
     <string name="info_takes_over">Takes over</string>
     <string name="info_refused">Refused</string>
@@ -87,7 +86,7 @@
     <string name="setting_reset">Restore Defaults</string>
     <string name="setting_reset_action">Restore</string>
     <string name="setting_reset_confirm">Press again to restore</string>
-    <string name="setting_reset_note">The device name, password and every other setting go back to how they were when CastBay was installed.</string>
+    <string name="setting_reset_note">The device name, casting verification and every other setting go back to how they were when CastBay was installed.</string>
     <string name="section_playback">Playback</string>
     <string name="section_playback_note">These apply right away. While casting, press Down or Menu on the remote to change them.</string>
     <string name="setting_device_name">Device Name</string>
@@ -96,9 +95,6 @@
     <string name="setting_codec">Codec</string>
     <string name="setting_codec_h264_only">H.264 only</string>
     <string name="setting_dlna">DLNA casting (apps\' cast button)</string>
-    <string name="setting_password">Casting password</string>
-    <string name="setting_password_off">Not required</string>
-    <string name="setting_password_on">Required</string>
     <string name="setting_password_field">Password</string>
     <string name="setting_password_too_short">Use at least %1$d digits.</string>
     <string name="setting_password_help">Devices must enter this to AirPlay to the TV.</string>
@@ -169,4 +165,16 @@
     <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that CastBay is open, showing “Waiting for a connection”.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
     <string name="help_video_title">A video won\'t play?</string>
     <string name="help_video">AirPlay and DLNA videos are fetched by the TV itself. If your phone needs a proxy or VPN to open them (e.g. YouTube), so does the TV.\nIf a casting password is set, enter the one from Settings on your phone.</string>
+    <string name="info_access">Verification</string>
+    <string name="setting_access">Casting verification</string>
+    <string name="access_open">Not required</string>
+    <string name="access_pin">PIN</string>
+    <string name="access_password">Password</string>
+    <string name="setting_pin_note">The first time a device casts, it enters a PIN shown on the TV; after that it is remembered.</string>
+    <string name="setting_paired_devices">Paired devices: %1$d</string>
+    <string name="setting_forget_devices">Forget all</string>
+    <string name="setting_forget_confirm">Press again to forget</string>
+    <string name="pairing_pin_title">Enter this PIN on your device</string>
+    <string name="pairing_pin_help">Needed once: the device will be remembered.</string>
+    <string name="close">Close</string>
 </resources>

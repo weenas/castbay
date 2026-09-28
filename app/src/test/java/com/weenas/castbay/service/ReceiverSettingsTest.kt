@@ -32,26 +32,30 @@ class ReceiverSettingsTest {
     }
 
     @Test
-    fun onlyValidPinsAreEnforced() {
-        assertTrue(ReceiverSettings.isValidPin("1234"))
-        assertTrue(ReceiverSettings.isValidPin("123456"))
-        assertFalse(ReceiverSettings.isValidPin("123"))
-        assertFalse(ReceiverSettings.isValidPin("12a4"))
-        assertEquals("", ReceiverSettings(requirePassword = true, pin = "").requiredPin())
-        assertEquals("", ReceiverSettings(requirePassword = true, pin = "12").requiredPin())
-        assertEquals("2468", ReceiverSettings(requirePassword = true, pin = "2468").requiredPin())
+    fun onlyValidPasswordsAreEnforced() {
+        val password = ReceiverSettings.ACCESS_PASSWORD
+        assertTrue(ReceiverSettings.isValidPassword("1234"))
+        assertTrue(ReceiverSettings.isValidPassword("123456"))
+        assertFalse(ReceiverSettings.isValidPassword("123"))
+        assertFalse(ReceiverSettings.isValidPassword("12a4"))
+        assertEquals("", ReceiverSettings(access = password, password = "").requiredPassword())
+        assertEquals("", ReceiverSettings(access = password, password = "12").requiredPassword())
+        assertEquals("2468", ReceiverSettings(access = password, password = "2468").requiredPassword())
     }
 
     @Test
-    fun passwordIsOnlyEnforcedWhenRequired() {
-        // The PIN is remembered while access is open, so switching back needs no retyping.
-        assertEquals("", ReceiverSettings(requirePassword = false, pin = "2468").requiredPin())
+    fun passwordIsOnlyEnforcedWhenChosen() {
+        // The password is remembered while another access is chosen, so switching back needs no retyping.
+        assertEquals("", ReceiverSettings(access = ReceiverSettings.ACCESS_OPEN, password = "2468").requiredPassword())
+        val pin = ReceiverSettings(access = ReceiverSettings.ACCESS_PIN, password = "2468")
+        assertEquals("", pin.requiredPassword())
+        assertTrue(pin.usesPin())
     }
 
     @Test
     fun newSendersAreRefusedByDefault() {
         assertEquals(false, ReceiverSettings().allowTakeover)
-        assertEquals(false, ReceiverSettings().requirePassword)
+        assertEquals(ReceiverSettings.ACCESS_OPEN, ReceiverSettings().access)
     }
 
     @Test

@@ -34,6 +34,17 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     val network: StateFlow<com.weenas.castbay.service.NetworkStatus> = networkMonitor.status
     /** The sender's volume, as it changes: the TV shows it briefly (VolumeIndicator). */
     val senderVolume get() = manager.senderVolume
+    /** A PIN a new sender must enter (PIN pairing), shown over any screen; null otherwise. */
+    val pairingPin get() = manager.pairingPin
+
+    /** Puts the PIN away; the device gets a new one when it tries again. */
+    fun dismissPairingPin() = manager.hidePairingPin()
+
+    /** Senders paired by PIN. */
+    fun pairedDevices() = manager.pairedDevices()
+
+    /** Senders enter a PIN again; the receiver restarts with a new pairing identity. */
+    fun forgetPairedDevices() = manager.forgetPairedDevices()
     val appVersion: String = com.weenas.castbay.util.AppVersion.name(application)
 
     fun canReadWifiName() = networkMonitor.canReadSsid()

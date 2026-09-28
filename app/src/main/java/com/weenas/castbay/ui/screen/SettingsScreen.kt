@@ -382,59 +382,97 @@ private fun TextSetting(
     }
 }
 
-private const val ACCESS_OPEN = "Not required"
-private const val ACCESS_PASSWORD = "Required"
 private const val TAKEOVER_REFUSE = "Refuse it"
 private const val TAKEOVER_ALLOW = "Let it take over"
 
+/** How a [ReceiverSettings.access] value is shown. */
+@Composable
+fun accessLabel(access: String): String = stringResource(
+    when (access) {
+        ReceiverSettings.ACCESS_PIN -> R.string.access_pin
+        ReceiverSettings.ACCESS_PASSWORD -> R.string.access_password
+        else -> R.string.access_open
+    }
+)
+
 /**
- * Casting with or without a password. "Required" only takes effect once a valid password
- * is saved, so choosing it can't lock everyone out by accident.
+ * Who may cast: anyone, a new device entering a PIN shown on the TV, or every device entering
+ * a password. The password only takes effect once a valid one is saved, so choosing it can't
+ * lock everyone out by accident.
  */
 @Composable
 fun AccessSetting(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
     var choosingPassword by remember { mutableStateOf(false) }
+    // Shows "Password" while one is being chosen, though it applies only once saved.
+    val shown = if (choosingPassword) ReceiverSettings.ACCESS_PASSWORD else settings.access
     ChoiceSetting(
-        stringResource(R.string.setting_password),
-        // Shows "Required" while a password is being chosen, though it applies only once saved.
-        if (settings.requirePassword || choosingPassword) ACCESS_PASSWORD else ACCESS_OPEN,
-        listOf(ACCESS_OPEN, ACCESS_PASSWORD),
-        display = { stringResource(if (it == ACCESS_PASSWORD) R.string.setting_password_on else R.string.setting_password_off) }
+        stringResource(R.string.setting_access),
+        shown,
+        ReceiverSettings.ACCESS_MODES,
+        display = { accessLabel(it) }
     ) { choice ->
-        if (choice == ACCESS_OPEN) {
-            choosingPassword = false
-            viewModel.updateSettings { it.copy(requirePassword = false) }
-        } else if (ReceiverSettings.isValidPin(settings.pin)) {
-            viewModel.updateSettings { it.copy(requirePassword = true) }
-        } else {
-            choosingPassword = true  // enabled when a valid password is saved below
+        choosingPassword = false
+        when {
+            choice != ReceiverSettings.ACCESS_PASSWORD -> viewModel.updateSettings { it.copy(access = choice) }
+            ReceiverSettings.isValidPassword(settings.password) -> viewModel.updateSettings { it.copy(access = choice) }
+            else -> choosingPassword = true  // enabled when a valid password is saved below
         }
     }
-    if (settings.requirePassword || choosingPassword) {
-        PinSetting(settings.pin) { pin ->
+    when (shown) {
+        ReceiverSettings.ACCESS_PIN -> PairedDevicesSetting(viewModel)
+        ReceiverSettings.ACCESS_PASSWORD -> PasswordSetting(settings.password) { password ->
             choosingPassword = false
-            viewModel.updateSettings { it.copy(pin = pin, requirePassword = true) }
+            viewModel.updateSettings { it.copy(password = password, access = ReceiverSettings.ACCESS_PASSWORD) }
         }
     }
 }
 
-/** The password senders must enter: at least [ReceiverSettings.MIN_PIN_LENGTH] digits. */
+/** How many devices have paired by PIN, and forgetting them (two presses), so they pair again. */
 @Composable
-fun PinSetting(value: String, onSaved: (String) -> Unit) {
+private fun PairedDevicesSetting(viewModel: AirPlayViewModel) {
+    var count by remember { mutableStateOf(viewModel.pairedDevices().size) }
+    var armed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) {
+        if (armed) {
+            delay(RESET_CONFIRM_MS)
+            armed = false
+        }
+    }
+    Text(stringResource(R.string.setting_pin_note), color = Color.Gray, fontSize = 14.sp)
+    SettingLine(stringResource(R.string.setting_paired_devices, count)) {
+        HomeButton(
+            stringResource(if (armed) R.string.setting_forget_confirm else R.string.setting_forget_devices),
+            muted = !armed || count == 0
+        ) {
+            if (count == 0) return@HomeButton
+            if (!armed) {
+                armed = true
+            } else {
+                armed = false
+                viewModel.forgetPairedDevices()
+                count = 0
+            }
+        }
+    }
+}
+
+/** The password senders must enter: at least [ReceiverSettings.MIN_PASSWORD_LENGTH] digits. */
+@Composable
+fun PasswordSetting(value: String, onSaved: (String) -> Unit) {
     TextSetting(
         value = value,
         label = stringResource(R.string.setting_password_field),
-        canSave = ReceiverSettings::isValidPin,
+        canSave = ReceiverSettings::isValidPassword,
         onSaved = onSaved,
         password = true,
         filter = { it.filter(Char::isDigit) },
         supportingText = { text ->
             Text(
-                if (!ReceiverSettings.isValidPin(text)) stringResource(R.string.setting_password_too_short, ReceiverSettings.MIN_PIN_LENGTH)
+                if (!ReceiverSettings.isValidPassword(text)) stringResource(R.string.setting_password_too_short, ReceiverSettings.MIN_PASSWORD_LENGTH)
                 else stringResource(R.string.setting_password_help)
             )
         },
-        isError = { text -> text.isNotEmpty() && !ReceiverSettings.isValidPin(text) }
+        isError = { text -> text.isNotEmpty() && !ReceiverSettings.isValidPassword(text) }
     )
 }
 

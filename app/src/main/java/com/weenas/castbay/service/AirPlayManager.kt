@@ -13,6 +13,11 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_WIDTH = 1920
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
+        /**
+         * A PIN left unentered this long is taken down (a new one comes with the next try).
+         * It stays when the sender disconnects: iPhones do, to ask for it, then connect again.
+         */
+        private const val PIN_VISIBLE_MS = 60_000L
         private const val HEARTBEAT_CHECK_MS = 1000L
         /** Two heartbeats missed (they come every two seconds; the TCL's gaps stayed under 2.6 s). */
         private const val HEARTBEAT_TIMEOUT_MS = 5000L
@@ -53,10 +58,17 @@ class AirPlayManager private constructor(private val context: Context) {
         },
         onRemoteControl = { dacpId, activeRemote -> dacp.setSender(dacpId, activeRemote) },
         onFeedback = ::onSenderHeartbeat,
+        onPin = ::showPairingPin,
+        onPaired = { device ->
+            Log.i(TAG, "Paired with ${device.name}")
+            pairedDevices.add(device)
+        },
         onClient = { name, model ->
             Log.i(TAG, "AirPlay sender: $name ($model)")
             val previous = airPlaySender
             airPlaySender = name.trim()
+            // Admitted: a PIN it was entering is done with.
+            hidePairingPin()
             if (previous.isNotEmpty() && airPlaySender != previous) onSenderTakeover()
         },
         audioInfo = object : AudioInfoListener {
@@ -310,7 +322,9 @@ class AirPlayManager private constructor(private val context: Context) {
             discoveryAdvertiser.hardwareAddress(),
             mirroringProfile(settings).also { advertised = it },
             settings.maxFps(),
-            settings.requiredPin(),
+            settings.requiredPassword(),
+            settings.usesPin(),
+            pairedDevices.load().map { it.publicKey },
             settings.allowTakeover
         )
         if (!discoveryAdvertiser.start(
@@ -347,9 +361,43 @@ class AirPlayManager private constructor(private val context: Context) {
         start(settings)
     }
 
+    /** Senders paired by PIN, for Settings. */
+    fun pairedDevices(): List<PairedDevice> = pairedDevices.load()
+
+    /**
+     * Forgets every paired sender: they enter a PIN again. The TV takes a new pairing
+     * identity too, or phones that kept the old pairing would fail to connect instead.
+     */
+    fun forgetPairedDevices() {
+        Log.i(TAG, "Forgetting paired devices")
+        pairedDevices.clear()
+        val running = currentState != AirPlayConnectionState.Idle && currentState != AirPlayConnectionState.Error
+        if (running) stop()
+        nativeBridge.resetIdentity()
+        if (running) start(activeSettings)
+    }
+
+    private val pairedDevices = PairedDevices(context)
+    private val _pairingPin = kotlinx.coroutines.flow.MutableStateFlow<String?>(null)
+    /** A PIN a new sender must enter, shown on the TV while it pairs; null otherwise. */
+    val pairingPin: kotlinx.coroutines.flow.StateFlow<String?> = _pairingPin
+    private val hidePinLater = Runnable { hidePairingPin() }
+
+    private fun showPairingPin(pin: String) {
+        _pairingPin.value = pin
+        mainHandler.removeCallbacks(hidePinLater)
+        mainHandler.postDelayed(hidePinLater, PIN_VISIBLE_MS)
+    }
+
+    fun hidePairingPin() {
+        mainHandler.removeCallbacks(hidePinLater)
+        _pairingPin.value = null
+    }
+
     fun stop() {
         Log.d(TAG, "Stopping AirPlay server")
         nativeBridge.stop()
+        hidePairingPin()
         discoveryAdvertiser.stop()
         dlna.stop()
         videoRenderer.stop()

@@ -79,12 +79,14 @@
     <!-- Settings -->
     <string name="section_connection">连接</string>
     <string name="section_connection_note">修改这些设置会重启接收器，已连接的设备需要重新连接。</string>
+    <string name="section_mirroring">屏幕镜像</string>
+    <string name="section_mirroring_note">只影响屏幕镜像，不影响 App 投送的视频和音乐。修改后会重启接收器。</string>
     <string name="section_playback">播放</string>
     <string name="section_playback_note">立即生效。投屏时按遥控器的下键或菜单键也可以修改。</string>
     <string name="setting_device_name">设备名称</string>
-    <string name="setting_resolution">镜像最高分辨率</string>
-    <string name="setting_frame_rate">镜像帧率</string>
-    <string name="setting_codec">镜像编码</string>
+    <string name="setting_resolution">最高分辨率</string>
+    <string name="setting_frame_rate">最大帧率</string>
+    <string name="setting_codec">编码</string>
     <string name="setting_codec_h264_only">仅 H.264</string>
     <string name="setting_dlna">DLNA 投屏（App 自带投屏按钮）</string>
     <string name="setting_password">投屏密码</string>

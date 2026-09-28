@@ -9,8 +9,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
@@ -33,12 +31,10 @@ private const val SOURCE_URL = "github.com/weenas/castbay"
  * can't easily open links but a phone can scan one), the privacy policy and the source.
  */
 @Composable
-fun AboutScreen(onBack: () -> Unit) {
+fun AboutScreen() {
     val context = LocalContext.current
     val version = remember { AppVersion.name(context) }
     val qr = remember { QrCode.bitmap(WEBSITE_URL, 512)?.asImageBitmap() }
-    val backFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { backFocus.requestFocus() } }
 
     AppBackground {
         Row(
@@ -56,8 +52,6 @@ fun AboutScreen(onBack: () -> Unit) {
                 AboutLine(stringResource(R.string.about_source), SOURCE_URL)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
-                Spacer(modifier = Modifier.height(28.dp))
-                HomeButton(stringResource(R.string.action_back), Modifier.focusRequester(backFocus), onClick = onBack)
             }
             if (qr != null) {
                 Spacer(modifier = Modifier.width(48.dp))

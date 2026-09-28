@@ -7,7 +7,6 @@
     <string name="action_stop">Stop</string>
     <string name="action_retry">Retry</string>
     <string name="action_save">Save</string>
-    <string name="action_back">Back</string>
     <string name="on">On</string>
     <string name="off">Off</string>
     <string name="auto">Auto</string>

@@ -50,10 +50,6 @@
 
     <!-- Mirroring profile, e.g. "H.265 · up to 4K" or "H.264 · 1080p (1080p screen)" -->
     <string name="mirroring_up_to_4k">up to 4K</string>
-    <string name="mirroring_note_screen">%1$dp screen</string>
-    <string name="mirroring_note_decoder">decoder can\'t do 4K</string>
-    <string name="mirroring_note_needs_h265">4K needs H.265</string>
-    <string name="mirroring_note_no_hw_decoder">no hardware H.265 decoder for 4K</string>
 
     <!-- Playback -->
     <string name="press_back_again">Press Back again to stop casting</string>
@@ -89,7 +85,6 @@
     <string name="setting_frame_rate">Mirroring Frame Rate</string>
     <string name="setting_codec">Mirroring Codec</string>
     <string name="setting_codec_h264_only">H.264 only</string>
-    <string name="setting_this_tv">This TV: %1$s</string>
     <string name="setting_dlna">DLNA casting (apps\' cast button)</string>
     <string name="setting_password">Casting password</string>
     <string name="setting_password_off">Not required</string>

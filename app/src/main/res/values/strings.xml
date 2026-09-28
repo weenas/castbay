@@ -77,8 +77,15 @@
     <!-- Settings -->
     <string name="section_connection">Connection</string>
     <string name="section_connection_note">Changing these restarts the receiver; connected devices need to reconnect.</string>
-    <string name="section_mirroring">Screen Mirroring</string>
+    <string name="section_mirroring">Mirroring</string>
     <string name="section_mirroring_note">Only for mirroring a phone\'s screen, not apps\' video and music. Changing these restarts the receiver.</string>
+    <string name="section_general">General</string>
+    <string name="setting_language">Language</string>
+    <string name="language_system">System</string>
+    <string name="setting_reset">Restore Defaults</string>
+    <string name="setting_reset_action">Restore</string>
+    <string name="setting_reset_confirm">Press again to restore</string>
+    <string name="setting_reset_note">The device name, password and every other setting go back to how they were when CastBay was installed.</string>
     <string name="section_playback">Playback</string>
     <string name="section_playback_note">These apply right away. While casting, press Down or Menu on the remote to change them.</string>
     <string name="setting_device_name">Device Name</string>

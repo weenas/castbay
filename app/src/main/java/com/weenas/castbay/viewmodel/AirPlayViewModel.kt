@@ -103,6 +103,9 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         manager.setVideoSurface(surface)
     }
 
+    /** Every setting back to its default (the TV's own name is kept: it isn't a setting). */
+    fun resetSettings() = updateSettings { ReceiverSettings(tvName = it.tvName) }
+
     fun updateSettings(transform: (ReceiverSettings) -> ReceiverSettings) {
         val previous = _settings.value
         val updated = transform(previous)

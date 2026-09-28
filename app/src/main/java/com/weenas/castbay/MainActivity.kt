@@ -1,13 +1,16 @@
 package com.weenas.castbay
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.res.imageResource
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.weenas.castbay.service.AppLanguage
 import com.weenas.castbay.ui.LocalBackgroundImage
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
@@ -17,6 +20,9 @@ import com.weenas.castbay.ui.theme.CastBayTheme
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 class MainActivity : ComponentActivity() {
+    // The language chosen in Settings (Settings recreates the activity when it changes).
+    override fun attachBaseContext(newBase: Context) = super.attachBaseContext(AppLanguage.wrap(newBase))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The manifest theme only paints the launch screen; the app itself has a plain background.
         setTheme(R.style.Theme_CastBay)
@@ -33,7 +39,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun Screens() {
-    var currentScreen by remember { mutableStateOf("mirror") }
+    // Saved, so recreating the activity for a new language stays in Settings.
+    var currentScreen by rememberSaveable { mutableStateOf("mirror") }
     val viewModel: AirPlayViewModel = viewModel()
 
     val navigateTo by viewModel.navigateTo.collectAsState()

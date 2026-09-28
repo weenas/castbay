@@ -29,7 +29,9 @@ data class ReceiverSettings(
     /** How mirroring and AirPlay video fill the screen: [PICTURE_FIT], [PICTURE_FILL] or [PICTURE_STRETCH]. */
     val pictureMode: String = PICTURE_FIT,
     /** Look up and show synced lyrics for AirPlay music (sends the song's title to lrclib.net). */
-    val showLyrics: Boolean = false
+    val showLyrics: Boolean = false,
+    /** The app's language: [LANGUAGE_SYSTEM] (the TV's), [LANGUAGE_ZH] or [LANGUAGE_EN]. */
+    val language: String = LANGUAGE_SYSTEM
 ) {
     /**
      * The display size advertised to senders, which they size mirroring to. "Auto" is the
@@ -63,7 +65,7 @@ data class ReceiverSettings(
     fun needsRestartComparedTo(previous: ReceiverSettings): Boolean =
         withoutLiveSettings() != previous.withoutLiveSettings()
 
-    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false)
+    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM)
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
     fun maxFps(): Int = if (frameRate == "30 FPS") 30 else 60
@@ -72,6 +74,10 @@ data class ReceiverSettings(
     fun requiredPin(): String = pin.takeIf { requirePassword && isValidPin(it) }.orEmpty()
 
     companion object {
+        const val LANGUAGE_SYSTEM = "system"
+        const val LANGUAGE_ZH = "zh"
+        const val LANGUAGE_EN = "en"
+        val LANGUAGES = listOf(LANGUAGE_SYSTEM, LANGUAGE_ZH, LANGUAGE_EN)
         const val RESOLUTION_AUTO = "Auto"
         const val FRAME_RATE_AUTO = "Auto"
         val RESOLUTIONS = listOf(RESOLUTION_AUTO, "720p", "1080p")
@@ -123,7 +129,9 @@ class ReceiverSettingsStore(context: Context) {
         showStats = preferences.getBoolean("show_stats", false),
         pictureMode = preferences.getString("picture_mode", null)
             ?.takeIf { it in ReceiverSettings.PICTURE_MODES } ?: ReceiverSettings.PICTURE_FIT,
-        showLyrics = preferences.getBoolean("show_lyrics", false)
+        showLyrics = preferences.getBoolean("show_lyrics", false),
+        language = preferences.getString("language", null)
+            ?.takeIf { it in ReceiverSettings.LANGUAGES } ?: ReceiverSettings.LANGUAGE_SYSTEM
     )
 
     fun save(settings: ReceiverSettings) {
@@ -142,7 +150,24 @@ class ReceiverSettingsStore(context: Context) {
             .putBoolean("show_stats", settings.showStats)
             .putString("picture_mode", settings.pictureMode)
             .putBoolean("show_lyrics", settings.showLyrics)
+            .putString("language", settings.language)
             .remove("audio_latency")
             .apply()
+    }
+}
+
+/**
+ * The app's language, chosen in Settings, applied to a context's resources: activities and
+ * the service wrap their base context with it (their strings follow it). The system language
+ * needs nothing done.
+ */
+object AppLanguage {
+    fun wrap(base: Context): Context {
+        val language = ReceiverSettingsStore(base).load().language
+        if (language == ReceiverSettings.LANGUAGE_SYSTEM) return base
+        val locale = if (language == ReceiverSettings.LANGUAGE_ZH) java.util.Locale.SIMPLIFIED_CHINESE else java.util.Locale.ENGLISH
+        val config = android.content.res.Configuration(base.resources.configuration)
+        config.setLocale(locale)
+        return base.createConfigurationContext(config)
     }
 }

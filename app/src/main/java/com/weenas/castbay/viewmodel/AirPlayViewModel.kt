@@ -59,13 +59,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     init {
         manager.registerStateCallback(stateCallback)
         // Opening the app starts the receiver (a no-op if it is running), like turning on an Apple TV.
-        if (_settings.value.receiverEnabled) startServer()
-    }
-
-    /** "Receive casts": on starts the receiver now and from now on, off stops it and keeps it off. */
-    fun setReceiverEnabled(enabled: Boolean) {
-        updateSettings { it.copy(receiverEnabled = enabled) }
-        if (enabled) startServer() else stopServer()
+        startServer()
     }
 
     fun startServer() {

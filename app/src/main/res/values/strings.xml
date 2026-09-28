@@ -51,6 +51,7 @@
 
     <!-- Playback -->
     <string name="press_back_again">Press Back again to stop casting</string>
+    <string name="press_back_to_quit">Press Back again to quit CastBay; phones won\'t be able to cast</string>
     <string name="airplay_audio">AirPlay audio</string>
     <string name="cover_art">Cover art</string>
     <string name="music_play">Play</string>
@@ -101,9 +102,6 @@
     <string name="setting_lyrics_note">Looks up lyrics on lrclib.net by the song\'s title and artist.</string>
     <string name="setting_append_tv_name">Add the TV\'s name after it</string>
     <string name="setting_append_tv_name_note">Phones see: %1$s</string>
-    <string name="setting_receiver">Receive casts</string>
-    <string name="setting_receiver_note">Starts when the TV turns on or CastBay opens. Off: phones won\'t see this TV.</string>
-    <string name="receiver_off">Receiving casts is off. Turn it on in Settings.</string>
     <string name="frame_rate_fps">%1$d FPS</string>
 
     <!-- About -->
@@ -157,7 +155,7 @@
     <string name="help_remote_title">The remote</string>
     <string name="help_remote">Video: OK pauses or resumes; Left and Right skip back or ahead 10 seconds.\nMusic: Left and Right choose a button; OK presses it.\nDown or Menu: the playback menu (picture, audio, subtitles, lyrics…).\nBack twice: stop casting. Home: keep playing in the background.</string>
     <string name="help_not_found_title">Your phone can\'t find this TV?</string>
-    <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that Receive casts is on in Settings.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
+    <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that CastBay is open, showing “Waiting for a connection”.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
     <string name="help_video_title">A video won\'t play?</string>
     <string name="help_video">AirPlay and DLNA videos are fetched by the TV itself. If your phone needs a proxy or VPN to open them (e.g. YouTube), so does the TV.\nIf a casting password is set, enter the one from Settings on your phone.</string>
 </resources>

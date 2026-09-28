@@ -24,11 +24,6 @@ data class ReceiverSettings(
     val allowTakeover: Boolean = false,
     /** Also act as a DLNA renderer, for video apps' own "cast" buttons (Bilibili, iQiyi, ...). */
     val dlnaEnabled: Boolean = true,
-    /**
-     * Receive casts: the receiver starts when the app opens and when the TV boots, so it is
-     * always ready like an Apple TV. Off stops it, and the TV disappears from senders' lists.
-     */
-    val receiverEnabled: Boolean = true,
     /** Show a "stats for nerds" overlay (codec, resolution, bitrate, ...) while playing. */
     val showStats: Boolean = false,
     /** How mirroring and AirPlay video fill the screen: [PICTURE_FIT], [PICTURE_FILL] or [PICTURE_STRETCH]. */
@@ -68,7 +63,7 @@ data class ReceiverSettings(
     fun needsRestartComparedTo(previous: ReceiverSettings): Boolean =
         withoutLiveSettings() != previous.withoutLiveSettings()
 
-    private fun withoutLiveSettings() = copy(receiverEnabled = false, showStats = false, pictureMode = PICTURE_FIT, showLyrics = false)
+    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false)
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
     fun maxFps(): Int = if (frameRate == "30 FPS") 30 else 60
@@ -125,8 +120,6 @@ class ReceiverSettingsStore(context: Context) {
         ),
         allowTakeover = preferences.getBoolean("allow_takeover", false),
         dlnaEnabled = preferences.getBoolean("dlna_enabled", true),
-        // The key is from when this setting only meant starting at boot.
-        receiverEnabled = preferences.getBoolean("start_on_boot", true),
         showStats = preferences.getBoolean("show_stats", false),
         pictureMode = preferences.getString("picture_mode", null)
             ?.takeIf { it in ReceiverSettings.PICTURE_MODES } ?: ReceiverSettings.PICTURE_FIT,
@@ -144,7 +137,8 @@ class ReceiverSettingsStore(context: Context) {
             .putBoolean("require_password", settings.requirePassword)
             .putBoolean("allow_takeover", settings.allowTakeover)
             .putBoolean("dlna_enabled", settings.dlnaEnabled)
-            .putBoolean("start_on_boot", settings.receiverEnabled)
+            // Receiving can no longer be turned off (Back twice on the home screen quits).
+            .remove("start_on_boot")
             .putBoolean("show_stats", settings.showStats)
             .putString("picture_mode", settings.pictureMode)
             .putBoolean("show_lyrics", settings.showLyrics)

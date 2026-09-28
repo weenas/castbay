@@ -46,7 +46,7 @@ import com.weenas.castbay.viewmodel.AirPlayViewModel
 @Composable
 fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
-    // Starts on "Receive casts", not the device name: focusing the text field opens the keyboard.
+    // Starts below the device name: focusing the text field opens the keyboard.
     val firstChoice = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstChoice.requestFocus() } }
     // Same look as the home screen: no app bar, a title with a button beside it.
@@ -68,17 +68,7 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     HomeButton(stringResource(R.string.action_back), onClick = onBack)
                 }
             }
-            item { Spacer(modifier = Modifier.height(20.dp)) }
-            item {
-                SettingsCard(Segment.Single) {
-                    SwitchSetting(
-                        stringResource(R.string.setting_receiver),
-                        settings.receiverEnabled,
-                        Modifier.focusRequester(firstChoice)
-                    ) { viewModel.setReceiverEnabled(it) }
-                    Text(stringResource(R.string.setting_receiver_note), color = Color.Gray, fontSize = 14.sp)
-                }
-            }
+            item { Spacer(modifier = Modifier.height(4.dp)) }
             // Connection settings change what senders see, so the receiver restarts for them;
             // playback settings apply live and are also in the quick menu during playback.
             item { SectionTitle(stringResource(R.string.section_connection), stringResource(R.string.section_connection_note)) }
@@ -87,7 +77,11 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     DeviceNameSetting(value = settings.deviceName) { name ->
                         viewModel.updateSettings { it.copy(deviceName = name) }
                     }
-                    SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
+                    SwitchSetting(
+                        stringResource(R.string.setting_append_tv_name),
+                        settings.appendTvName,
+                        Modifier.focusRequester(firstChoice)
+                    ) { enabled ->
                         viewModel.updateSettings { it.copy(appendTvName = enabled) }
                     }
                     Text(

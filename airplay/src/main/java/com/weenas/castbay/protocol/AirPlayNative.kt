@@ -62,6 +62,11 @@ object AirPlayNative {
     var clientListener: ((String, String, String) -> Boolean)? = null
     /** The sender's heartbeat, every two seconds while it is connected. */
     var feedbackListener: (() -> Unit)? = null
+    /**
+     * A mirroring sender's once-a-second report: values in the order jni_bridge's
+     * dispatchSenderReport reads them (-1 when not reported).
+     */
+    var senderReportListener: ((DoubleArray) -> Unit)? = null
     /** A PIN for a new sender to enter (PIN pairing), to show on the TV. */
     var pinListener: ((String) -> Unit)? = null
     /** (publicKey, deviceId, name) of a sender that has just paired with a PIN; to keep. */
@@ -162,6 +167,11 @@ object AirPlayNative {
     @JvmStatic
     fun onFeedback() {
         feedbackListener?.invoke()
+    }
+
+    @JvmStatic
+    fun onSenderReport(values: DoubleArray) {
+        senderReportListener?.invoke(values)
     }
 
     @JvmStatic

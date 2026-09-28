@@ -28,6 +28,7 @@ class NativeBridge(
     private val onClient: (deviceId: String, name: String, model: String) -> Boolean,
     private val onFeedback: () -> Unit,
     private val onPin: (pin: String) -> Unit,
+    private val onSenderReport: (SenderReport) -> Unit,
     private val onPaired: (PairedDevice) -> Unit,
     private val onSessionEnd: () -> Unit
 ) {
@@ -74,6 +75,7 @@ class NativeBridge(
         AirPlayNative.clientListener = onClient
         AirPlayNative.feedbackListener = onFeedback
         AirPlayNative.pinListener = onPin
+        AirPlayNative.senderReportListener = { values -> SenderReport.parse(values)?.let(onSenderReport) }
         AirPlayNative.pairedListener = { key, id, name -> onPaired(PairedDevice(key, id, name)) }
         AirPlayNative.setVideoSink(object : VideoSink {
             override fun onVideoData(data: ByteArray, presentationTimeUs: Long, isH265: Boolean) {

@@ -19,6 +19,7 @@ extern "C" {
 #include "dnssd.h"
 #include "logger.h"
 #include "raop.h"
+#include <plist/plist.h>
 #include "raop_ext.h"
 #include "stream.h"
 }
@@ -48,6 +49,7 @@ jmethodID g_on_remote_control = nullptr;
 jmethodID g_on_client = nullptr;
 jmethodID g_on_feedback = nullptr;
 jmethodID g_on_pin = nullptr;
+jmethodID g_on_sender_report = nullptr;
 jmethodID g_on_paired = nullptr;
 /*
  * PIN pairing (UxPlay's pin_pw = 1): a new sender enters a PIN shown on the TV, once. The
@@ -440,7 +442,49 @@ int videoSetCodec(void *, video_codec_t codec) {
     return 0;
 }
 
+/*
+ * A mirroring sender's once-a-second streaming report (a plist UxPlay logs as XML with
+ * clientFPSdata on), passed to Java for the stats overlay rather than logged. Returns whether
+ * [message] was one.
+ */
+bool dispatchSenderReport(const char *message) {
+    if (!message || !strstr(message, "<key>encoderCurrentFPS</key>")) return false;
+    plist_t root = nullptr;
+    plist_from_xml(message, static_cast<uint32_t>(strlen(message)), &root);
+    if (!root) return false;
+    // The order SenderReport.KEYS (in the app) expects.
+    static const char *const kKeys[] = {
+        "sentFramesAvg", "encoderCurrentFPS", "submitSurfaceFPS", "encoderDropFPS",
+        "encoderQueueDropFPS", "sinkOverflowDropFPS", "rttAvg", "lossAvg", "txUsageAvg", "txCapacityAvg"
+    };
+    constexpr int kCount = sizeof(kKeys) / sizeof(kKeys[0]);
+    jdouble values[kCount];
+    for (int i = 0; i < kCount; i++) {
+        plist_t node = plist_dict_get_item(root, kKeys[i]);
+        values[i] = -1;  // not reported
+        if (PLIST_IS_UINT(node)) {
+            uint64_t value = 0;
+            plist_get_uint_val(node, &value);
+            values[i] = static_cast<jdouble>(value);
+        } else if (PLIST_IS_REAL(node)) {
+            double value = 0;
+            plist_get_real_val(node, &value);
+            values[i] = value;
+        }
+    }
+    plist_free(root);
+    JNIEnv *env = currentEnv();
+    if (!env) return true;
+    jdoubleArray array = env->NewDoubleArray(kCount);
+    if (!array) return true;
+    env->SetDoubleArrayRegion(array, 0, kCount, values);
+    callStatic(g_on_sender_report, array);
+    env->DeleteLocalRef(array);
+    return true;
+}
+
 void logCallback(void *, int level, const char *message) {
+    if (dispatchSenderReport(message)) return;
     const int priority = level <= LOGGER_ERR ? ANDROID_LOG_ERROR :
         (level <= LOGGER_WARNING ? ANDROID_LOG_WARN :
         (level <= LOGGER_INFO ? ANDROID_LOG_INFO : ANDROID_LOG_DEBUG));
@@ -587,6 +631,9 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeStart(
 
     // AirPlay video (HLS): the YouTube app and similar in-app players.
     raop_set_plist(g_raop, "hls", 1);
+    // Mirroring senders report once a second how they stream (frame rates, drops, round
+    // trip, bandwidth); UxPlay logs them, and logCallback passes them on for the stats.
+    raop_set_plist(g_raop, "clientFPSdata", 1);
     // 0: a new random PIN for each pairing.
     if (g_use_pin) raop_set_plist(g_raop, "pin", 0);
     // Music senders time playback about 1.75 s out, plus the output latency a receiver
@@ -735,10 +782,11 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     g_on_client = env->GetStaticMethodID(local, "onClient", "(Ljava/lang/String;[B[B)Z");
     g_on_feedback = env->GetStaticMethodID(local, "onFeedback", "()V");
     g_on_pin = env->GetStaticMethodID(local, "onPin", "(Ljava/lang/String;)V");
+    g_on_sender_report = env->GetStaticMethodID(local, "onSenderReport", "([D)V");
     g_on_paired = env->GetStaticMethodID(local, "onPaired", "(Ljava/lang/String;Ljava/lang/String;[B)V");
     if (!g_on_connection_started || !g_on_video_play || !g_on_video_scrub || !g_on_video_rate ||
         !g_on_video_stop || !g_playback_info || !g_on_remote_control || !g_on_client ||
-        !g_on_feedback || !g_on_pin || !g_on_paired) return JNI_ERR;
+        !g_on_feedback || !g_on_pin || !g_on_paired || !g_on_sender_report) return JNI_ERR;
     env->DeleteLocalRef(local);
     return JNI_VERSION_1_6;
 }

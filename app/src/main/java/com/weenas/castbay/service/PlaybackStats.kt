@@ -23,6 +23,52 @@ data class VideoStats(
     val droppedFrames: Long = 0
 )
 
+/**
+ * What a mirroring sender reports about its own streaming, once a second: how many frames it
+ * sends against its target, how many its screen produced and it dropped, and its network.
+ */
+data class SenderReport(
+    val sentFps: Int,
+    val targetFps: Int,
+    /** Frames the sender's screen produced: fewer while nothing on it moves. */
+    val screenFps: Int?,
+    val droppedFps: Int,
+    val roundTripMs: Int?,
+    /** Packet loss, in percent. */
+    val lossPercent: Double?,
+    val usedBps: Long?,
+    /** What the sender reckons the link carries. */
+    val capacityBps: Long?
+) {
+    companion object {
+        /**
+         * The order of the reported values: the sender's own names for them, as jni_bridge's
+         * dispatchSenderReport reads them.
+         */
+        val KEYS = listOf(
+            "sentFramesAvg", "encoderCurrentFPS", "submitSurfaceFPS", "encoderDropFPS",
+            "encoderQueueDropFPS", "sinkOverflowDropFPS", "rttAvg", "lossAvg", "txUsageAvg", "txCapacityAvg"
+        )
+
+        /** From values in [KEYS] order (-1 = not reported). */
+        fun parse(values: DoubleArray): SenderReport? {
+            fun at(key: String) = values.getOrNull(KEYS.indexOf(key))?.takeIf { it >= 0 }
+            val sent = at("sentFramesAvg") ?: return null
+            val drops = listOf("encoderDropFPS", "encoderQueueDropFPS", "sinkOverflowDropFPS").sumOf { at(it) ?: 0.0 }
+            return SenderReport(
+                sentFps = sent.toInt(),
+                targetFps = at("encoderCurrentFPS")?.toInt() ?: 0,
+                screenFps = at("submitSurfaceFPS")?.toInt(),
+                droppedFps = drops.toInt(),
+                roundTripMs = at("rttAvg")?.toInt(),
+                lossPercent = at("lossAvg"),
+                usedBps = at("txUsageAvg")?.toLong(),
+                capacityBps = at("txCapacityAvg")?.toLong()
+            )
+        }
+    }
+}
+
 data class AudioStats(
     /** e.g. "AAC-ELD", "ALAC". */
     val codec: String,

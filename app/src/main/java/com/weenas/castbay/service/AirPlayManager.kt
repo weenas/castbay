@@ -13,6 +13,8 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_WIDTH = 1920
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
+        /** A mirroring sender reports every second; older than this, it stopped. */
+        private const val SENDER_REPORT_STALE_MS = 3000L
         /**
          * A PIN left unentered this long is taken down (a new one comes with the next try).
          * It stays when the sender disconnects: iPhones do, to ask for it, then connect again.
@@ -59,6 +61,10 @@ class AirPlayManager private constructor(private val context: Context) {
         onRemoteControl = { dacpId, activeRemote -> dacp.setSender(dacpId, activeRemote) },
         onFeedback = ::onSenderHeartbeat,
         onPin = ::showPairingPin,
+        onSenderReport = { report ->
+            senderReport = report
+            senderReportAtMs = android.os.SystemClock.elapsedRealtime()
+        },
         onPaired = { device ->
             Log.i(TAG, "Paired with ${device.name}")
             pairedDevices.add(device)
@@ -553,7 +559,9 @@ class AirPlayManager private constructor(private val context: Context) {
             stream.isVideoPlayback ->
                 hlsPlayer.stats(if (stream.isDlna) "DLNA video" else "AirPlay video") ?: return null
             stream.isAudioOnly && stream.isDlna -> hlsPlayer.stats("DLNA audio") ?: return null
-            stream.isMirroring -> PlaybackStats("Screen mirroring", videoRenderer.stats(), audioRenderer.stats())
+            stream.isMirroring -> PlaybackStats(
+                "Screen mirroring", videoRenderer.stats(), audioRenderer.stats(), senderReportLines()
+            )
             stream.isAudioOnly -> PlaybackStats("AirPlay audio", audio = audioRenderer.stats())
             else -> return null
         }
@@ -561,6 +569,30 @@ class AirPlayManager private constructor(private val context: Context) {
             if (db <= AirPlayVolume.MIN_DB) "muted" else "%.1f dB".format(java.util.Locale.US, db)
         }
         return if (volume == null) stats else stats.copy(extra = stats.extra + ("Volume" to volume))
+    }
+
+    /** The mirroring sender's latest report, for the stats overlay. */
+    @Volatile private var senderReport: SenderReport? = null
+    @Volatile private var senderReportAtMs = 0L
+
+    /** The sender's side of mirroring, while its reports are current (they come every second). */
+    private fun senderReportLines(): List<Pair<String, String>> {
+        val report = senderReport ?: return emptyList()
+        if (android.os.SystemClock.elapsedRealtime() - senderReportAtMs > SENDER_REPORT_STALE_MS) return emptyList()
+        val frames = listOfNotNull(
+            "${report.sentFps}/${report.targetFps} fps",
+            report.screenFps?.let { "screen $it" },
+            "dropped ${report.droppedFps}"
+        )
+        val network = listOfNotNull(
+            report.roundTripMs?.let { "RTT $it ms" },
+            report.lossPercent?.let { "loss %.2f%%".format(java.util.Locale.US, it) },
+            report.usedBps?.let { used ->
+                val capacity = report.capacityBps?.let { " / " + StatsFormat.bitrate(it) }.orEmpty()
+                StatsFormat.bitrate(used) + capacity
+            }
+        )
+        return listOf("Sender" to frames.joinToString(" · "), "Network" to network.joinToString(" · "))
     }
 
     /** TV-remote control of AirPlay video (e.g. YouTube): pause/resume. */

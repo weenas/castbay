@@ -10,10 +10,36 @@
   --accent: #a48bf5;
   --accent-strong: #6750a4;
   --accent-glow: rgba(164, 139, 245, 0.35);
+  --header-bg: rgba(11, 9, 16, 0.72);
+  --line: rgba(255, 255, 255, 0.06);
+  /* The page colour as r, g, b, for the veil over the hero artwork. */
+  --veil: 11, 9, 16;
   --radius: 18px;
   --max: 1120px;
   color-scheme: dark;
 }
+
+/* Light, chosen with the theme button or following the system (site.js sets data-theme). */
+:root[data-theme="light"] {
+  --bg: #f7f5fb;
+  --bg-raised: #efebf6;
+  --card: #ffffff;
+  --card-border: rgba(27, 21, 40, 0.1);
+  --text: #1b1528;
+  --text-2: rgba(27, 21, 40, 0.72);
+  --text-3: rgba(27, 21, 40, 0.55);
+  --accent: #6750a4;
+  --accent-glow: rgba(103, 80, 164, 0.25);
+  --header-bg: rgba(247, 245, 251, 0.8);
+  --line: rgba(27, 21, 40, 0.08);
+  --veil: 247, 245, 251;
+  color-scheme: light;
+}
+
+/* The header wordmark: white lettering on dark, dark lettering on light. */
+.brand .wm-light { display: none; }
+:root[data-theme="light"] .brand .wm-dark { display: none; }
+:root[data-theme="light"] .brand .wm-light { display: block; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
@@ -33,9 +59,9 @@ img { max-width: 100%; display: block; }
 /* Header */
 .top {
   position: sticky; top: 0; z-index: 10;
-  background: rgba(11, 9, 16, 0.72);
+  background: var(--header-bg);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--line);
 }
 .top .wrap { display: flex; align-items: center; gap: 28px; height: 84px; }
 /* The bilingual wordmark (mark, CastBay | 映湾) as an image: its fonts aren't on every system. */
@@ -50,6 +76,20 @@ img { max-width: 100%; display: block; }
   border-radius: 999px; padding: 6px 14px; font-size: 14px;
 }
 .lang:hover { border-color: var(--accent); text-decoration: none; }
+
+/* Dark/light: the moon shows in light, the sun in dark, turning as they swap (as on weenas.com). */
+.theme {
+  position: relative; width: 34px; height: 34px; padding: 0; border: 0; background: none;
+  color: var(--text-2); cursor: pointer; flex: none;
+}
+.theme:hover { color: var(--accent); }
+.theme svg {
+  position: absolute; top: 50%; left: 50%; width: 22px; height: 22px;
+  transform: translate(-50%, -50%); transition: transform .3s, opacity .3s;
+}
+.theme .sun { transform: translate(-50%, -50%) scale(0) rotate(90deg); opacity: 0; }
+:root[data-theme="dark"] .theme .moon { transform: translate(-50%, -50%) scale(0) rotate(-90deg); opacity: 0; }
+:root[data-theme="dark"] .theme .sun { transform: translate(-50%, -50%) scale(1) rotate(0); opacity: 1; }
 
 /* Buttons, in the app's pill style */
 .btn {
@@ -72,7 +112,7 @@ img { max-width: 100%; display: block; }
 }
 .hero::after {
   content: ""; position: absolute; inset: 0;
-  background: linear-gradient(90deg, rgba(11, 9, 16, 0.94) 0%, rgba(11, 9, 16, 0.75) 45%, rgba(11, 9, 16, 0.35) 100%),
+  background: linear-gradient(90deg, rgba(var(--veil), 0.94) 0%, rgba(var(--veil), 0.75) 45%, rgba(var(--veil), 0.35) 100%),
     linear-gradient(0deg, var(--bg) 0%, transparent 30%);
 }
 .hero .wrap { position: relative; z-index: 1; padding-top: 120px; padding-bottom: 140px; }
@@ -145,7 +185,7 @@ details p { margin: 0 0 18px; color: var(--text-2); font-size: 15.5px; }
 .oss p { color: var(--text-2); max-width: 40em; margin: 8px 0 0; }
 
 /* Footer */
-footer { border-top: 1px solid rgba(255, 255, 255, 0.06); padding: 36px 0 48px; color: var(--text-3); font-size: 14px; }
+footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--text-3); font-size: 14px; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 16px 32px; justify-content: space-between; }
 footer a { color: var(--text-2); }
 footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
@@ -161,9 +201,9 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
   .nav { display: none; }
   .top .wrap { gap: 12px; height: 72px; }
   .brand img { height: 48px; } /* leaves room for the language button on phones */
-  .lang { margin-left: auto; }
+  .theme { margin-left: auto; }
   .hero .wrap { padding-top: 72px; padding-bottom: 96px; }
-  .hero::after { background: linear-gradient(0deg, var(--bg) 0%, rgba(11, 9, 16, 0.85) 60%, rgba(11, 9, 16, 0.7) 100%); }
+  .hero::after { background: linear-gradient(0deg, var(--bg) 0%, rgba(var(--veil), 0.85) 60%, rgba(var(--veil), 0.7) 100%); }
   section { padding: 64px 0; }
   .btn { padding: 13px 22px; font-size: 16px; }
 }

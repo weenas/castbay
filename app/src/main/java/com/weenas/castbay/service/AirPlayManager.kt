@@ -14,17 +14,10 @@ class AirPlayManager private constructor(private val context: Context) {
         private const val DEFAULT_VIDEO_HEIGHT = 1080
         private const val PAUSE_CHECK_MS = 500L
         private const val HEARTBEAT_CHECK_MS = 1000L
-        /**
-         * A pause from the TV the sender hasn't acted on by then is undone. iPhones stop in
-         * about 0.8 s; longer, and what they keep sending overflows the paused track.
-         */
-        private const val HOLD_TIMEOUT_MS = 1500L
         /** Two heartbeats missed (they come every two seconds; the TCL's gaps stayed under 2.6 s). */
         private const val HEARTBEAT_TIMEOUT_MS = 5000L
         private const val DLNA_PROGRESS_MS = 500L
         private const val DLNA_SKIP_SEC = 10
-        /** How far a sender's scan (DacpClient.skip) moves, as measured on an iPhone. */
-        private const val AIRPLAY_SKIP_SEC = 11.0
         private const val MAX_COVER_BYTES = 5 * 1024 * 1024
         /** playback-info for an AirPlay sender whose video DLNA replaced: finished, so it ends its session. */
         private val AIRPLAY_VIDEO_REPLACED =
@@ -46,7 +39,7 @@ class AirPlayManager private constructor(private val context: Context) {
         onConnectionStarted = ::onNativeConnectionStarted,
         onVideoData = { data, pts, isH265 -> onNativeVideoData(data, pts, isH265) },
         onAudioData = { data, _ -> audioRenderer.render(data) },
-        onPcmData = { data, _, compressedBytes -> onPcmAudio(data, compressedBytes) },
+        onPcmData = { data, playAtUs, compressedBytes -> onPcmAudio(data, playAtUs, compressedBytes) },
         onAudioFlush = {
             audioRenderer.flush()
             updateNowPlaying { it.paused() }
@@ -77,8 +70,8 @@ class AirPlayManager private constructor(private val context: Context) {
                 it.copy(
                     positionSec = positionSec,
                     durationSec = durationSec,
-                    // The sender's position is heard only once the buffered lead has played.
-                    positionAtMs = android.os.SystemClock.elapsedRealtime() + AudioRenderer.MUSIC_LEAD_MS
+                    // Music is played when the sender means it heard, so its position is now.
+                    positionAtMs = android.os.SystemClock.elapsedRealtime()
                 )
             }
         },
@@ -445,22 +438,12 @@ class AirPlayManager private constructor(private val context: Context) {
      * Audio streaming (music apps) has no picture, so the first PCM frame switches the screen
      * from "Connecting" to what is playing.
      */
-    private fun onPcmAudio(pcm: ByteArray, compressedBytes: Int) {
-        audioRenderer.renderPcm(pcm, compressedBytes)
+    private fun onPcmAudio(pcm: ByteArray, playAtUs: Long, compressedBytes: Int) {
+        audioRenderer.renderPcm(pcm, playAtUs, compressedBytes)
         val now = android.os.SystemClock.elapsedRealtime()
-        val previousAudio = lastAudioAtMs
         lastAudioAtMs = now
-        val held = heldAtMs
-        if (held != 0L) {
-            // Paused from the TV: audio arriving is the sender still stopping. A gap then new
-            // audio is a resume; audio that never stops means the sender ignored the pause.
-            val resumed = now - previousAudio > NowPlaying.STALL_MS
-            val ignored = now - held > HOLD_TIMEOUT_MS
-            if (!resumed && !ignored) return
-            releaseHold()
-        }
-        // Heard once the buffered lead has played, so the position counts from then.
-        if (!nowPlaying.playing) updateNowPlaying { it.resumed(now + AudioRenderer.MUSIC_LEAD_MS) }
+        // Heard when the sender means it to be, so the position counts from then.
+        if (!nowPlaying.playing) updateNowPlaying { it.resumed(now + audioRenderer.musicDelayMs()) }
         if (currentState == AirPlayConnectionState.Connecting || videoSource == VideoSource.DLNA) {
             stopDlnaVideo()
             currentStreamInfo = StreamInfo(isAudioOnly = true, sender = airPlaySender, nowPlaying = nowPlaying)
@@ -480,8 +463,8 @@ class AirPlayManager private constructor(private val context: Context) {
             // DLNA music plays here, not from the sender, so no audio gap means a pause there.
             if (!currentStreamInfo.isAudioOnly || currentStreamInfo.isDlna) return
             val lastAudio = lastAudioAtMs
-            // The last audio to arrive is heard a buffered lead later.
-            if (nowPlaying.stalled(lastAudio)) updateNowPlaying { it.paused(nowMs = lastAudio + AudioRenderer.MUSIC_LEAD_MS) }
+            // The last audio to arrive is heard later, when the sender means it to be.
+            if (nowPlaying.stalled(lastAudio)) updateNowPlaying { it.paused(nowMs = lastAudio + audioRenderer.musicDelayMs()) }
             mainHandler.postDelayed(this, PAUSE_CHECK_MS)
         }
     }
@@ -557,47 +540,20 @@ class AirPlayManager private constructor(private val context: Context) {
             }
             return
         }
-        // Only when the command can reach the sender: pausing here alone would leave the phone
-        // playing, its audio piling up behind the pause.
-        if (command == DacpClient.Command.PLAY_PAUSE && currentStreamInfo.isAudioOnly && dacp.isReady()) {
-            // Pause here at once: the sender takes about a second to stop sending, and until
-            // then the TV would keep playing. It resumes once the sender sends audio again.
-            if (nowPlaying.playing) {
-                heldAtMs = android.os.SystemClock.elapsedRealtime()
-                audioRenderer.holdMusic(true)
-                updateNowPlaying { it.paused() }
-            } else {
-                releaseHold()
-            }
-        }
+        // The sender pauses and resumes, as with an Apple TV: Apple Music flushes at once, and
+        // is silent; others (NetEase Cloud Music) stop sending, and what came plays out. Paused
+        // here instead, music was lost or played twice on resuming, as senders resume from
+        // different places.
         dacp.send(command)
     }
 
-    /** When music was paused from the TV ([AudioRenderer.holdMusic]); 0 when not held. */
-    @Volatile private var heldAtMs = 0L
-
-    private fun releaseHold() {
-        if (heldAtMs == 0L) return
-        heldAtMs = 0L
-        audioRenderer.holdMusic(false)
-    }
-
-    /** Skips the sender's music about ten seconds forward or back (it can't seek exactly). */
+    /**
+     * Skips DLNA music ten seconds forward or back. AirPlay has no seeking: iPhones refuse a
+     * time, and scanning forward and resuming skipped unevenly, so the phone does it.
+     */
     fun skipMusic(forward: Boolean) {
         Log.d(TAG, "Remote control: skip ${if (forward) "forward" else "back"}")
-        // DLNA music plays here, so it seeks exactly.
-        if (dlnaMusicPlaying()) {
-            hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC)
-            return
-        }
-        dacp.skip(forward)
-        // Move the progress bar and lyrics now: the sender takes about a second to act, and
-        // corrects this when it reports its position.
-        updateNowPlaying {
-            val now = android.os.SystemClock.elapsedRealtime()
-            val target = it.currentPositionSec(now) + if (forward) AIRPLAY_SKIP_SEC else -AIRPLAY_SKIP_SEC
-            it.copy(positionSec = target.coerceIn(0.0, maxOf(it.durationSec, 0.0)), positionAtMs = now)
-        }
+        if (dlnaMusicPlaying()) hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC)
     }
 
     /** Metadata can arrive before the audio does, so it is kept until the screen shows it. */

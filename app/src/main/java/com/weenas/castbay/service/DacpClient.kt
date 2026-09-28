@@ -20,11 +20,7 @@ class DacpClient(context: Context) {
         PAUSE("pause"),
         PLAY_PAUSE("playpause"),
         NEXT("nextitem"),
-        PREVIOUS("previtem"),
-        /** Starts scanning; [PLAY_RESUME] ends it. iPhones scan fast: ~11 s per 0.25 s held. */
-        BEGIN_FAST_FORWARD("beginff"),
-        BEGIN_REWIND("beginrew"),
-        PLAY_RESUME("playresume")
+        PREVIOUS("previtem")
     }
 
     private val nsd = context.applicationContext.getSystemService(NsdManager::class.java)
@@ -82,21 +78,6 @@ class DacpClient(context: Context) {
         stopDiscoveryLocked()
         resolving = false
         startDiscoveryLocked()
-    }
-
-    /**
-     * Skips roughly ten seconds. iPhones don't accept seeking to a time (setproperty
-     * dacp.playingtime answers 400), so this scans briefly and resumes; both requests run in one
-     * task so nothing else lands in between.
-     */
-    fun skip(forward: Boolean) {
-        val begin = if (forward) Command.BEGIN_FAST_FORWARD else Command.BEGIN_REWIND
-        val endpoint = endpoint(begin) ?: return later { skip(forward) }
-        executor.execute {
-            request(begin, endpoint)
-            Thread.sleep(SCAN_MS)
-            request(Command.PLAY_RESUME, endpoint)
-        }
     }
 
     private data class Endpoint(val host: InetAddress, val port: Int, val activeRemote: String)
@@ -192,8 +173,6 @@ class DacpClient(context: Context) {
         private const val SERVICE_TYPE = "_dacp._tcp"
         private const val PENDING_MS = 3000L
         private const val TIMEOUT_MS = 3000
-        /** How long to scan per skip: about 11 s of music on an iPhone. */
-        private const val SCAN_MS = 250L
 
         fun serviceNameFor(dacpId: String) = "iTunes_Ctrl_$dacpId"
 

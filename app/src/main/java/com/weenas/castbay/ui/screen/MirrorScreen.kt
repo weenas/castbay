@@ -702,7 +702,9 @@ fun AudioPlayback(
 
 /**
  * Apple-style round icon buttons, focused the way the rest of the app is (the accent colour
- * and a white outline): rewind, previous, play/pause (larger), next, fast forward.
+ * and a white outline): previous, play/pause (larger), next. DLNA music, played here, has no
+ * tracks to change but seeks exactly, so it has rewind and fast forward instead; AirPlay
+ * senders can't be asked to seek.
  */
 @Composable
 private fun MusicControls(
@@ -713,7 +715,9 @@ private fun MusicControls(
     playModifier: Modifier
 ) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-        MediaButton(MediaIcons.Back10, R.string.music_rewind, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(false) }
+        if (!canChangeTrack) {
+            MediaButton(MediaIcons.Back10, R.string.music_rewind, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(false) }
+        }
         if (canChangeTrack) {
             MediaButton(MediaIcons.Previous, R.string.music_previous, MEDIA_BUTTON_SIZE) {
                 onCommand(DacpClient.Command.PREVIOUS)
@@ -728,7 +732,9 @@ private fun MusicControls(
         if (canChangeTrack) {
             MediaButton(MediaIcons.Next, R.string.music_next, MEDIA_BUTTON_SIZE) { onCommand(DacpClient.Command.NEXT) }
         }
-        MediaButton(MediaIcons.Ahead10, R.string.music_fast_forward, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(true) }
+        if (!canChangeTrack) {
+            MediaButton(MediaIcons.Ahead10, R.string.music_fast_forward, MEDIA_BUTTON_SIZE, iconScale = 0.58f) { onSkip(true) }
+        }
     }
 }
 

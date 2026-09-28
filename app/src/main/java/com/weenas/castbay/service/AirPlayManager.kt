@@ -63,14 +63,7 @@ class AirPlayManager private constructor(private val context: Context) {
             Log.i(TAG, "Paired with ${device.name}")
             pairedDevices.add(device)
         },
-        onClient = { name, model ->
-            Log.i(TAG, "AirPlay sender: $name ($model)")
-            val previous = airPlaySender
-            airPlaySender = name.trim()
-            // Admitted: a PIN it was entering is done with.
-            hidePairingPin()
-            if (previous.isNotEmpty() && airPlaySender != previous) onSenderTakeover()
-        },
+        onClient = ::admitSender,
         audioInfo = object : AudioInfoListener {
             override fun onMetadata(dmap: ByteArray) {
                 val track = DmapMetadata.parse(dmap) ?: return
@@ -301,6 +294,8 @@ class AirPlayManager private constructor(private val context: Context) {
     @Volatile private var currentStreamInfo: StreamInfo = StreamInfo()
     /** The name of the AirPlay sender that set up the latest session, for [StreamInfo.sender]. */
     @Volatile private var airPlaySender = ""
+    /** The AirPlay device ID of that sender: a different one is a takeover. */
+    @Volatile private var airPlaySenderId = ""
     private var currentError: String? = null
 
     val isDiscoveryOnly: Boolean
@@ -361,14 +356,11 @@ class AirPlayManager private constructor(private val context: Context) {
         start(settings)
     }
 
-    /** Senders paired by PIN, for Settings. */
-    fun pairedDevices(): List<PairedDevice> = pairedDevices.load()
-
     /**
      * Forgets every paired sender: they enter a PIN again. The TV takes a new pairing
      * identity too, or phones that kept the old pairing would fail to connect instead.
      */
-    fun forgetPairedDevices() {
+    private fun forgetPairedDevices() {
         Log.i(TAG, "Forgetting paired devices")
         pairedDevices.clear()
         val running = currentState != AirPlayConnectionState.Idle && currentState != AirPlayConnectionState.Error
@@ -607,8 +599,75 @@ class AirPlayManager private constructor(private val context: Context) {
     }
 
     /**
+     * Whether a sender setting up a session may cast: blocked devices never; new ones, while
+     * they need approval, only once allowed on the TV (asked now, so they try again after).
+     * Must answer at once (the protocol's only thread is waiting).
+     */
+    private fun admitSender(deviceId: String, name: String, model: String): Boolean {
+        val known = knownDevices.find(deviceId)
+        val label = name.trim().ifEmpty { model }
+        when {
+            known?.allowed == false -> {
+                Log.i(TAG, "Refused blocked AirPlay sender: $label ($model)")
+                return false
+            }
+            known == null && activeSettings.access == ReceiverSettings.ACCESS_CONFIRM -> {
+                Log.i(TAG, "New AirPlay sender needs approval: $label ($model)")
+                _deviceRequest.value = DeviceRequest(deviceId, label, model)
+                return false
+            }
+        }
+        Log.i(TAG, "AirPlay sender: $label ($model)")
+        knownDevices.put(KnownDevice(deviceId, label, model, allowed = true))
+        // Admitted: a PIN it was entering, or a request it made, is done with.
+        hidePairingPin()
+        if (_deviceRequest.value?.deviceId == deviceId) _deviceRequest.value = null
+        val previous = airPlaySenderId
+        airPlaySender = label
+        airPlaySenderId = deviceId
+        if (previous.isNotEmpty() && deviceId != previous) onSenderTakeover()
+        return true
+    }
+
+    private val knownDevices = KnownDevices(context)
+
+    /** A new device asking to cast, while new devices need approval; [allowed] once it is. */
+    data class DeviceRequest(val deviceId: String, val name: String, val model: String, val allowed: Boolean = false)
+    private val _deviceRequest = kotlinx.coroutines.flow.MutableStateFlow<DeviceRequest?>(null)
+    val deviceRequest: kotlinx.coroutines.flow.StateFlow<DeviceRequest?> = _deviceRequest
+
+    /** Allows or blocks the device that asked; allowed, it casts when it tries again. */
+    fun answerDeviceRequest(allow: Boolean) {
+        val request = _deviceRequest.value ?: return
+        knownDevices.put(KnownDevice(request.deviceId, request.name, request.model, allowed = allow))
+        Log.i(TAG, "${if (allow) "Allowed" else "Blocked"} AirPlay sender ${request.name}")
+        _deviceRequest.value = if (allow) request.copy(allowed = true) else null
+    }
+
+    fun dismissDeviceRequest() {
+        _deviceRequest.value = null
+    }
+
+    /** Devices that have cast here, for Settings. */
+    fun knownDevices(): List<KnownDevice> = knownDevices.load()
+
+    fun setDeviceAllowed(deviceId: String, allowed: Boolean) {
+        knownDevices.find(deviceId)?.let { knownDevices.put(it.copy(allowed = allowed)) }
+    }
+
+    /**
+     * Forgets every device: allowed and blocked ones, and those paired by PIN, which then
+     * pair again. Casting stops if PIN pairings were forgotten (the receiver restarts).
+     */
+    fun forgetDevices() {
+        knownDevices.clear()
+        if (pairedDevices.load().isNotEmpty()) forgetPairedDevices()
+    }
+
+    /**
      * Another device took the session over (Allow takeover): its connection opens before the
-     * first one's closes, so no session ends or starts. What is on screen is the new sender's
+     * first one's closes, so no session ends or starts. Told apart by device ID, as two phones
+     * may share a name. What is on screen is the new sender's
      * now, and what was playing was the old one's.
      */
     private fun onSenderTakeover() {

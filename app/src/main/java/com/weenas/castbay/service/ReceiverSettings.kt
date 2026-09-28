@@ -14,9 +14,10 @@ data class ReceiverSettings(
     /** "Auto" offers H.265 when the TV decodes it in hardware; otherwise H.264 only. */
     val videoCodec: String = CODEC_AUTO,
     /**
-     * Who may cast: [ACCESS_OPEN] anyone on the network; [ACCESS_PIN] a new device enters a PIN
-     * shown on the TV, once, and is remembered ([PairedDevices]); [ACCESS_PASSWORD] every device
-     * enters [password].
+     * Who may cast: [ACCESS_OPEN] anyone on the network; [ACCESS_CONFIRM] a new device once
+     * allowed on the TV ([KnownDevices]); [ACCESS_PIN] a new device enters a PIN shown on the TV,
+     * once, and is remembered ([PairedDevices]); [ACCESS_PASSWORD] every device enters
+     * [password]. Devices blocked in [KnownDevices] are refused whatever this is.
      */
     val access: String = ACCESS_OPEN,
     /** The password (digits) for [ACCESS_PASSWORD]; kept while another access is chosen. */
@@ -71,7 +72,9 @@ data class ReceiverSettings(
     fun needsRestartComparedTo(previous: ReceiverSettings): Boolean =
         withoutLiveSettings() != previous.withoutLiveSettings()
 
-    private fun withoutLiveSettings() = copy(showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true)
+    private fun withoutLiveSettings() = copy(
+        showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true
+    )
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
     fun maxFps(): Int = if (frameRate == "30 FPS") 30 else 60
@@ -104,9 +107,10 @@ data class ReceiverSettings(
         val VIDEO_CODECS = listOf(CODEC_AUTO, CODEC_H264_ONLY)
 
         const val ACCESS_OPEN = "open"
+        const val ACCESS_CONFIRM = "confirm"
         const val ACCESS_PIN = "pin"
         const val ACCESS_PASSWORD = "password"
-        val ACCESS_MODES = listOf(ACCESS_OPEN, ACCESS_PIN, ACCESS_PASSWORD)
+        val ACCESS_MODES = listOf(ACCESS_OPEN, ACCESS_CONFIRM, ACCESS_PIN, ACCESS_PASSWORD)
 
         /** UxPlay requires client-access passwords of at least 4 characters. */
         const val MIN_PASSWORD_LENGTH = 4

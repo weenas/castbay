@@ -54,8 +54,12 @@ object AirPlayNative {
     var videoPlaybackListener: VideoPlaybackListener? = null
     /** (dacpId, activeRemote) of a sender that accepts remote-control commands. */
     var remoteControlListener: ((String, String) -> Unit)? = null
-    /** (name, model) of a sender setting up a session, e.g. ("eason的iPhone", "iPhone15,2"). */
-    var clientListener: ((String, String) -> Unit)? = null
+    /**
+     * (deviceId, name, model) of a sender setting up a session, e.g. ("AA:BB:...", "eason的iPhone",
+     * "iPhone15,2"); returns whether to admit it. Called on the protocol's only thread, so it
+     * must answer at once.
+     */
+    var clientListener: ((String, String, String) -> Boolean)? = null
     /** The sender's heartbeat, every two seconds while it is connected. */
     var feedbackListener: (() -> Unit)? = null
     /** A PIN for a new sender to enter (PIN pairing), to show on the TV. */
@@ -152,9 +156,8 @@ object AirPlayNative {
     }
 
     @JvmStatic
-    fun onClient(name: ByteArray, model: ByteArray) {
-        clientListener?.invoke(String(name, Charsets.UTF_8), String(model, Charsets.UTF_8))
-    }
+    fun onClient(deviceId: String, name: ByteArray, model: ByteArray): Boolean =
+        clientListener?.invoke(deviceId, String(name, Charsets.UTF_8), String(model, Charsets.UTF_8)) ?: true
 
     @JvmStatic
     fun onFeedback() {

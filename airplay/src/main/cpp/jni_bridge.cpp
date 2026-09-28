@@ -327,21 +327,36 @@ void audioSetProgress(void *, uint32_t *start, uint32_t *current, uint32_t *end)
 }
 void videoReportSize(void *, float *, float *, float *, float *) {}
 void mirrorVideoRunning(void *, bool) {}
-/* A sender setting up a session: its name ("eason的iPhone") and model ("iPhone15,2"), shown on
- * the TV. Passed as UTF-8 bytes: NewStringUTF expects modified UTF-8, which emoji break. */
+/* Names ("eason的iPhone") and models ("iPhone15,2") go to Java as UTF-8 bytes: NewStringUTF
+ * expects modified UTF-8, which emoji break. */
 jbyteArray utf8Bytes(JNIEnv *env, const char *text) {
     jsize length = text ? static_cast<jsize>(strlen(text)) : 0;
     jbyteArray bytes = env->NewByteArray(length);
     if (bytes && length) env->SetByteArrayRegion(bytes, 0, length, reinterpret_cast<const jbyte *>(text));
     return bytes;
 }
-void reportClientRequest(void *, char *, char *model, char *name, bool *admit) {
+/*
+ * A sender setting up a session: the app decides at once whether to admit it (a blocked
+ * device, or a new one while new devices need approval, is not). It can't wait for an answer
+ * on the TV: UxPlay serves every connection on this one thread.
+ */
+void reportClientRequest(void *, char *deviceid, char *model, char *name, bool *admit) {
     *admit = true;
     JNIEnv *env = currentEnv();
-    if (!env) return;
+    if (!env || !g_native_class || !g_on_client) return;
+    jstring id = env->NewStringUTF(deviceid ? deviceid : "");
     jbyteArray jname = utf8Bytes(env, name);
     jbyteArray jmodel = utf8Bytes(env, model);
-    if (jname && jmodel) callStatic(g_on_client, jname, jmodel);
+    if (id && jname && jmodel) {
+        *admit = env->CallStaticBooleanMethod(g_native_class, g_on_client, id, jname, jmodel) == JNI_TRUE;
+        if (env->ExceptionCheck()) {
+            env->ExceptionDescribe();
+            env->ExceptionClear();
+            *admit = true;
+        }
+        if (!*admit) LOGI("Refused a sender's session");
+    }
+    if (id) env->DeleteLocalRef(id);
     if (jname) env->DeleteLocalRef(jname);
     if (jmodel) env->DeleteLocalRef(jmodel);
 }
@@ -717,7 +732,7 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *) {
     g_on_video_stop = env->GetStaticMethodID(local, "onVideoStop", "()V");
     g_playback_info = env->GetStaticMethodID(local, "playbackInfo", "()[D");
     g_on_remote_control = env->GetStaticMethodID(local, "onRemoteControl", "(Ljava/lang/String;Ljava/lang/String;)V");
-    g_on_client = env->GetStaticMethodID(local, "onClient", "([B[B)V");
+    g_on_client = env->GetStaticMethodID(local, "onClient", "(Ljava/lang/String;[B[B)Z");
     g_on_feedback = env->GetStaticMethodID(local, "onFeedback", "()V");
     g_on_pin = env->GetStaticMethodID(local, "onPin", "(Ljava/lang/String;)V");
     g_on_paired = env->GetStaticMethodID(local, "onPaired", "(Ljava/lang/String;Ljava/lang/String;[B)V");

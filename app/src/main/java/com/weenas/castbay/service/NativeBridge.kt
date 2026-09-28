@@ -24,7 +24,8 @@ class NativeBridge(
     private val audioInfo: AudioInfoListener,
     private val videoPlayback: VideoPlaybackListener,
     private val onRemoteControl: (dacpId: String, activeRemote: String) -> Unit,
-    private val onClient: (name: String, model: String) -> Unit,
+    /** Whether to admit a sender setting up a session; see [AirPlayNative.clientListener]. */
+    private val onClient: (deviceId: String, name: String, model: String) -> Boolean,
     private val onFeedback: () -> Unit,
     private val onPin: (pin: String) -> Unit,
     private val onPaired: (PairedDevice) -> Unit,

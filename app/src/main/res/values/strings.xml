@@ -171,10 +171,20 @@
     <string name="access_pin">PIN</string>
     <string name="access_password">Password</string>
     <string name="setting_pin_note">The first time a device casts, it enters a PIN shown on the TV; after that it is remembered.</string>
-    <string name="setting_paired_devices">Paired devices: %1$d</string>
-    <string name="setting_forget_devices">Forget all</string>
-    <string name="setting_forget_confirm">Press again to forget</string>
+    <string name="setting_forget_confirm">Press again to remove</string>
     <string name="pairing_pin_title">Enter this PIN on your device</string>
     <string name="pairing_pin_help">Needed once: the device will be remembered.</string>
     <string name="close">Close</string>
+    <string name="setting_devices">Devices that have cast</string>
+    <string name="setting_devices_note">Blocked devices can’t cast. Removed devices are new again: the next time they cast, they are confirmed or enter a PIN, as chosen above.</string>
+    <string name="setting_devices_none">None yet</string>
+    <string name="device_allow">Allow</string>
+    <string name="device_block">Block</string>
+    <string name="setting_forget_known">Remove all</string>
+    <string name="device_request_title">“%1$s” wants to cast to this TV</string>
+    <string name="device_request_help">You can change this later in Settings.</string>
+    <string name="device_request_allowed">“%1$s” is allowed</string>
+    <string name="device_request_try_again">Cast again from the device to start.</string>
+    <string name="access_confirm">Confirm</string>
+    <string name="setting_confirm_note">The first time a device casts, it must be allowed on the TV, then cast again.</string>
 </resources>

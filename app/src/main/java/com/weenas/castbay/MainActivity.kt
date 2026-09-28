@@ -75,11 +75,8 @@ private fun Screens() {
 
     when (currentScreen) {
         "mirror" -> MirrorScreen(viewModel = viewModel)
-        "settings" -> SettingsScreen(
-            viewModel = viewModel,
-            onBack = { currentScreen = "mirror" }
-        )
-        "help" -> HelpScreen(viewModel = viewModel, onBack = { currentScreen = "mirror" })
-        "about" -> AboutScreen(onBack = { currentScreen = "mirror" })
+        "settings" -> SettingsScreen(viewModel = viewModel)
+        "help" -> HelpScreen(viewModel = viewModel)
+        "about" -> AboutScreen()
     }
 }

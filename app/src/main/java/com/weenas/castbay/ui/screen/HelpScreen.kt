@@ -62,7 +62,7 @@ private val TOPICS = listOf(
  * something doesn't work. Topics are cards the remote moves between, which scrolls the page.
  */
 @Composable
-fun HelpScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
+fun HelpScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
     val name = settings.advertisedName
     val firstTopic = remember { FocusRequester() }
@@ -85,11 +85,6 @@ fun HelpScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                         Text(stringResource(R.string.help), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Color.White)
                         Text(stringResource(R.string.help_more, WEBSITE_URL.removePrefix("https://")), fontSize = 16.sp, color = Color.Gray)
                     }
-                    HomeButton(
-                        stringResource(R.string.action_back),
-                        Modifier.onFocusChanged { if (it.isFocused) scope.launch { gridState.animateScrollToItem(0) } },
-                        onClick = onBack
-                    )
                 }
             }
             TOPICS.forEachIndexed { index, topic ->

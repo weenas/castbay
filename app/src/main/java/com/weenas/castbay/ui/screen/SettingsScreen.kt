@@ -51,7 +51,7 @@ private enum class SettingsTab { CONNECTION, MIRRORING, PLAYBACK, GENERAL }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
+fun SettingsScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
     // Kept across the recreation a language change causes, so the General page stays open.
     var tab by rememberSaveable { mutableStateOf(SettingsTab.CONNECTION) }
@@ -73,8 +73,8 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     }
     AppBackground {
         Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
-            // The title, the tabs (one focus stop: Left and Right switch pages, Down enters one)
-            // and Back, on one line.
+            // The title and the tabs (one focus stop: Left and Right switch pages, Down enters
+            // one). No Back button: the remote's Back key leaves, as on other TV apps.
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(stringResource(R.string.settings), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Spacer(modifier = Modifier.width(32.dp))
@@ -84,8 +84,6 @@ fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
                     display = { stringResource(it.title) },
                     modifier = Modifier.focusRequester(tabsFocus)
                 ) { tab = it }
-                Spacer(modifier = Modifier.weight(1f))
-                HomeButton(stringResource(R.string.action_back), onClick = onBack)
             }
             Spacer(modifier = Modifier.height(20.dp))
             // A page fits a 540 dp tall screen; it scrolls in case (e.g. the password field).

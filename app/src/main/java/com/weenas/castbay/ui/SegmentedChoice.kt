@@ -3,6 +3,11 @@ package com.weenas.castbay.ui
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
@@ -68,8 +73,20 @@ fun <T> SegmentedChoice(
     val selected = choices.indexOf(value).coerceAtLeast(0)
     fun pick(index: Int) = onSelected(choices[Math.floorMod(index, choices.size)])
 
-    val thumbX by animateDpAsState(bounds[selected]?.first ?: 0.dp, tween(220), label = "thumbX")
-    val thumbWidth by animateDpAsState(bounds[selected]?.second ?: 0.dp, tween(220), label = "thumbWidth")
+    // The highlight starts where it belongs, sliding only when the choice changes: animating
+    // from where it was before the segments were measured made it sweep in from the left
+    // whenever the control appeared (e.g. Settings recreated for a new language).
+    val placed = bounds[selected] != null
+    var slide by remember { mutableStateOf(false) }
+    LaunchedEffect(placed) {
+        if (placed) {
+            withFrameNanos { }
+            slide = true
+        }
+    }
+    val motion = if (slide) tween<Dp>(220) else snap()
+    val thumbX by animateDpAsState(bounds[selected]?.first ?: 0.dp, motion, label = "thumbX")
+    val thumbWidth by animateDpAsState(bounds[selected]?.second ?: 0.dp, motion, label = "thumbWidth")
     // Unfocused, the choice stays visible but quieter, so the focused row stands out.
     val thumbColor by animateColorAsState(
         if (focused) MaterialTheme.colorScheme.primary else Color(0xFF5A5470),

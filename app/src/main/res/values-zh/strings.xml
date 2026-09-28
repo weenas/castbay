@@ -173,10 +173,20 @@
     <string name="access_pin">PIN 码</string>
     <string name="access_password">密码</string>
     <string name="setting_pin_note">设备第一次投屏时，需要输入电视上显示的 PIN 码，之后会记住这台设备。</string>
-    <string name="setting_paired_devices">已配对设备：%1$d 台</string>
-    <string name="setting_forget_devices">全部忘记</string>
     <string name="setting_forget_confirm">再按一次确认</string>
     <string name="pairing_pin_title">请在设备上输入 PIN 码</string>
     <string name="pairing_pin_help">只需输入一次，之后会记住这台设备。</string>
     <string name="close">关闭</string>
+    <string name="setting_devices">投屏过的设备</string>
+    <string name="setting_devices_note">被拒绝的设备无法投屏。移除后，设备再次投屏时视为新设备，需按上面的验证方式重新确认或输入 PIN 码。</string>
+    <string name="setting_devices_none">暂无</string>
+    <string name="device_allow">允许</string>
+    <string name="device_block">拒绝</string>
+    <string name="setting_forget_known">全部移除</string>
+    <string name="device_request_title">“%1$s”想要投屏到这台电视</string>
+    <string name="device_request_help">之后可以在设置中修改。</string>
+    <string name="device_request_allowed">已允许“%1$s”</string>
+    <string name="device_request_try_again">请在设备上重新投屏。</string>
+    <string name="access_confirm">电视确认</string>
+    <string name="setting_confirm_note">设备第一次投屏时，需要在电视上允许，然后在设备上重新投屏。</string>
 </resources>

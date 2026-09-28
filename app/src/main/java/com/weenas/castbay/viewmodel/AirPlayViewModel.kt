@@ -40,11 +40,17 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     /** Puts the PIN away; the device gets a new one when it tries again. */
     fun dismissPairingPin() = manager.hidePairingPin()
 
-    /** Senders paired by PIN. */
-    fun pairedDevices() = manager.pairedDevices()
+    /** A new device asking to cast, while new devices need approval. */
+    val deviceRequest get() = manager.deviceRequest
+    fun answerDeviceRequest(allow: Boolean) = manager.answerDeviceRequest(allow)
+    fun dismissDeviceRequest() = manager.dismissDeviceRequest()
 
-    /** Senders enter a PIN again; the receiver restarts with a new pairing identity. */
-    fun forgetPairedDevices() = manager.forgetPairedDevices()
+    /** Devices that have cast here, each allowed or blocked. */
+    fun knownDevices() = manager.knownDevices()
+    fun setDeviceAllowed(deviceId: String, allowed: Boolean) = manager.setDeviceAllowed(deviceId, allowed)
+    /** Forgets every device, allowed, blocked or paired by PIN: they are new again. */
+    fun forgetDevices() = manager.forgetDevices()
+
     val appVersion: String = com.weenas.castbay.util.AppVersion.name(application)
 
     fun canReadWifiName() = networkMonitor.canReadSsid()

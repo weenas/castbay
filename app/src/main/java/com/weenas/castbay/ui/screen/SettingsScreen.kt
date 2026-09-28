@@ -146,6 +146,51 @@ private fun ColumnScope.ConnectionPage(settings: ReceiverSettings, viewModel: Ai
         listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
         display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
     ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
+    CardDivider()
+    KnownDevicesSetting(viewModel)
+}
+
+/**
+ * Devices that have cast here, each allowed or blocked, and removing them all (two presses):
+ * they are new again, confirming or entering a PIN the next time.
+ */
+@Composable
+private fun KnownDevicesSetting(viewModel: AirPlayViewModel) {
+    var devices by remember { mutableStateOf(viewModel.knownDevices()) }
+    var armed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) {
+        if (armed) {
+            delay(RESET_CONFIRM_MS)
+            armed = false
+        }
+    }
+    SettingLine(stringResource(R.string.setting_devices)) {
+        if (devices.isEmpty()) {
+            Text(stringResource(R.string.setting_devices_none), color = Color.Gray, fontSize = 18.sp)
+        } else {
+            HomeButton(stringResource(if (armed) R.string.setting_forget_confirm else R.string.setting_forget_known), muted = !armed) {
+                if (!armed) {
+                    armed = true
+                } else {
+                    armed = false
+                    viewModel.forgetDevices()
+                    devices = emptyList()
+                }
+            }
+        }
+    }
+    devices.forEach { device ->
+        ChoiceSetting(
+            device.name,
+            device.allowed,
+            listOf(true, false),
+            display = { stringResource(if (it) R.string.device_allow else R.string.device_block) }
+        ) { allowed ->
+            viewModel.setDeviceAllowed(device.deviceId, allowed)
+            devices = viewModel.knownDevices()
+        }
+    }
+    Text(stringResource(R.string.setting_devices_note), color = Color.Gray, fontSize = 14.sp)
 }
 
 /** Each Auto names what it gives on this TV with the other settings. */
@@ -282,14 +327,14 @@ private val CARD_BACKGROUND = Color(0x1FFFFFFF)
 private val CARD_DIVIDER = Color(0x14FFFFFF)
 
 @Composable
-fun ChoiceSetting(
+fun <T> ChoiceSetting(
     label: String,
-    value: String,
-    choices: List<String>,
+    value: T,
+    choices: List<T>,
     /** How a stored value is shown, in the TV's language. */
-    display: @Composable (String) -> String = { settingValueLabel(it) },
+    display: @Composable (T) -> String = { settingValueLabel(it.toString()) },
     modifier: Modifier = Modifier,
-    onSelected: (String) -> Unit
+    onSelected: (T) -> Unit
 ) {
     SettingLine(label) {
         SegmentedChoice(value, choices, display, modifier, onSelected)
@@ -389,6 +434,7 @@ private const val TAKEOVER_ALLOW = "Let it take over"
 @Composable
 fun accessLabel(access: String): String = stringResource(
     when (access) {
+        ReceiverSettings.ACCESS_CONFIRM -> R.string.access_confirm
         ReceiverSettings.ACCESS_PIN -> R.string.access_pin
         ReceiverSettings.ACCESS_PASSWORD -> R.string.access_password
         else -> R.string.access_open
@@ -396,8 +442,8 @@ fun accessLabel(access: String): String = stringResource(
 )
 
 /**
- * Who may cast: anyone, a new device entering a PIN shown on the TV, or every device entering
- * a password. The password only takes effect once a valid one is saved, so choosing it can't
+ * Who may cast: anyone, a new device allowed on the TV, a new device entering a PIN shown on
+ * the TV, or every device entering a password. The password only takes effect once a valid one is saved, so choosing it can't
  * lock everyone out by accident.
  */
 @Composable
@@ -419,39 +465,11 @@ fun AccessSetting(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
         }
     }
     when (shown) {
-        ReceiverSettings.ACCESS_PIN -> PairedDevicesSetting(viewModel)
+        ReceiverSettings.ACCESS_CONFIRM -> Text(stringResource(R.string.setting_confirm_note), color = Color.Gray, fontSize = 14.sp)
+        ReceiverSettings.ACCESS_PIN -> Text(stringResource(R.string.setting_pin_note), color = Color.Gray, fontSize = 14.sp)
         ReceiverSettings.ACCESS_PASSWORD -> PasswordSetting(settings.password) { password ->
             choosingPassword = false
             viewModel.updateSettings { it.copy(password = password, access = ReceiverSettings.ACCESS_PASSWORD) }
-        }
-    }
-}
-
-/** How many devices have paired by PIN, and forgetting them (two presses), so they pair again. */
-@Composable
-private fun PairedDevicesSetting(viewModel: AirPlayViewModel) {
-    var count by remember { mutableStateOf(viewModel.pairedDevices().size) }
-    var armed by remember { mutableStateOf(false) }
-    LaunchedEffect(armed) {
-        if (armed) {
-            delay(RESET_CONFIRM_MS)
-            armed = false
-        }
-    }
-    Text(stringResource(R.string.setting_pin_note), color = Color.Gray, fontSize = 14.sp)
-    SettingLine(stringResource(R.string.setting_paired_devices, count)) {
-        HomeButton(
-            stringResource(if (armed) R.string.setting_forget_confirm else R.string.setting_forget_devices),
-            muted = !armed || count == 0
-        ) {
-            if (count == 0) return@HomeButton
-            if (!armed) {
-                armed = true
-            } else {
-                armed = false
-                viewModel.forgetPairedDevices()
-                count = 0
-            }
         }
     }
 }

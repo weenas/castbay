@@ -13,6 +13,7 @@ import androidx.compose.ui.res.imageResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.weenas.castbay.service.AppLanguage
 import com.weenas.castbay.ui.LocalBackgroundImage
+import com.weenas.castbay.ui.DeviceRequestDialog
 import com.weenas.castbay.ui.PairingPinDialog
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
@@ -84,5 +85,7 @@ private fun Screens() {
         }
         val pairingPin by viewModel.pairingPin.collectAsState()
         PairingPinDialog(pairingPin, onDismiss = viewModel::dismissPairingPin)
+        val deviceRequest by viewModel.deviceRequest.collectAsState()
+        DeviceRequestDialog(deviceRequest, onAnswer = viewModel::answerDeviceRequest, onDismiss = viewModel::dismissDeviceRequest)
     }
 }

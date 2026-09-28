@@ -81,6 +81,13 @@
     <string name="section_connection_note">修改这些设置会重启接收器，已连接的设备需要重新连接。</string>
     <string name="section_mirroring">屏幕镜像</string>
     <string name="section_mirroring_note">只影响屏幕镜像，不影响 App 投送的视频和音乐。修改后会重启接收器。</string>
+    <string name="section_general">通用</string>
+    <string name="setting_language">语言</string>
+    <string name="language_system">跟随系统</string>
+    <string name="setting_reset">恢复默认设置</string>
+    <string name="setting_reset_action">恢复</string>
+    <string name="setting_reset_confirm">再按一次确认</string>
+    <string name="setting_reset_note">设备名称、投屏密码等所有设置都会恢复为刚安装时的状态。</string>
     <string name="section_playback">播放</string>
     <string name="section_playback_note">立即生效。投屏时按遥控器的下键或菜单键也可以修改。</string>
     <string name="setting_device_name">设备名称</string>

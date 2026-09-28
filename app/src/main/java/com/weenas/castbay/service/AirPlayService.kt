@@ -36,6 +36,9 @@ class AirPlayService : Service() {
         }
     }
 
+    // Its notification in the language chosen in Settings.
+    override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(AppLanguage.wrap(newBase))
+
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()

@@ -1,14 +1,13 @@
 package com.weenas.castbay.ui.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -47,210 +46,236 @@ import androidx.compose.foundation.interaction.PressInteraction
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 import kotlinx.coroutines.delay
 
+/** Settings' pages, one tab each. */
+private enum class SettingsTab { CONNECTION, MIRRORING, PLAYBACK, GENERAL }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: AirPlayViewModel, onBack: () -> Unit) {
     val settings by viewModel.settings.collectAsState()
-    // Starts on the device name: its keyboard opens only on OK (TextSetting), not on focus.
-    val firstChoice = remember { FocusRequester() }
-    val listState = rememberLazyListState()
+    // Kept across the recreation a language change causes, so the General page stays open.
+    var tab by rememberSaveable { mutableStateOf(SettingsTab.CONNECTION) }
+    // Starts on the tabs: no page scrolls, and no text field opens the keyboard. After a
+    // language change recreates the screen, back on the language choice instead.
+    val tabsFocus = remember { FocusRequester() }
+    val languageFocus = remember { FocusRequester() }
+    var refocusLanguage by rememberSaveable { mutableStateOf(false) }
     LaunchedEffect(Unit) {
-        runCatching { firstChoice.requestFocus() }
-        // Focusing the field scrolls it into view over the next frames, pushing the title
-        // half off the top; once that has settled, back to the top.
-        delay(FOCUS_SCROLL_SETTLE_MS)
-        listState.scrollToItem(0)
+        runCatching { (if (refocusLanguage) languageFocus else tabsFocus).requestFocus() }
+        refocusLanguage = false
     }
-    // Same look as the home screen: no app bar, a title with a button beside it.
+    val activity = LocalContext.current as? android.app.Activity
+    val recreateForLanguage = {
+        refocusLanguage = true
+        // The app's resources are chosen as the activity starts (MainActivity.attachBaseContext).
+        activity?.recreate()
+        Unit
+    }
     AppBackground {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = 48.dp, vertical = 24.dp)
-        ) {
-            item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        stringResource(R.string.settings),
-                        fontSize = 40.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White,
-                        modifier = Modifier.weight(1f)
-                    )
-                    HomeButton(stringResource(R.string.action_back), onClick = onBack)
-                }
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
+            // The title, the tabs (one focus stop: Left and Right switch pages, Down enters one)
+            // and Back, on one line.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(stringResource(R.string.settings), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Spacer(modifier = Modifier.width(32.dp))
+                SegmentedChoice(
+                    tab,
+                    SettingsTab.entries,
+                    display = { stringResource(it.title) },
+                    modifier = Modifier.focusRequester(tabsFocus)
+                ) { tab = it }
+                Spacer(modifier = Modifier.weight(1f))
+                HomeButton(stringResource(R.string.action_back), onClick = onBack)
             }
-            item { Spacer(modifier = Modifier.height(4.dp)) }
-            // Connection settings change what senders see, so the receiver restarts for them;
-            // playback settings apply live and are also in the quick menu during playback.
-            item { SectionTitle(stringResource(R.string.section_connection), stringResource(R.string.section_connection_note)) }
-            item {
-                SettingsCard(Segment.Top) {
-                    DeviceNameSetting(value = settings.deviceName, modifier = Modifier.focusRequester(firstChoice)) { name ->
-                        viewModel.updateSettings { it.copy(deviceName = name) }
-                    }
-                    SwitchSetting(
-                        stringResource(R.string.setting_append_tv_name),
-                        settings.appendTvName
-                    ) { enabled ->
-                        viewModel.updateSettings { it.copy(appendTvName = enabled) }
-                    }
-                    Text(
-                        stringResource(R.string.setting_append_tv_name_note, settings.advertisedName),
-                        color = Color.Gray,
-                        fontSize = 14.sp
-                    )
+            Spacer(modifier = Modifier.height(20.dp))
+            // A page fits a 540 dp tall screen; it scrolls in case (e.g. the password field).
+            Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
+                tab.note?.let {
+                    Text(stringResource(it), color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(start = 8.dp, bottom = 10.dp))
                 }
-            }
-            item {
-                SettingsCard(Segment.Middle) {
-                    SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
-                        viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
+                SettingsCard {
+                    when (tab) {
+                        SettingsTab.CONNECTION -> ConnectionPage(settings, viewModel)
+                        SettingsTab.MIRRORING -> MirroringPage(settings, viewModel)
+                        SettingsTab.PLAYBACK -> PlaybackPage(settings, viewModel)
+                        SettingsTab.GENERAL -> GeneralPage(settings, viewModel, languageFocus, recreateForLanguage)
                     }
                 }
             }
-            item {
-                SettingsCard(Segment.Middle) {
-                    AccessSetting(settings, viewModel)
-                }
-            }
-            item {
-                SettingsCard(Segment.Bottom) {
-                    ChoiceSetting(
-                        stringResource(R.string.setting_takeover),
-                        if (settings.allowTakeover) TAKEOVER_ALLOW else TAKEOVER_REFUSE,
-                        listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
-                        display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
-                    ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
-                }
-            }
-            // Screen mirroring only: apps' AirPlay and DLNA video and music aren't affected. Each
-            // Auto names what it gives on this TV with the other settings.
-            item { SectionTitle(stringResource(R.string.section_mirroring), stringResource(R.string.section_mirroring_note)) }
-            item {
-                SettingsCard(Segment.Top) {
-                    val autoProfile = remember(settings) {
-                        viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
-                    }
-                    val autoLabel = stringResource(R.string.auto_with, "${autoProfile.height}p")
-                    ChoiceSetting(
-                        stringResource(R.string.setting_resolution),
-                        settings.resolution,
-                        ReceiverSettings.RESOLUTIONS,
-                        display = { if (it == ReceiverSettings.RESOLUTION_AUTO) autoLabel else settingValueLabel(it) }
-                    ) {
-                        viewModel.updateSettings { current -> current.copy(resolution = it) }
-                    }
-                }
-            }
-            item {
-                SettingsCard(Segment.Middle) {
-                    val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
-                    val autoLabel = stringResource(R.string.auto_with, stringResource(R.string.frame_rate_fps, autoFps))
-                    ChoiceSetting(
-                        stringResource(R.string.setting_frame_rate),
-                        settings.frameRate,
-                        ReceiverSettings.FRAME_RATES,
-                        display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) autoLabel else settingValueLabel(it) }
-                    ) {
-                        viewModel.updateSettings { current -> current.copy(frameRate = it) }
-                    }
-                }
-            }
-            item {
-                SettingsCard(Segment.Bottom) {
-                    // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
-                    val autoProfile = remember(settings) {
-                        viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
-                    }
-                    val autoLabel = stringResource(R.string.auto_with, if (autoProfile.h265) "H.265" else "H.264")
-                    ChoiceSetting(
-                        stringResource(R.string.setting_codec),
-                        settings.videoCodec,
-                        ReceiverSettings.VIDEO_CODECS,
-                        display = { if (it == ReceiverSettings.CODEC_AUTO) autoLabel else settingValueLabel(it) }
-                    ) {
-                        viewModel.updateSettings { current -> current.copy(videoCodec = it) }
-                    }
-                }
-            }
-            item { SectionTitle(stringResource(R.string.section_playback), stringResource(R.string.section_playback_note)) }
-            item {
-                SettingsCard(Segment.Top) {
-                    SwitchSetting(stringResource(R.string.setting_stats), settings.showStats) { enabled ->
-                        viewModel.updateSettings { it.copy(showStats = enabled) }
-                    }
-                }
-            }
-            item {
-                SettingsCard(Segment.Middle) {
-                    SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics) { enabled ->
-                        viewModel.updateSettings { it.copy(showLyrics = enabled) }
-                    }
-                    Text(stringResource(R.string.setting_lyrics_note), color = Color.Gray, fontSize = 14.sp)
-                }
-            }
-            item {
-                SettingsCard(Segment.Bottom) {
-                    ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
-                        viewModel.updateSettings { current -> current.copy(pictureMode = it) }
-                    }
-                }
-            }
-}
+        }
     }
 }
 
-/**
- * A group's title, above its card: larger than the settings' names and in the accent colour,
- * so the groups stand apart; its note says what the group's settings affect.
- */
+private val SettingsTab.title
+    get() = when (this) {
+        SettingsTab.CONNECTION -> R.string.section_connection
+        SettingsTab.MIRRORING -> R.string.section_mirroring
+        SettingsTab.PLAYBACK -> R.string.section_playback
+        SettingsTab.GENERAL -> R.string.section_general
+    }
+
+/** What a page's settings affect, above its card. */
+private val SettingsTab.note: Int?
+    get() = when (this) {
+        // They change what senders see, so the receiver restarts for them.
+        SettingsTab.CONNECTION -> R.string.section_connection_note
+        // Screen mirroring only: apps' AirPlay and DLNA video and music aren't affected.
+        SettingsTab.MIRRORING -> R.string.section_mirroring_note
+        // Live, and also in the quick menu during playback.
+        SettingsTab.PLAYBACK -> R.string.section_playback_note
+        SettingsTab.GENERAL -> null
+    }
+
 @Composable
-private fun SectionTitle(title: String, note: String?) {
-    Column(modifier = Modifier.padding(start = 8.dp, top = 32.dp, bottom = 10.dp)) {
-        Text(title, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = SECTION_ACCENT)
-        note?.let { Text(it, color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(top = 2.dp)) }
+private fun ColumnScope.ConnectionPage(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
+    DeviceNameSetting(value = settings.deviceName) { name ->
+        viewModel.updateSettings { it.copy(deviceName = name) }
+    }
+    SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
+        viewModel.updateSettings { it.copy(appendTvName = enabled) }
+    }
+    Text(stringResource(R.string.setting_append_tv_name_note, settings.advertisedName), color = Color.Gray, fontSize = 14.sp)
+    CardDivider()
+    SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
+        viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
+    }
+    CardDivider()
+    AccessSetting(settings, viewModel)
+    CardDivider()
+    ChoiceSetting(
+        stringResource(R.string.setting_takeover),
+        if (settings.allowTakeover) TAKEOVER_ALLOW else TAKEOVER_REFUSE,
+        listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
+        display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
+    ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
+}
+
+/** Each Auto names what it gives on this TV with the other settings. */
+@Composable
+private fun ColumnScope.MirroringPage(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
+    val autoResolution = remember(settings) {
+        viewModel.mirroringProfile(settings.copy(resolution = ReceiverSettings.RESOLUTION_AUTO))
+    }
+    val resolutionAuto = stringResource(R.string.auto_with, "${autoResolution.height}p")
+    ChoiceSetting(
+        stringResource(R.string.setting_resolution),
+        settings.resolution,
+        ReceiverSettings.RESOLUTIONS,
+        display = { if (it == ReceiverSettings.RESOLUTION_AUTO) resolutionAuto else settingValueLabel(it) }
+    ) { viewModel.updateSettings { current -> current.copy(resolution = it) } }
+    CardDivider()
+    val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
+    val fpsAuto = stringResource(R.string.auto_with, stringResource(R.string.frame_rate_fps, autoFps))
+    ChoiceSetting(
+        stringResource(R.string.setting_frame_rate),
+        settings.frameRate,
+        ReceiverSettings.FRAME_RATES,
+        display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) fpsAuto else settingValueLabel(it) }
+    ) { viewModel.updateSettings { current -> current.copy(frameRate = it) } }
+    CardDivider()
+    // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
+    val autoCodec = remember(settings) {
+        viewModel.mirroringProfile(settings.copy(videoCodec = ReceiverSettings.CODEC_AUTO))
+    }
+    val codecAuto = stringResource(R.string.auto_with, if (autoCodec.h265) "H.265" else "H.264")
+    ChoiceSetting(
+        stringResource(R.string.setting_codec),
+        settings.videoCodec,
+        ReceiverSettings.VIDEO_CODECS,
+        display = { if (it == ReceiverSettings.CODEC_AUTO) codecAuto else settingValueLabel(it) }
+    ) { viewModel.updateSettings { current -> current.copy(videoCodec = it) } }
+}
+
+@Composable
+private fun ColumnScope.PlaybackPage(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
+    SwitchSetting(stringResource(R.string.setting_stats), settings.showStats) { enabled ->
+        viewModel.updateSettings { it.copy(showStats = enabled) }
+    }
+    CardDivider()
+    SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics) { enabled ->
+        viewModel.updateSettings { it.copy(showLyrics = enabled) }
+    }
+    Text(stringResource(R.string.setting_lyrics_note), color = Color.Gray, fontSize = 14.sp)
+    CardDivider()
+    ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
+        viewModel.updateSettings { current -> current.copy(pictureMode = it) }
     }
 }
 
-private const val FOCUS_SCROLL_SETTLE_MS = 250L
-
-/** Where a list item sits in its group's card: the card is drawn a piece per item. */
-private enum class Segment { Single, Top, Middle, Bottom }
-
-/**
- * A group's settings on one card, like the home screen's info panel. Each list item draws
- * its piece ([segment]), with a thin line between settings.
- */
 @Composable
-private fun SettingsCard(segment: Segment, content: @Composable ColumnScope.() -> Unit) {
-    val radius = 20.dp
-    val shape = when (segment) {
-        Segment.Single -> RoundedCornerShape(radius)
-        Segment.Top -> RoundedCornerShape(topStart = radius, topEnd = radius)
-        Segment.Middle -> RectangleShape
-        Segment.Bottom -> RoundedCornerShape(bottomStart = radius, bottomEnd = radius)
+private fun ColumnScope.GeneralPage(
+    settings: ReceiverSettings,
+    viewModel: AirPlayViewModel,
+    languageFocus: FocusRequester,
+    onLanguageChanged: () -> Unit
+) {
+    ChoiceSetting(
+        stringResource(R.string.setting_language),
+        settings.language,
+        ReceiverSettings.LANGUAGES,
+        display = {
+            when (it) {
+                ReceiverSettings.LANGUAGE_ZH -> "中文"
+                ReceiverSettings.LANGUAGE_EN -> "English"
+                else -> stringResource(R.string.language_system)
+            }
+        },
+        modifier = Modifier.focusRequester(languageFocus)
+    ) { language ->
+        viewModel.updateSettings { it.copy(language = language) }
+        onLanguageChanged()
     }
-    val first = segment == Segment.Single || segment == Segment.Top
-    val last = segment == Segment.Single || segment == Segment.Bottom
+    CardDivider()
+    // Two presses, so a stray OK doesn't wipe the device name and password.
+    var armed by remember { mutableStateOf(false) }
+    LaunchedEffect(armed) {
+        if (armed) {
+            delay(RESET_CONFIRM_MS)
+            armed = false
+        }
+    }
+    SettingLine(stringResource(R.string.setting_reset)) {
+        HomeButton(stringResource(if (armed) R.string.setting_reset_confirm else R.string.setting_reset_action), muted = !armed) {
+            if (!armed) {
+                armed = true
+            } else {
+                armed = false
+                val languageChanged = settings.language != ReceiverSettings.LANGUAGE_SYSTEM
+                viewModel.resetSettings()
+                if (languageChanged) onLanguageChanged()
+            }
+        }
+    }
+    Text(stringResource(R.string.setting_reset_note), color = Color.Gray, fontSize = 14.sp)
+}
+
+private const val RESET_CONFIRM_MS = 3000L
+
+/** A page's settings on one card, like the home screen's info panel. */
+@Composable
+private fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(shape)
+            .clip(RoundedCornerShape(20.dp))
             .background(CARD_BACKGROUND)
-            .drawBehind {
-                if (!first) {
-                    val inset = 24.dp.toPx()
-                    drawLine(CARD_DIVIDER, Offset(inset, 0f), Offset(size.width - inset, 0f), strokeWidth = 1.dp.toPx())
-                }
-            }
-            .padding(start = 24.dp, end = 16.dp, top = if (first) 12.dp else 6.dp, bottom = if (last) 12.dp else 6.dp),
+            .padding(start = 24.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
         content = content
     )
 }
 
-private val SECTION_ACCENT = Color(0xFFB9A6FF)
+/** A thin line between the settings on a card. */
+@Composable
+private fun CardDivider() {
+    Spacer(
+        modifier = Modifier
+            .padding(top = 6.dp, bottom = 6.dp, end = 8.dp)
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(CARD_DIVIDER)
+    )
+}
+
 /** As the home screen's info panel. */
 private val CARD_BACKGROUND = Color(0x1FFFFFFF)
 private val CARD_DIVIDER = Color(0x14FFFFFF)

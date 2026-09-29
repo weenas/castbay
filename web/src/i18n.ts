@@ -53,6 +53,9 @@ export function pagePath(lang: Lang, page: PageName): string {
 
 export const APK_URL = 'https://github.com/weenas/castbay/releases/latest/download/CastBay.apk';
 
+/** The SHA-256 fingerprint of the certificate every release APK is signed with (CN=CastBay, O=weenas). */
+export const CERT_SHA256 = 'a33fd34b57c7320068ccbcc2a5ee0c58e6112288048a80e609c98bc68a753d8d';
+
 /** A date as the pages write it: "September 29, 2026" or "2026 年 9 月 29 日". */
 export function formatDate(lang: Lang, date: Date): string {
   return lang === 'zh'

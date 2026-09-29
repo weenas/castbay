@@ -1,0 +1,37 @@
+name: Compatibility report / 兼容性反馈
+description: CastBay works (or doesn't) on a TV, phone or app not on the list. / 在列表之外的设备或 App 上能否使用。
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The list: https://castbay.weenas.com/compatibility · 兼容性列表：https://castbay.weenas.com/zh/compatibility
+  - type: input
+    id: version
+    attributes:
+      label: CastBay version / 映湾版本
+      placeholder: "1.0.80"
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: TV, phone or app / 电视、手机或 App
+      placeholder: "TCL 55C735, Android 11 · or · QQ Music on iPhone"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: Does it work? / 能用吗？
+      options:
+        - Works / 可以用
+        - Works, with problems / 可以用，但有问题
+        - Doesn't work / 不能用
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Details / 详情
+      description: What you tried, and anything that didn't work. / 试了哪些功能，哪些有问题。

@@ -34,8 +34,11 @@ const nav =
 nav.push({ href: 'https://github.com/weenas/castbay', text: 'GitHub' });
 
 // Every page but this one, then the releases and the source.
-const footerPages: PageName[] = ['index', 'guide', 'tech', 'changelog', 'privacy'];
-const labels = { index: s.home, guide: s.guide, tech: s.tech, changelog: s.changelog, privacy: s.privacy };
+const footerPages: PageName[] = ['index', 'guide', 'tech', 'changelog', 'compatibility', 'feedback', 'privacy'];
+const labels = {
+  index: s.home, guide: s.guide, tech: s.tech, changelog: s.changelog,
+  compatibility: s.compatibility, feedback: s.feedback, privacy: s.privacy,
+};
 const footerLinks = [
   ...footerPages.filter((p) => p !== page).map((p) => ({ href: pagePath(lang, p), text: labels[p] })),
   { href: 'https://github.com/weenas/castbay/releases', text: s.releases },

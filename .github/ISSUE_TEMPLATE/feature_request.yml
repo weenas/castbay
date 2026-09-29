@@ -1,0 +1,14 @@
+name: Feature request / 功能建议
+description: An idea for CastBay. / 对映湾的建议。
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What you'd like / 希望实现什么
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why it would help / 为什么需要

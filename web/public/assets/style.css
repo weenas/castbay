@@ -206,6 +206,12 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 .doc h3 { font-size: 17px; margin: 22px 0 6px; }
 .doc code { font-size: .92em; }
 .doc p, .doc li { color: var(--text-2); }
+/* Tables in documents (the compatibility list): scroll sideways on phones rather than squeeze. */
+.doc table { display: block; overflow-x: auto; width: 100%; border-collapse: collapse; margin: 12px 0 20px; font-size: 15px; }
+.doc th, .doc td { text-align: left; padding: 9px 14px 9px 0; border-bottom: 1px solid var(--card-border); color: var(--text-2); vertical-align: top; }
+.doc th { color: var(--text); font-weight: 600; white-space: nowrap; }
+.doc td:first-child { color: var(--text); white-space: nowrap; }
+
 /* The changelog: each release's date beside its version. */
 .release-date { font-size: 15px; font-weight: 400; color: var(--text-3); margin-left: 10px; }
 .doc section.release { padding: 0; margin-top: 36px; }

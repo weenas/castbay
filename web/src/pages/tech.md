@@ -37,7 +37,7 @@ On a 4K TV with a hardware H.265 decoder, CastBay offers the phone H.265 up to 4
 
 Turn on **Show stats** (Settings → Playback, or the quick menu while playing) to see what's going on. While mirroring, the phone also reports on itself:
 
-- **Video**: what the TV receives and decodes (codec, resolution, frame rate, bitrate) and frames it dropped.
+- **Video**: what the TV receives and decodes (codec, resolution, frame rate, bitrate), how long each frame takes from arriving to being shown (decode), and frames it dropped.
 - **Sender**: frames the phone sends against its target (e.g. 60/60), how many its screen drew (fewer while nothing moves, which is normal), and frames it dropped.
 - **Network**: round trip time, packet loss, and the bandwidth used against what the phone thinks the link can carry.
 

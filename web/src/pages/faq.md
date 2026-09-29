@@ -48,6 +48,10 @@ Mac screen mirroring works. Music from the Mac's Music app doesn't: it uses an e
 
 To stay in step with the phone. An iPhone sends music about two seconds ahead, stamped with when each part should be heard, and CastBay plays it then, as an Apple TV does. That keeps lyrics in sync and lets pausing and resuming pick up where they left off. See [How it works](/tech).
 
+### Screen mirroring lags a little. Is that normal?
+
+Some delay is, as with an Apple TV: the sender has to capture and compress its screen before the TV can show it. Two things shorten it. First, switch the TV's picture mode to **Game**: TVs process the picture to make films look better, and on our Sony that alone took 160 ms. Second, if you mirror a Mac to a 4K TV, set **Maximum Resolution** to 1080p: a Mac encodes 1080p much faster than 4K. In our test (MacBook to a Sony 4K TV) mirroring lagged about 350 ms in the standard picture mode, 190 ms in Game mode, and under 100 ms in Game mode at 1080p. The stats overlay shows how much of it the TV's decoding takes (decode, usually 10–20 ms).
+
 ### A video won't play. Why?
 
 Videos cast from apps are fetched by the TV itself. If your phone needs a proxy or VPN to open them (YouTube, for example), the TV needs one too. Screen mirroring isn't affected: the picture comes from the phone.

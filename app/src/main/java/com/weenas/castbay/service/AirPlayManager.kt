@@ -42,7 +42,8 @@ class AirPlayManager private constructor(private val context: Context) {
         }
     }
 
-    private val nativeBridge = NativeBridge(
+    /** Internal for debug builds' simulated sender, which calls its callbacks as the protocol does. */
+    internal val nativeBridge = NativeBridge(
         onConnectionStarted = ::onNativeConnectionStarted,
         onVideoData = { data, pts, isH265 -> if (!endedFromTv) onNativeVideoData(data, pts, isH265) },
         onAudioData = { data, _ -> if (!endedFromTv) audioRenderer.render(data) },

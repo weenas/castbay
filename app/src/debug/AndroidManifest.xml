@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            Debug builds only: plays the part of an AirPlay sender, driven from adb (see
+            tools/sim). DUMP is held by the shell, not by other apps.
+        -->
+        <receiver
+            android:name=".debug.SimulatorReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.weenas.castbay.SIMULATE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

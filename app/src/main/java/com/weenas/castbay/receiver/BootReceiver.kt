@@ -12,6 +12,8 @@ import com.weenas.castbay.service.ReceiverSettingsStore
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action !in BOOT_ACTIONS) return
+        // A debug build beside the release app waits to be opened for a test.
+        if (com.weenas.castbay.BuildConfig.DEBUG) return
         Log.i(TAG, "Starting AirPlay receiver after boot (${intent.action})")
         try {
             ContextCompat.startForegroundService(

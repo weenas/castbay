@@ -52,6 +52,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs beside the release app, with the simulated sender (src/debug) for tests.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-dev"
+        }
         release {
             // R8 drops the unused parts of Compose, Media3 and Kotlin (about 2/3 of the dex).
             isMinifyEnabled = true

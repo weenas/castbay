@@ -30,7 +30,7 @@ class DeviceNameTest {
     fun appendsTheTvName() {
         assertEquals("CastBay (客厅电视)", DeviceName.compose("CastBay", "客厅电视"))
         assertEquals("CastBay", DeviceName.compose("CastBay", ""))
-        assertEquals("CastBay (BRAVIA)", DeviceName.compose(" ", "BRAVIA"))
+        assertEquals("${DeviceName.BRAND} (BRAVIA)", DeviceName.compose(" ", "BRAVIA"))
         // Not twice when the chosen name already has it.
         assertEquals("客厅电视", DeviceName.compose("客厅电视", "客厅电视"))
     }
@@ -46,8 +46,8 @@ class DeviceNameTest {
     @Test
     fun settingsAdvertiseTheComposedName() {
         val settings = ReceiverSettings(tvName = "BRAVIA")
-        assertEquals("CastBay (BRAVIA)", settings.advertisedName)
-        assertEquals("CastBay", settings.copy(appendTvName = false).advertisedName)
+        assertEquals("${DeviceName.BRAND} (BRAVIA)", settings.advertisedName)
+        assertEquals(DeviceName.BRAND, settings.copy(appendTvName = false).advertisedName)
         assertTrue(settings.copy(appendTvName = false).needsRestartComparedTo(settings))
     }
 }

@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/Doc.astro
 lang: en
+toc: true
 page: guide
 title: 'User guide – CastBay'
 description: 'How to use CastBay: installing and updating it, casting from iPhone, iPad, Mac and Android, the remote and quick menu, and every setting.'

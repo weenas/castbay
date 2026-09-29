@@ -1,6 +1,7 @@
 ---
 layout: ../../layouts/Doc.astro
 lang: zh
+toc: true
 page: guide
 title: '使用说明 – 映湾 CastBay'
 description: '映湾的使用说明：安装与更新、从 iPhone、iPad、Mac 和安卓手机投屏、遥控器和快捷菜单，以及每一个设置项。'

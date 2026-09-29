@@ -1,6 +1,7 @@
 ---
 layout: ../layouts/Doc.astro
 lang: en
+toc: true
 page: tech
 title: 'How CastBay works – CastBay'
 description: 'How CastBay works: the three ways to cast, how your phone finds the TV, why AirPlay music is timed, reading the mirroring stats, and who can cast.'

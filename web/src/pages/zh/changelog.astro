@@ -16,6 +16,7 @@ const entries = (await releases('zh')).map((r) => ({ depth: 2, slug: `v${r.data.
       <summary>校验下载的安装包</summary>
       <p>下面每个版本都列出了 APK 的 SHA-256 校验值，可以和下载的文件对比：Mac 或 Linux 上运行 <code>shasum -a 256 CastBay-1.0.79.apk</code>，Windows 上运行 <code>certutil -hashfile CastBay-1.0.79.apk SHA256</code>。（最新版的 <code>CastBay.apk</code> 和带版本号的那个文件完全相同。）</p>
       <p>所有版本都用同一个证书签名（CN=CastBay, O=weenas），证书的 SHA-256 指纹是 <code>{CERT_SHA256}</code>，可以用 Android SDK 里的 <code>apksigner verify --print-certs</code> 查看。安卓也不允许用其他证书签名的安装包覆盖更新映湾。</p>
+      <p>如果想退回旧版本，需要先卸载映湾（安卓不允许用旧版本覆盖安装新版本），再安装旧版本，设置也会随之清除。</p>
     </details>
   </Fragment>
   <Changelog lang="zh" />

@@ -1,13 +1,15 @@
 ---
 // Every release's notes in one language, newest first, each under its version and date, with
-// its APK's SHA-256 when GitHub could be asked for it.
+// its APK's download link and SHA-256 when GitHub could be asked for them.
 import { render } from 'astro:content';
 import { formatDate, type Lang } from '../i18n';
 import { releases } from '../releases';
-import { apkDigests } from '../checksums';
+import { releaseApks } from '../checksums';
 
 const { lang } = Astro.props as { lang: Lang };
-const digests = await apkDigests();
+const apks = await releaseApks();
+const download = lang === 'zh' ? '下载' : 'Download';
+const prerelease = lang === 'zh' ? '（预发布版）' : ' (pre-release)';
 const entries = await Promise.all(
   (await releases(lang)).map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
 );
@@ -16,8 +18,14 @@ const entries = await Promise.all(
   <section class="release" id={`v${entry.data.version}`}>
     <h2>{entry.data.version} <span class="release-date">{formatDate(lang, entry.data.date)}</span></h2>
     <Content />
-    {digests.has(entry.data.version) && (
-      <p class="checksum">SHA-256 (CastBay-{entry.data.version}.apk): <code>{digests.get(entry.data.version)}</code></p>
-    )}
+    {apks.has(entry.data.version) && (() => {
+      const apk = apks.get(entry.data.version)!;
+      const file = `CastBay-${entry.data.version}.apk`;
+      return (
+        <p class="checksum">
+          <a href={apk.url}>{download} {file}</a>{apk.prerelease && prerelease} · SHA-256: <code>{apk.sha256}</code>
+        </p>
+      );
+    })()}
   </section>
 ))}

@@ -5,6 +5,7 @@
 // reader on wide screens, a folded list under the title on narrow ones. `faq: true` tells
 // search engines its ### headings are questions answered by what follows each (FAQPage).
 import Page from './Page.astro';
+import TocPage, { type TocEntry } from '../components/TocPage.astro';
 
 const { frontmatter, headings = [], compiledContent } = Astro.props;
 const { lang, page, title, description, heading, intro, toc, faq } = frontmatter;
@@ -21,52 +22,17 @@ if (faq) {
   }));
   faqData = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: questions }, null, 2);
 }
-const entries: { depth: number; slug: string; text: string }[] = toc
+const entries: TocEntry[] = toc
   ? headings.filter((h: { depth: number }) => h.depth === 2 || h.depth === 3)
   : [];
-const label = lang === 'zh' ? '目录' : 'Contents';
 ---
 <Page lang={lang} page={page} title={title} description={description}>
 {faqData && <script is:inline type="application/ld+json" slot="head" set:html={faqData} />}
-<main class:list={['wrap doc', { 'has-toc': entries.length > 0 }]}>
-  {entries.length > 0 && (
-    <nav class="toc toc-side" aria-label={label}>
-      <div class="toc-title">{label}</div>
-      <ol>{entries.map((h) => <li class={`toc-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
-    </nav>
-  )}
-  <article class="doc-body">
+<TocPage lang={lang} entries={entries}>
+  <Fragment slot="top">
     <h1>{heading}</h1>
     <p class="date" set:html={intro}></p>
-    {entries.length > 0 && (
-      <details class="toc toc-inline">
-        <summary>{label}</summary>
-        <ol>{entries.map((h) => <li class={`toc-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
-      </details>
-    )}
+  </Fragment>
 <slot />
-  </article>
-</main>
-{entries.length > 0 && (
-  <script is:inline>
-    // Marks the section being read in the sidebar: the last heading scrolled up to just under
-    // the header, or the last one of all at the bottom of the page (short final sections
-    // never reach the top).
-    (() => {
-      const links = [...document.querySelectorAll('.toc-side a')];
-      const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
-      const update = () => {
-        let current = 0;
-        targets.forEach((el, i) => { if (el && el.getBoundingClientRect().top < 160) current = i; });
-        if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = links.length - 1;
-        links.forEach((a, i) => (i === current ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
-      };
-      addEventListener('scroll', update, { passive: true });
-      update();
-      // Picking a section on a phone folds the list away again.
-      document.querySelectorAll('.toc-inline a').forEach((a) =>
-        a.addEventListener('click', () => a.closest('details').removeAttribute('open')));
-    })();
-  </script>
-)}
+</TocPage>
 </Page>

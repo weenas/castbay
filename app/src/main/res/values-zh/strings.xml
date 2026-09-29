@@ -120,6 +120,14 @@
     <string name="about_update">有新版本 %1$s 可以更新</string>
     <string name="about_scan_update">用手机扫码下载新版本</string>
     <string name="about_scan">用手机扫码打开官网</string>
+    <string name="update_install">下载并安装 %1$s</string>
+    <string name="update_downloading">正在下载… %1$d%%</string>
+    <string name="update_downloading_unknown">正在下载…</string>
+    <string name="update_installing">请在安装界面中确认更新。第一次更新时，需要允许映湾安装应用。</string>
+    <string name="update_failed_download">下载失败，请检查网络后重试。</string>
+    <string name="update_failed_checksum">下载的文件和发布版本的校验值不一致，没有安装，请重试。</string>
+    <string name="update_failed_installer">这台电视没有可用的安装程序，请扫码下载新版本。</string>
+    <string name="update_retry">重试</string>
 
     <!-- Notification -->
     <string name="notification_channel">映湾服务</string>

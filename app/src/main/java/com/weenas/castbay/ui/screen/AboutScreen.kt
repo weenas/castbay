@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
@@ -16,7 +18,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.weenas.castbay.BuildConfig
 import com.weenas.castbay.R
+import com.weenas.castbay.service.UpdateInstall
 import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.BrandSlogan
 import com.weenas.castbay.ui.BrandTitle
@@ -61,6 +65,7 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                         color = UPDATE_COLOR,
                         modifier = Modifier.padding(start = 120.dp, bottom = 4.dp)
                     )
+                    if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) UpdateAction(viewModel, it.version)
                 }
                 AboutLine(stringResource(R.string.about_website), WEBSITE_URL.removePrefix("https://"))
                 AboutLine(stringResource(R.string.about_privacy), PRIVACY_URL)
@@ -89,6 +94,48 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                     )
                 }
             }
+        }
+    }
+}
+
+/**
+ * Downloads and installs the new version when pressed, with how far it has got; focused on
+ * opening, so OK is all it takes.
+ */
+@Composable
+private fun UpdateAction(viewModel: AirPlayViewModel, version: String) {
+    val state by viewModel.updateInstall.collectAsState()
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    Column(modifier = Modifier.padding(start = 120.dp, top = 8.dp, bottom = 12.dp)) {
+        val busy = state is UpdateInstall.Downloading
+        HomeButton(
+            text = when (val s = state) {
+                is UpdateInstall.Downloading -> s.progress?.let { stringResource(R.string.update_downloading, (it * 100).toInt()) }
+                    ?: stringResource(R.string.update_downloading_unknown)
+                is UpdateInstall.Failed -> stringResource(R.string.update_retry)
+                else -> stringResource(R.string.update_install, version)
+            },
+            muted = busy,
+            modifier = Modifier.focusRequester(focus),
+            onClick = { if (!busy) viewModel.installUpdate() }
+        )
+        val note = when (val s = state) {
+            UpdateInstall.Installing -> R.string.update_installing
+            is UpdateInstall.Failed -> when (s.reason) {
+                UpdateInstall.Reason.DOWNLOAD -> R.string.update_failed_download
+                UpdateInstall.Reason.CHECKSUM -> R.string.update_failed_checksum
+                UpdateInstall.Reason.INSTALLER -> R.string.update_failed_installer
+            }
+            else -> null
+        }
+        note?.let {
+            Text(
+                stringResource(it),
+                fontSize = 15.sp,
+                color = Color.White.copy(alpha = 0.75f),
+                modifier = Modifier.padding(top = 8.dp).widthIn(max = 520.dp)
+            )
         }
     }
 }

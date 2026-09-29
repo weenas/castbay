@@ -118,6 +118,14 @@
     <string name="about_update">Version %1$s is available</string>
     <string name="about_scan_update">Scan with your phone to download the new version</string>
     <string name="about_scan">Scan with your phone to open the website</string>
+    <string name="update_install">Download and install %1$s</string>
+    <string name="update_downloading">Downloading… %1$d%%</string>
+    <string name="update_downloading_unknown">Downloading…</string>
+    <string name="update_installing">Confirm the update in the installer. The first time, allow installing apps from CastBay.</string>
+    <string name="update_failed_download">The download failed. Check the network and try again.</string>
+    <string name="update_failed_checksum">The download doesn\'t match the release\'s checksum, so it wasn\'t installed. Try again.</string>
+    <string name="update_failed_installer">This TV has no installer CastBay can open. Scan the code to download the update instead.</string>
+    <string name="update_retry">Try again</string>
 
     <!-- Notification -->
     <string name="notification_channel">CastBay Service</string>

@@ -18,7 +18,7 @@ Colors: harbor `#6750A4` (dark `#A991FF`), boats `#C7B8FF` (dark `#E2D8FF`), wat
 ## Where they are used
 
 - **App**: `app/src/main/res/drawable/ic_castbay_mark.xml` (home and About screens), the adaptive launcher icon (`ic_launcher_foreground.xml` on `ic_launcher_background.xml`), the notification icon (`ic_notification.xml`), and the Android TV banners in `drawable-xhdpi`, `drawable-xxhdpi` and their `-zh` variants.
-- **Website**: `website/assets/logo.svg` (header and favicon), `favicon-32.png`, `apple-touch-icon.png` and the social preview `og.jpg`.
+- **Website**: `web/public/assets/logo.svg` (header and favicon), `favicon-32.png`, `apple-touch-icon.png` and the social preview `og.jpg`.
 - **README**: the header wordmark.
 
 The vector drawables copy the mark's SVG paths; if the mark changes, update them and regenerate the PNGs (for example with `rsvg-convert` and ImageMagick).

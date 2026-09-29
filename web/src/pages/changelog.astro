@@ -16,6 +16,7 @@ const entries = (await releases('en')).map((r) => ({ depth: 2, slug: `v${r.data.
       <summary>Verify your download</summary>
       <p>Each version below lists its APK's SHA-256. Compare it with the file you downloaded: <code>shasum -a 256 CastBay-1.0.79.apk</code> on a Mac or Linux, <code>certutil -hashfile CastBay-1.0.79.apk SHA256</code> on Windows. (<code>CastBay.apk</code>, the latest version, is the same file as its numbered one.)</p>
       <p>Every release is signed with the same certificate (CN=CastBay, O=weenas), whose SHA-256 fingerprint is <code>{CERT_SHA256}</code>. <code>apksigner verify --print-certs</code>, from the Android SDK, shows it. Android also refuses to update CastBay with an APK signed by any other.</p>
+      <p>To go back to an older version, uninstall CastBay first (Android won't install an older version over a newer one), then install it. Your settings are cleared with it.</p>
     </details>
   </Fragment>
   <Changelog lang="en" />

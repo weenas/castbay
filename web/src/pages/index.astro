@@ -1,6 +1,10 @@
 ---
 import Page from '../layouts/Page.astro';
-import { APK_URL } from '../i18n';
+import { APK_URL, formatDate } from '../i18n';
+import { releases } from '../releases';
+
+// The newest release, shown under the download button.
+const [latest] = await releases('en');
 ---
 <Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone' description='Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.'>
 <main>
@@ -21,6 +25,7 @@ import { APK_URL } from '../i18n';
         </a>
       </div>
       <p class="note">
+        Version {latest.data.version} · {formatDate('en', latest.data.date)} · <a href="/changelog">What's new</a><br>
         For Android TV / Google TV devices on Android 8.0 or later
       </p>
       <div class="chips">

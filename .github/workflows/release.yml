@@ -86,6 +86,27 @@ jobs:
             exit 1
           fi
 
+      # The release notes are the website's changelog entries for this version, in English
+      # then Chinese (web/src/content/releases/<lang>/<version>.md); a full release must have
+      # both. GitHub's list of merged pull requests follows them.
+      - name: Release notes from the changelog
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          : > "$notes"
+          for lang in en zh; do
+            file="web/src/content/releases/$lang/${VERSION%%-*}.md"
+            if [ ! -f "$file" ]; then
+              if [ "$PRERELEASE" = true ]; then continue; fi
+              echo "::error::No release notes in $file: add the changelog entry for this version"
+              exit 1
+            fi
+            if [ "$lang" = en ]; then echo "## What's new" >> "$notes"; else echo "## 更新内容" >> "$notes"; fi
+            # Everything after the front matter (the second ---).
+            awk 'n >= 2 { print } /^---$/ { n++ }' "$file" >> "$notes"
+            echo >> "$notes"
+          done
+          echo "NOTES_FILE=$notes" >> "$GITHUB_ENV"
+
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -101,6 +122,7 @@ jobs:
           gh release create "$GITHUB_REF_NAME" "${files[@]}" \
             --title "CastBay $VERSION" \
             "$kind" \
+            --notes-file "$NOTES_FILE" \
             --generate-notes
       - name: Clean up the key
         if: always()

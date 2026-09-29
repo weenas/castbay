@@ -41,10 +41,12 @@
     try { localStorage.setItem(KEY, lang); } catch (e) { /* private mode: the link still works */ }
   }
   var path = location.pathname;
+  // A page in both languages (the 404 page) stays put: there is no Chinese copy of it.
+  var bilingual = document.documentElement.hasAttribute('data-bilingual');
   var onChinese = path === '/zh' || path.indexOf('/zh/') === 0;
   var browserChinese = (navigator.language || '').toLowerCase().indexOf('zh') === 0;
   var preferred = saved() || (browserChinese ? 'zh' : 'en');
-  if (!onChinese && preferred === 'zh') {
+  if (!bilingual && !onChinese && preferred === 'zh') {
     location.replace('/zh' + (path === '/' ? '/' : path) + location.hash);
     return;
   }

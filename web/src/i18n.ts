@@ -1,6 +1,6 @@
 // The words the shared header and footer use, and where each page lives in each language.
 export type Lang = 'en' | 'zh';
-export type PageName = 'index' | 'guide' | 'tech' | 'privacy';
+export type PageName = 'index' | 'guide' | 'tech' | 'changelog' | 'privacy';
 
 export const BASE_URL = 'https://castbay.weenas.com';
 
@@ -18,6 +18,7 @@ export const strings = {
     guide: 'User guide',
     faq: 'FAQ',
     tech: 'How it works',
+    changelog: 'Changelog',
     privacy: 'Privacy',
     releases: 'Releases',
     trademarks: 'AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.',
@@ -35,6 +36,7 @@ export const strings = {
     guide: '使用说明',
     faq: '常见问题',
     tech: '技术原理',
+    changelog: '更新日志',
     privacy: '隐私政策',
     releases: '版本下载',
     trademarks: 'AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。',
@@ -50,3 +52,10 @@ export function pagePath(lang: Lang, page: PageName): string {
 }
 
 export const APK_URL = 'https://github.com/weenas/castbay/releases/latest/download/CastBay.apk';
+
+/** A date as the pages write it: "September 29, 2026" or "2026 年 9 月 29 日". */
+export function formatDate(lang: Lang, date: Date): string {
+  return lang === 'zh'
+    ? `${date.getUTCFullYear()} 年 ${date.getUTCMonth() + 1} 月 ${date.getUTCDate()} 日`
+    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' });
+}

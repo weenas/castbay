@@ -1,0 +1,17 @@
+---
+// Every release's notes in one language, newest first, each under its version and date.
+import { render } from 'astro:content';
+import { formatDate, type Lang } from '../i18n';
+import { releases } from '../releases';
+
+const { lang } = Astro.props as { lang: Lang };
+const entries = await Promise.all(
+  (await releases(lang)).map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
+);
+---
+{entries.map(({ entry, Content }) => (
+  <section class="release" id={`v${entry.data.version}`}>
+    <h2>{entry.data.version} <span class="release-date">{formatDate(lang, entry.data.date)}</span></h2>
+    <Content />
+  </section>
+))}

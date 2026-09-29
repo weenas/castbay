@@ -1,0 +1,11 @@
+---
+import Page from '../../layouts/Page.astro';
+import Changelog from '../../components/Changelog.astro';
+---
+<Page lang="zh" page="changelog" title="更新日志 – 映湾 CastBay" description="映湾每个版本的更新内容。">
+<main class="wrap doc">
+    <h1>更新日志</h1>
+    <p class="date" set:html={`每个版本更新了什么。最新版可以直接下载 <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">CastBay.apk</a>，其他版本在<a href="https://github.com/weenas/castbay/releases">发布页</a>。`}></p>
+    <Changelog lang="zh" />
+</main>
+</Page>

@@ -1,0 +1,11 @@
+---
+import Page from '../layouts/Page.astro';
+import Changelog from '../components/Changelog.astro';
+---
+<Page lang="en" page="changelog" title="Changelog – CastBay" description="What's new in each version of CastBay.">
+<main class="wrap doc">
+    <h1>Changelog</h1>
+    <p class="date" set:html={`What changed in each version. Download the latest from <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">CastBay.apk</a>, or any version from the <a href="https://github.com/weenas/castbay/releases">releases page</a>.`}></p>
+    <Changelog lang="en" />
+</main>
+</Page>

@@ -1,6 +1,10 @@
 ---
 import Page from '../../layouts/Page.astro';
-import { APK_URL } from '../../i18n';
+import { APK_URL, formatDate } from '../../i18n';
+import { releases } from '../../releases';
+
+// The newest release, shown under the download button.
+const [latest] = await releases('zh');
 ---
 <Page lang="zh" page="index" title='映湾 CastBay：安卓电视 AirPlay 投屏接收器，iPhone 投屏到电视' description='免费开源的 Android TV 投屏 App：把 iPhone、iPad、Mac 的屏幕镜像、音乐和视频通过 AirPlay 投到安卓电视和电视盒子，也支持哔哩哔哩、爱奇艺等 App 的 DLNA 投屏。无广告，无需账号。'>
 <main>
@@ -23,6 +27,7 @@ import { APK_URL } from '../../i18n';
         </a>
       </div>
       <p class="note">
+        版本 {latest.data.version} · {formatDate('zh', latest.data.date)} · <a href="/zh/changelog">更新内容</a><br>
         适用于 Android 8.0 及以上的 Android TV / Google TV 设备
       </p>
       <div class="chips">

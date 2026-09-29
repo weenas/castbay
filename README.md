@@ -62,6 +62,29 @@ For an existing clone, initialize the pinned dependencies before building:
 git submodule update --init --recursive
 ```
 
+## Testing without a phone
+
+Debug builds (`com.weenas.castbay.debug`, listed as "CastBay Dev") install beside the release app
+and carry a simulated AirPlay sender. It feeds the app through the same callbacks the protocol
+library uses, so admission, decoding, timed music playback, the screens, menus and stats all run
+for real; only the network, pairing and encryption are skipped (those still need a real iPhone or
+Mac). `tools/sim` drives it and the TV's remote over adb:
+
+```bash
+tools/sim install              # build, install and open the debug app
+tools/sim mirror 30            # 30 s of a test picture: a clock, a frame counter, a moving block
+tools/sim music 60 "My Song"   # a generated tune with title, artist, album and cover
+tools/sim pause                # pause / resume, as the phone would
+tools/sim video                # an HLS video (Apple's sample, with audio tracks and subtitles)
+tools/sim stop                 # the sender disconnects
+tools/sim key down right ok    # remote keys: up down left right ok back home menu playpause
+tools/sim shot screen.png      # screenshot
+tools/sim log                  # CastBay's recent log
+```
+
+Use `-s SERIAL` (or `ANDROID_SERIAL`) to pick the TV or an emulator. The debug app doesn't start
+at boot, so it only runs while you test.
+
 ## Project Structure
 
 ```

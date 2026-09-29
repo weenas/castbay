@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# Tests CastBay without a phone: drives the debug build's simulated AirPlay sender and the
+# TV's remote over adb, and takes screenshots. See "Testing without a phone" in README.md.
+#
+#   tools/sim [-s SERIAL] COMMAND [ARGS]
+#
+#   install                     build the debug app, install it and open it
+#   open                        open the debug app
+#   mirror [SECONDS] [WxH] [FPS]   mirror a test picture (default: until stopped, 1920x1080, 30)
+#   music [SECONDS] [TITLE]     play a generated tune with title, artist, album and cover
+#   pause | resume              pause or resume that music, as the phone would
+#   video [URL]                 cast a video URL (default: Apple's HLS sample)
+#   stop                        the sender stops casting
+#   key KEY...                  press remote keys: up down left right ok back home menu
+#                               playpause, or any KEYCODE_* name
+#   shot [FILE]                 screenshot (default: sim-shot.png)
+#   log [LINES]                 CastBay's recent log lines
+#
+# SERIAL defaults to $ANDROID_SERIAL, else the only device adb sees.
+set -euo pipefail
+
+PACKAGE=com.weenas.castbay.debug
+ACTION=com.weenas.castbay.SIMULATE
+cd "$(dirname "$0")/.."
+
+if [[ "${1:-}" == "-s" ]]; then
+  export ANDROID_SERIAL="$2"
+  shift 2
+fi
+cmd="${1:-}"
+[[ -n "$cmd" ]] || { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
+shift
+
+simulate() {
+  adb shell am broadcast -a "$ACTION" -p "$PACKAGE" --es cmd "$@" >/dev/null
+}
+
+keycode() {
+  case "$1" in
+    up) echo KEYCODE_DPAD_UP ;;
+    down) echo KEYCODE_DPAD_DOWN ;;
+    left) echo KEYCODE_DPAD_LEFT ;;
+    right) echo KEYCODE_DPAD_RIGHT ;;
+    ok) echo KEYCODE_DPAD_CENTER ;;
+    back) echo KEYCODE_BACK ;;
+    home) echo KEYCODE_HOME ;;
+    menu) echo KEYCODE_MENU ;;
+    playpause) echo KEYCODE_MEDIA_PLAY_PAUSE ;;
+    *) echo "$1" ;;
+  esac
+}
+
+open_app() {
+  # Wakes the TV from its screensaver first.
+  adb shell input keyevent KEYCODE_WAKEUP
+  adb shell am start -n "$PACKAGE/com.weenas.castbay.MainActivity" >/dev/null
+}
+
+case "$cmd" in
+  install)
+    JAVA_HOME="${JAVA_HOME:-/Applications/Android Studio.app/Contents/jbr/Contents/Home}" \
+      ./gradlew -q assembleDebug
+    adb install -r app/build/outputs/apk/debug/app-debug.apk
+    open_app
+    ;;
+  open) open_app ;;
+  mirror)
+    size="${2:-1920x1080}"
+    simulate mirror --ei seconds "${1:-0}" --ei width "${size%x*}" --ei height "${size#*x}" --ei fps "${3:-30}"
+    ;;
+  music)
+    if [[ -n "${2:-}" ]]; then simulate music --ei seconds "${1:-180}" --es title "$2"
+    else simulate music --ei seconds "${1:-180}"; fi
+    ;;
+  pause | resume | stop) simulate "$cmd" ;;
+  video)
+    if [[ -n "${1:-}" ]]; then simulate video --es url "$1"; else simulate video; fi
+    ;;
+  key)
+    for key in "$@"; do
+      adb shell input keyevent "$(keycode "$key")"
+      sleep 0.3
+    done
+    ;;
+  shot)
+    file="${1:-sim-shot.png}"
+    adb exec-out screencap -p > "$file"
+    echo "$file"
+    ;;
+  log)
+    adb logcat -d | grep -E "CastBay|AirPlayManager|AndroidRuntime" | tail -n "${1:-40}"
+    ;;
+  *)
+    echo "Unknown command: $cmd" >&2
+    exit 1
+    ;;
+esac

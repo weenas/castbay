@@ -1028,7 +1028,9 @@ fun StatsOverlay(viewModel: AirPlayViewModel, modifier: Modifier = Modifier) {
                     StatsFormat.fps(video.fps), StatsFormat.bitrate(video.bitrateBps)
                 ).joinToString(" · ")
             )
-            StatsLine("", listOfNotNull(video.decoder, "dropped ${video.droppedFrames}").joinToString(" · "))
+            StatsLine("", listOfNotNull(
+                video.decoder, video.decodeLatencyMs?.let { "decode $it ms" }, "dropped ${video.droppedFrames}"
+            ).joinToString(" · "))
         }
         current.audio?.let { audio ->
             StatsLine(

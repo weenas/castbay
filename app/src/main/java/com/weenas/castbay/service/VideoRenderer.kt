@@ -3,8 +3,11 @@ package com.weenas.castbay.service
 import android.content.Context
 import android.media.MediaCodec
 import androidx.media3.exoplayer.video.PlaceholderSurface
+import android.media.MediaCodecInfo
 import android.media.MediaFormat
+import android.os.Build
 import android.os.Handler
+import android.os.SystemClock
 import android.os.HandlerThread
 import com.weenas.castbay.util.Log
 import android.view.Surface
@@ -56,6 +59,9 @@ class VideoRenderer(
     @Volatile private var decoderName: String? = null
     @Volatile private var frameWidth = 0
     @Volatile private var frameHeight = 0
+    /** When each queued frame arrived, by presentation time, to time it through the decoder. */
+    private val arrivals = HashMap<Long, Long>()
+    @Volatile private var decodeLatencyMs: Double? = null
 
     private class Frame(val data: ByteArray, val presentationTimeUs: Long, val flags: Int) {
         val isConfig: Boolean get() = flags and MediaCodec.BUFFER_FLAG_CODEC_CONFIG != 0
@@ -135,6 +141,8 @@ class VideoRenderer(
             }
 
             awaitingKeyFrame = false
+            if (arrivals.size >= MAX_PENDING_FRAMES) arrivals.clear()
+            arrivals[presentationTimeUs] = SystemClock.elapsedRealtimeNanos()
             val flags = if (nal.hasRandomAccess) MediaCodec.BUFFER_FLAG_KEY_FRAME else 0
             enqueueLocked(Frame(accessUnit, presentationTimeUs, flags))
             return true
@@ -151,7 +159,8 @@ class VideoRenderer(
             fps = inputRate.perSecond(),
             bitrateBps = inputRate.bitsPerSecond(),
             decoder = name,
-            droppedFrames = synchronized(lock) { droppedFrames }
+            droppedFrames = synchronized(lock) { droppedFrames },
+            decodeLatencyMs = decodeLatencyMs?.toInt()
         )
     }
 
@@ -168,6 +177,7 @@ class VideoRenderer(
             decoderName = null
             frameWidth = 0
             frameHeight = 0
+            decodeLatencyMs = null
             inputRate.reset()
             droppedFrames = 0
         }
@@ -217,7 +227,7 @@ class VideoRenderer(
         }
         try {
             decoder.setCallback(DecoderCallback(decoder), handler)
-            decoder.configure(MediaFormat.createVideoFormat(mimeType, width, height), target, null, 0)
+            decoder.configure(lowLatencyFormat(decoder), target, null, 0)
             codec = decoder
             renderedFrames = 0
             codecConfig?.let { pendingFrames.addFirst(Frame(it, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG)) }
@@ -232,6 +242,26 @@ class VideoRenderer(
         }
     }
 
+    /**
+     * Asks the decoder to output each frame as soon as it is decoded. Without this, TV decoders
+     * (MediaTek's among them) hold several frames back as if for smooth film playback, which
+     * mirroring feels as lag.
+     */
+    private fun lowLatencyFormat(decoder: MediaCodec): MediaFormat {
+        val format = MediaFormat.createVideoFormat(mimeType, width, height)
+        // Real-time priority: decode frames as they come rather than at a relaxed pace.
+        format.setInteger(MediaFormat.KEY_PRIORITY, 0)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val supported = runCatching {
+                decoder.codecInfo.getCapabilitiesForType(mimeType)
+                    .isFeatureSupported(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency)
+            }.getOrDefault(false)
+            Log.i(TAG, "${decoder.name} low-latency mode ${if (supported) "supported" else "not advertised"}")
+            format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
+        }
+        return format
+    }
+
     private fun placeholderLocked(): Surface? = placeholder ?: runCatching {
         PlaceholderSurface.newInstanceV17(appContext, false)
     }.onFailure { Log.w(TAG, "No placeholder surface; the decoder restarts on return", it) }
@@ -244,6 +274,7 @@ class VideoRenderer(
 
     private fun releaseCodecLocked() {
         freeInputs.clear()
+        arrivals.clear()
         // Frames buffered before any decoder existed are still decodable by the next one.
         val decoder = codec ?: return
         awaitingKeyFrame = true
@@ -279,6 +310,7 @@ class VideoRenderer(
                 try {
                     // Mirroring is live: show every decoded frame immediately.
                     mc.releaseOutputBuffer(index, info.size > 0)
+                    arrivals.remove(info.presentationTimeUs)?.let { recordDecodeLatency(it) }
                     if (info.size > 0 && renderedFrames++ == 0L) Log.i(TAG, "First video frame rendered")
                 } catch (error: IllegalStateException) {
                     Log.w(TAG, "Could not release output buffer", error)
@@ -314,6 +346,14 @@ class VideoRenderer(
                 if (!error.isTransient) restartCodecLocked()
             }
         }
+    }
+
+    /** A smoothed time from a frame's arrival to its release for display. */
+    private fun recordDecodeLatency(arrivedNanos: Long) {
+        val ms = (SystemClock.elapsedRealtimeNanos() - arrivedNanos) / 1_000_000.0
+        val previous = decodeLatencyMs
+        decodeLatencyMs = if (previous == null) ms else previous + (ms - previous) * 0.1
+        if (renderedFrames % 300 == 1L) Log.i(TAG, "Decode latency about ${decodeLatencyMs?.toInt()} ms")
     }
 
     private class NalSummary(

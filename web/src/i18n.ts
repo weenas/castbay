@@ -53,7 +53,8 @@ export function pagePath(lang: Lang, page: PageName): string {
   return page === 'index' ? prefix : prefix + page;
 }
 
-export const APK_URL = 'https://github.com/weenas/castbay/releases/latest/download/CastBay.apk';
+/** The latest APK, served by the site itself (see integrations/latest-apk.mjs); short enough to type on a TV. */
+export const APK_URL = 'https://castbay.weenas.com/apk';
 
 /** The SHA-256 fingerprint of the certificate every release APK is signed with (CN=CastBay, O=weenas). */
 export const CERT_SHA256 = 'a33fd34b57c7320068ccbcc2a5ee0c58e6112288048a80e609c98bc68a753d8d';

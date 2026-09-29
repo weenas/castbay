@@ -16,8 +16,11 @@ intro: 'Everything about using CastBay, from installing it to each setting. For 
 
 ## Install and update
 
-1. Download [CastBay.apk](https://github.com/weenas/castbay/releases/latest/download/CastBay.apk), the latest version (the website's Download APK button), or pick any version on the [releases page](https://github.com/weenas/castbay/releases).
-2. Copy it to a USB drive and plug that into the TV, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources; allow it.
+1. Get the latest CastBay.apk from **castbay.weenas.com/apk** (the website's Download APK button), or any version from the [changelog](/changelog). Then put it on the TV in whichever way suits it:
+   - **The TV's browser**: type `castbay.weenas.com/apk` in its address bar; the APK downloads, then open it.
+   - **A USB drive**: copy the APK onto it, plug it into the TV, and open the APK with the TV's file manager (ES File Explorer, for example).
+   - **From your phone**: apps such as Dangbei Assistant or Shafa Butler (当贝助手, 沙发管家) send an APK from the phone to the TV over the home network and install it.
+2. The first time, the TV may ask you to allow installing apps from unknown sources; allow it.
 3. Open CastBay from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on.
 
 **Updates**: when a newer version is out, a red dot appears on the home screen's About button, and About shows the new version and a QR code; scan it with your phone to open the download page. Install the new APK over the old one; your settings are kept.

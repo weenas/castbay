@@ -22,9 +22,17 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 85
-        versionName = "1.0.85"
+        versionCode = 86
+        versionName = "1.0.86"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // The in-app updater (download and install from About). App-store builds turn it off
+        // with -Pcastbay.selfUpdate=false: stores update apps themselves and don't allow it.
+        val selfUpdate = (project.findProperty("castbay.selfUpdate") as String?)?.toBoolean() ?: true
+        buildConfigField("boolean", "SELF_UPDATE", selfUpdate.toString())
+        manifestPlaceholders["selfUpdate"] = selfUpdate.toString()
+        manifestPlaceholders["installPermission"] =
+            if (selfUpdate) "android.permission.REQUEST_INSTALL_PACKAGES" else "com.weenas.castbay.permission.NO_INSTALL"
 
         if (enableNativeBuild.get()) {
             externalNativeBuild {

@@ -8,6 +8,10 @@ import androidx.lifecycle.*
 import com.weenas.castbay.service.AirPlayConnectionState
 import com.weenas.castbay.service.AirPlayManager
 import com.weenas.castbay.service.StreamInfo
+import com.weenas.castbay.service.UpdateInstall
+import com.weenas.castbay.service.UpdateInstaller
+import com.weenas.castbay.BuildConfig
+import com.weenas.castbay.util.Log
 import com.weenas.castbay.service.ReceiverSettings
 import com.weenas.castbay.service.ReceiverSettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -114,6 +118,37 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         kotlin.concurrent.thread(name = "CastBay-update") {
             val found = updateChecker.check()
             if (_settings.value.checkUpdates) _update.value = found
+        }
+    }
+
+    private val updateInstaller = UpdateInstaller(application)
+    private val _updateInstall = MutableStateFlow<UpdateInstall>(UpdateInstall.Idle)
+    /** Where downloading and installing [update] has got to (About's Update button). */
+    val updateInstall: StateFlow<UpdateInstall> = _updateInstall.asStateFlow()
+
+    /** Downloads [update] and opens Android's installer on it; the person confirms there. */
+    fun installUpdate() {
+        val target = _update.value ?: return
+        if (!BuildConfig.SELF_UPDATE) return
+        if (_updateInstall.value is UpdateInstall.Downloading) return
+        _updateInstall.value = UpdateInstall.Downloading(null)
+        kotlin.concurrent.thread(name = "CastBay-update-download") {
+            val file = try {
+                updateInstaller.download(target) { _updateInstall.value = UpdateInstall.Downloading(it) }
+            } catch (error: UpdateInstaller.ChecksumException) {
+                _updateInstall.value = UpdateInstall.Failed(UpdateInstall.Reason.CHECKSUM)
+                return@thread
+            } catch (error: Exception) {
+                _updateInstall.value = UpdateInstall.Failed(UpdateInstall.Reason.DOWNLOAD)
+                return@thread
+            }
+            _updateInstall.value = try {
+                updateInstaller.install(file)
+                UpdateInstall.Installing
+            } catch (error: Exception) {
+                Log.w("CastBayUpdate", "No installer for the update", error)
+                UpdateInstall.Failed(UpdateInstall.Reason.INSTALLER)
+            }
         }
     }
 

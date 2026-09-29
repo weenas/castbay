@@ -17,6 +17,12 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--
+        Installing an update the person chose to download (About's Update button). Builds with
+        -Pcastbay.selfUpdate=false, for app stores, replace it with a permission that grants
+        nothing (see app/build.gradle.kts).
+    -->
+    <uses-permission android:name="${installPermission}" />
     <!-- The receiver runs as a media-playback foreground service so casting survives the Home key. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
@@ -53,6 +59,18 @@
             android:name=".service.AirPlayService"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Hands a downloaded update to Android's installer. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.updates"
+            android:enabled="${selfUpdate}"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
 
         <receiver
             android:name=".receiver.BootReceiver"

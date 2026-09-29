@@ -5,7 +5,7 @@ page: privacy
 title: 'Privacy Policy – CastBay'
 description: 'CastBay''s privacy policy: no account, no analytics, no ads. Lyrics lookups and the daily update check are optional.'
 heading: 'Privacy Policy'
-intro: 'Effective: September 28, 2026'
+intro: 'Effective: September 30, 2026'
 ---
 
 CastBay is an open-source casting receiver app for Android TV. It needs no account and contains no ads, analytics or tracking code.
@@ -26,7 +26,9 @@ CastBay does not collect, store or upload personal information, and does not sen
 
 ## Update check
 
-Once a day, CastBay asks GitHub (api.github.com) for the number of the latest CastBay version, so it can tell you when a newer one is out. The request contains nothing about you or your TV; GitHub sees your network's address, as it does for any web page, and GitHub's own policy applies to it. You can turn this off in Settings, under General.
+Once a day, CastBay asks this website (castbay.weenas.com/latest.json), or GitHub (api.github.com) if the website can't be reached, for the number of the latest CastBay version, so it can tell you when a newer one is out. The request contains nothing about you or your TV; the server sees your network's address, as for any web page (the website is hosted by Cloudflare; GitHub's own policy applies to GitHub). You can turn this off in Settings, under General.
+
+Only when you choose **Download and install** on the About screen does CastBay download the new version, from this website or GitHub, check that it is exactly the released file (its SHA-256), and open Android's installer, where you confirm the update. Nothing is downloaded or installed on its own.
 
 ## Settings and data on the TV
 

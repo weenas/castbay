@@ -1,7 +1,7 @@
 name: Website
 
-# website/*.html are built from site/ by scripts/build_website.py and committed; this fails
-# when one was edited directly, or site/ changed without rebuilding.
+# website/ is built from web/ (Astro) by `npm run build` and committed; this fails when a
+# page was edited in website/ directly, or web/ changed without rebuilding.
 on:
   push:
     branches: [main]
@@ -10,11 +10,23 @@ on:
 jobs:
   pages-up-to-date:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-node@v4
         with:
-          python-version: '3.12'
-      - name: Check website/ matches site/
-        run: python3 scripts/build_website.py --check
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Build the website
+        working-directory: web
+        run: |
+          npm ci --no-fund --no-audit
+          npm run build
+      - name: Check website/ matches the build
+        run: |
+          if [ -n "$(git status --porcelain website)" ]; then
+            git status --short website
+            echo "::error::website/ is out of date: run npm run build in web/ and commit it"
+            exit 1
+          fi

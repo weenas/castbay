@@ -1,8 +1,8 @@
-<!--
-title: 映湾 CastBay：安卓电视 AirPlay 投屏接收器，iPhone 投屏到电视
-description: 免费开源的 Android TV 投屏 App：把 iPhone、iPad、Mac 的屏幕镜像、音乐和视频通过 AirPlay 投到安卓电视和电视盒子，也支持哔哩哔哩、爱奇艺等 App 的 DLNA 投屏。无广告，无需账号。
-structured-data: yes
--->
+---
+import Page from '../../layouts/Page.astro';
+import { APK_URL } from '../../i18n';
+---
+<Page lang="zh" page="index" title='映湾 CastBay：安卓电视 AirPlay 投屏接收器，iPhone 投屏到电视' description='免费开源的 Android TV 投屏 App：把 iPhone、iPad、Mac 的屏幕镜像、音乐和视频通过 AirPlay 投到安卓电视和电视盒子，也支持哔哩哔哩、爱奇艺等 App 的 DLNA 投屏。无广告，无需账号。'>
 <main>
   <section class="hero">
     <div class="wrap">
@@ -14,7 +14,7 @@ structured-data: yes
         映湾（CastBay）让 Android 电视接收 AirPlay 屏幕镜像、音乐和视频，也支持视频和音乐 App 自带的投屏按钮（DLNA）。免费、开源、无广告。
       </p>
       <div class="actions">
-        <a class="btn btn-primary" href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">
+        <a class="btn btn-primary" href={APK_URL}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
           下载 APK
         </a>
@@ -196,3 +196,4 @@ structured-data: yes
     </div>
   </section>
 </main>
+</Page>

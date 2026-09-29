@@ -3,12 +3,17 @@
   "configurations": [
     {
       "name": "website",
-      "runtimeExecutable": "python3",
+      "runtimeExecutable": "npm",
       "runtimeArgs": [
-        "scripts/serve_website.py",
-        "8321"
+        "--prefix",
+        "web",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "4321"
       ],
-      "port": 8321
+      "port": 4321
     }
   ]
 }

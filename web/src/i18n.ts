@@ -1,0 +1,52 @@
+// The words the shared header and footer use, and where each page lives in each language.
+export type Lang = 'en' | 'zh';
+export type PageName = 'index' | 'guide' | 'tech' | 'privacy';
+
+export const BASE_URL = 'https://castbay.weenas.com';
+
+export const strings = {
+  en: {
+    htmlLang: 'en',
+    ogLocale: 'en_US',
+    prefix: '/',
+    label: 'English',
+    themeTitle: 'Dark or light theme',
+    themeToLight: 'Switch to light theme',
+    themeToDark: 'Switch to dark theme',
+    home: 'Home',
+    features: 'Features',
+    guide: 'User guide',
+    faq: 'FAQ',
+    tech: 'How it works',
+    privacy: 'Privacy',
+    releases: 'Releases',
+    trademarks: 'AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.',
+  },
+  zh: {
+    htmlLang: 'zh-CN',
+    ogLocale: 'zh_CN',
+    prefix: '/zh/',
+    label: '中文',
+    themeTitle: '深色或浅色',
+    themeToLight: '切换到浅色',
+    themeToDark: '切换到深色',
+    home: '主页',
+    features: '功能',
+    guide: '使用说明',
+    faq: '常见问题',
+    tech: '技术原理',
+    privacy: '隐私政策',
+    releases: '版本下载',
+    trademarks: 'AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。',
+  },
+} as const;
+
+export const otherLang = (lang: Lang): Lang => (lang === 'en' ? 'zh' : 'en');
+
+/** A page's URL path, e.g. "/", "/guide", "/zh/", "/zh/guide". */
+export function pagePath(lang: Lang, page: PageName): string {
+  const prefix = strings[lang].prefix;
+  return page === 'index' ? prefix : prefix + page;
+}
+
+export const APK_URL = 'https://github.com/weenas/castbay/releases/latest/download/CastBay.apk';

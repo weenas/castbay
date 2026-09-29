@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -25,6 +25,7 @@
   <link rel="icon" href="/assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
   <link rel="stylesheet" href="/assets/style.css">
+  <!-- Sets the theme before the page draws, so it never flashes the wrong one. -->
   <script src="/assets/site.js"></script>
 </head>
 <body>
@@ -33,142 +34,124 @@
   <div class="wrap">
     <a class="brand" href="/"><img class="wm-dark" src="/assets/wordmark@2x.png?v=2" srcset="/assets/wordmark@2x.png?v=2 2x, /assets/wordmark@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"><img class="wm-light" src="/assets/wordmark-light@2x.png?v=2" srcset="/assets/wordmark-light@2x.png?v=2 2x, /assets/wordmark-light@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"></a>
     <nav class="nav">
-      <a href="/">Home</a>
-      <a href="/guide" aria-current="page">User guide</a>
-      <a href="/tech">How it works</a>
-      <a href="https://github.com/weenas/castbay">GitHub</a>
+      <a href="/">Home</a><a href="/guide" aria-current="page">User guide</a><a href="/tech">How it works</a><a href="https://github.com/weenas/castbay">GitHub</a>
     </nav>
-    <button id="theme-btn" class="theme" type="button" title="Dark or light theme" aria-label="Switch to light theme" data-to-light="Switch to light theme" data-to-dark="Switch to dark theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"/></svg></button>
+    <button id="theme-btn" class="theme" type="button" title="Dark or light theme" aria-label="Switch to light theme" data-to-light="Switch to light theme" data-to-dark="Switch to dark theme"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"></path></svg></button>
     <a class="lang" href="/zh/guide" hreflang="zh-CN" lang="zh-CN" data-lang-link="zh">中文</a>
   </div>
 </header>
 
+
 <main class="wrap doc">
     <h1>User guide</h1>
     <p class="date">Everything about using CastBay, from installing it to each setting. For problems, see the <a href="/#faq">FAQ</a>; for how it works, see <a href="/tech">How it works</a>.</p>
+<h2 id="what-you-need">What you need</h2>
+<ul>
+<li>An Android TV or Google TV device (a TV or a box) on Android 8.0 or later.</li>
+<li>The TV and your phone on the same network, not a guest network. The TV can be wired and the phone on Wi-Fi, as long as both go through the same router.</li>
+</ul>
+<h2 id="install-and-update">Install and update</h2>
+<ol>
+<li>Download <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">CastBay.apk</a>, the latest version (the website's Download APK button), or pick any version on the <a href="https://github.com/weenas/castbay/releases">releases page</a>.</li>
+<li>Copy it to a USB drive and plug that into the TV, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources; allow it.</li>
+<li>Open CastBay from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on.</li>
+</ol>
+<p><strong>Updates</strong>: when a newer version is out, a red dot appears on the home screen's About button, and About shows the new version and a QR code; scan it with your phone to open the download page. Install the new APK over the old one; your settings are kept.</p>
+<h2 id="the-home-screen">The home screen</h2>
+<ul>
+<li><strong>Left</strong>: the CastBay mark and the status. While it says "Waiting for a connection…", phones can find the TV. Below are Settings, Help and About.</li>
+<li><strong>The panel on the right</strong>: the name phones see, the network and IP address, what mirroring it offers (e.g. H.265 · 2160p), whether DLNA is on, the casting verification, and whether a second device is refused or takes over.</li>
+<li><strong>Quitting</strong>: press Back twice on the home screen. CastBay then stops receiving until you open it again.</li>
+</ul>
+<h2 id="casting-from-an-iphone-or-ipad">Casting from an iPhone or iPad</h2>
+<h3 id="screen-mirroring">Screen mirroring</h3>
+<ol>
+<li>Swipe down from the top-right corner to open Control Center and tap Screen Mirroring.</li>
+<li>Choose CastBay's name (by default "CastBay" plus the TV's name; you can change it in Settings).</li>
+<li>Your screen and sound appear on the TV. To stop, tap Stop Mirroring in Control Center, or press Back twice on the TV.</li>
+</ol>
+<h3 id="video-from-an-app">Video from an app</h3>
+<p>In YouTube, iQiyi and other apps, tap the AirPlay icon (a rectangle with a triangle) on the player and choose CastBay. The TV plays the video straight from the internet, so you can lock the phone or use other apps.</p>
+<h3 id="music">Music</h3>
+<p>In Apple Music, NetEase Cloud Music and other apps, tap the AirPlay icon there or on the music card in Control Center, and choose CastBay. Music starts about two seconds later: that keeps the TV in step with the phone, which is also what keeps lyrics in sync (see <a href="/tech">How it works</a>).</p>
+<h2 id="casting-from-a-mac">Casting from a Mac</h2>
+<p>Click Control Center in the menu bar → Screen Mirroring, and choose CastBay. Sending music from the Mac's Music app isn't supported.</p>
+<h2 id="casting-from-an-android-phone">Casting from an Android phone</h2>
+<p>Use an app's own cast button (DLNA): in Bilibili, iQiyi, NetEase Cloud Music, QQ Music and similar apps, tap the cast button on the player (usually a TV icon) and choose CastBay. DLNA casting must be on in Settings (it is by default). These apps' buttons work from iPhones too.</p>
+<h2 id="the-first-time-a-device-connects">The first time a device connects</h2>
+<p>If casting verification is on in Settings, a new device casting for the first time:</p>
+<ul>
+<li><strong>Confirm</strong>: is turned away while the TV asks "… wants to cast to this TV". Choose Allow, then cast again from the device; Block keeps it from casting.</li>
+<li><strong>PIN</strong>: enters the four-digit PIN the TV shows in the box that appears on the phone, once; the device is remembered after that. OK or Back puts the PIN away, and the device gets a new one when it tries again.</li>
+<li><strong>Password</strong>: enters the password from Settings. The phone remembers it until the password changes.</li>
+</ul>
+<h2 id="the-remote-while-playing">The remote while playing</h2>
+<ul>
+<li><strong>Video cast from an app</strong>: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds.</li>
+<li><strong>Music</strong>: Left and Right move between the buttons, OK presses one. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.</li>
+<li><strong>Screen mirroring</strong>: the phone controls the picture; the remote only opens the menu and stops the cast.</li>
+<li><strong>Down or Menu</strong>: opens the quick menu; OK changes an option, Back closes it.</li>
+<li><strong>Back twice</strong>: stops the cast and goes back to the home screen.</li>
+<li><strong>Home</strong>: goes to the TV's home screen; the cast keeps playing in the background.</li>
+<li><strong>Volume</strong>: set it on the phone; the TV shows a volume bar in the corner for a moment.</li>
+</ul>
+<h2 id="the-quick-menu">The quick menu</h2>
+<p>Press Down or Menu while playing. What it offers depends on what's playing:</p>
+<ul>
+<li><strong>Playback stats</strong>: codec, resolution, frame rate, bitrate and more; while mirroring, also the phone's frame rate and network (see <a href="/tech">How it works</a>).</li>
+<li><strong>Picture</strong> (video and mirroring): Fit (all of it, perhaps with black bars), Fill (the whole screen, perhaps cropping the edges) or Stretch (the whole screen, perhaps distorted).</li>
+<li><strong>Lyrics</strong> (music): on or off.</li>
+<li><strong>Audio</strong> and <strong>Subtitles</strong> (videos cast from apps, when there is a choice): another language, or subtitles off.</li>
+<li><strong>Stop casting</strong>.</li>
+</ul>
+<h2 id="the-music-screen">The music screen</h2>
+<p>The blurred album cover fills the background; in front are the cover, title, artist, album and progress, with the playback buttons below. With lyrics on, they scroll along with the song on the right, or it says there are none. The top left shows which device is casting.</p>
+<h2 id="settings">Settings</h2>
+<p>Choose Settings on the home screen, and move between the four tabs at the top with Left and Right. Text fields, such as the device name, open the keyboard only when you press OK.</p>
+<h3 id="connection">Connection</h3>
+<p>Changing these restarts the receiver; a device that was casting connects again.</p>
+<ul>
+<li><strong>Device name</strong>: the name phones see; "CastBay" by default.</li>
+<li><strong>Add the TV's name after it</strong>: adds the TV's model or name after it, so several TVs are told apart. The full name phones see is shown below.</li>
+<li><strong>DLNA casting (apps' cast button)</strong>: whether apps' own cast buttons can cast here.</li>
+<li><strong>Casting verification</strong>: Not required, Confirm, PIN or Password; see "The first time a device connects" above. Password needs at least 4 digits.</li>
+<li><strong>When another device casts</strong>: while one device is casting, another is refused, or takes over (the current cast ends).</li>
+<li><strong>Devices that have cast</strong>: each can be allowed or blocked; blocked devices can't cast. Remove all (press twice) makes every device new again.</li>
+</ul>
+<h3 id="screen-mirroring-1">Screen mirroring</h3>
+<p>Only for mirroring a phone's screen, not apps' video and music. Changing these restarts the receiver.</p>
+<ul>
+<li><strong>Maximum Resolution</strong>: Auto (2160p on a 4K TV with H.265, otherwise 1080p), 720p or 1080p.</li>
+<li><strong>Maximum Frame Rate</strong>: Auto (60 fps) or 30 fps. On a weak network, 30 can be smoother.</li>
+<li><strong>Codec</strong>: Auto (H.265 when the TV decodes it in hardware) or H.264 only. If H.265 mirroring looks wrong, try H.264 only.</li>
+</ul>
+<h3 id="playback">Playback</h3>
+<p>These apply at once, and can also be changed from the quick menu while casting.</p>
+<ul>
+<li><strong>Show playback stats</strong>.</li>
+<li><strong>Show lyrics for music</strong>: looks the song's title and artist up on lrclib.net; off by default.</li>
+<li><strong>Picture</strong>: Fit, Fill or Stretch.</li>
+</ul>
+<h3 id="general">General</h3>
+<ul>
+<li><strong>Language</strong>: System (the TV's), 中文 or English.</li>
+<li><strong>Check for Updates</strong>: looks for a newer version on GitHub once a day.</li>
+<li><strong>Restore Defaults</strong>: press twice to put every setting back as it was when CastBay was installed.</li>
+</ul>
+<h2 id="help-and-about">Help and About</h2>
+<p>Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, the website, privacy policy and source code, and a QR code that opens the website on your phone; when a newer version is out, it shows that version, and the QR code opens the download page instead.</p>
 
-    <h2>What you need</h2>
-    <ul>
-      <li>An Android TV or Google TV device (a TV or a box) on Android 8.0 or later.</li>
-      <li>The TV and your phone on the same network, not a guest network. The TV can be wired and the phone on Wi-Fi, as long as both go through the same router.</li>
-    </ul>
-
-    <h2>Install and update</h2>
-    <ol>
-      <li>Download <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">CastBay.apk</a>, the latest version (the website's Download APK button), or pick any version on the <a href="https://github.com/weenas/castbay/releases">releases page</a>.</li>
-      <li>Copy it to a USB drive and plug that into the TV, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources; allow it.</li>
-      <li>Open CastBay from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on.</li>
-    </ol>
-    <p><strong>Updates</strong>: when a newer version is out, a red dot appears on the home screen's About button, and About shows the new version and a QR code; scan it with your phone to open the download page. Install the new APK over the old one; your settings are kept.</p>
-
-    <h2>The home screen</h2>
-    <ul>
-      <li><strong>Left</strong>: the CastBay mark and the status. While it says "Waiting for a connection…", phones can find the TV. Below are Settings, Help and About.</li>
-      <li><strong>The panel on the right</strong>: the name phones see, the network and IP address, what mirroring it offers (e.g. H.265 · 2160p), whether DLNA is on, the casting verification, and whether a second device is refused or takes over.</li>
-      <li><strong>Quitting</strong>: press Back twice on the home screen. CastBay then stops receiving until you open it again.</li>
-    </ul>
-
-    <h2>Casting from an iPhone or iPad</h2>
-    <h3>Screen mirroring</h3>
-    <ol>
-      <li>Swipe down from the top-right corner to open Control Center and tap Screen Mirroring.</li>
-      <li>Choose CastBay's name (by default "CastBay" plus the TV's name; you can change it in Settings).</li>
-      <li>Your screen and sound appear on the TV. To stop, tap Stop Mirroring in Control Center, or press Back twice on the TV.</li>
-    </ol>
-    <h3>Video from an app</h3>
-    <p>In YouTube, iQiyi and other apps, tap the AirPlay icon (a rectangle with a triangle) on the player and choose CastBay. The TV plays the video straight from the internet, so you can lock the phone or use other apps.</p>
-    <h3>Music</h3>
-    <p>In Apple Music, NetEase Cloud Music and other apps, tap the AirPlay icon there or on the music card in Control Center, and choose CastBay. Music starts about two seconds later: that keeps the TV in step with the phone, which is also what keeps lyrics in sync (see <a href="/tech">How it works</a>).</p>
-
-    <h2>Casting from a Mac</h2>
-    <p>Click Control Center in the menu bar → Screen Mirroring, and choose CastBay. Sending music from the Mac's Music app isn't supported.</p>
-
-    <h2>Casting from an Android phone</h2>
-    <p>Use an app's own cast button (DLNA): in Bilibili, iQiyi, NetEase Cloud Music, QQ Music and similar apps, tap the cast button on the player (usually a TV icon) and choose CastBay. DLNA casting must be on in Settings (it is by default). These apps' buttons work from iPhones too.</p>
-
-    <h2>The first time a device connects</h2>
-    <p>If casting verification is on in Settings, a new device casting for the first time:</p>
-    <ul>
-      <li><strong>Confirm</strong>: is turned away while the TV asks "… wants to cast to this TV". Choose Allow, then cast again from the device; Block keeps it from casting.</li>
-      <li><strong>PIN</strong>: enters the four-digit PIN the TV shows in the box that appears on the phone, once; the device is remembered after that. OK or Back puts the PIN away, and the device gets a new one when it tries again.</li>
-      <li><strong>Password</strong>: enters the password from Settings. The phone remembers it until the password changes.</li>
-    </ul>
-
-    <h2>The remote while playing</h2>
-    <ul>
-      <li><strong>Video cast from an app</strong>: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds.</li>
-      <li><strong>Music</strong>: Left and Right move between the buttons, OK presses one. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.</li>
-      <li><strong>Screen mirroring</strong>: the phone controls the picture; the remote only opens the menu and stops the cast.</li>
-      <li><strong>Down or Menu</strong>: opens the quick menu; OK changes an option, Back closes it.</li>
-      <li><strong>Back twice</strong>: stops the cast and goes back to the home screen.</li>
-      <li><strong>Home</strong>: goes to the TV's home screen; the cast keeps playing in the background.</li>
-      <li><strong>Volume</strong>: set it on the phone; the TV shows a volume bar in the corner for a moment.</li>
-    </ul>
-
-    <h2>The quick menu</h2>
-    <p>Press Down or Menu while playing. What it offers depends on what's playing:</p>
-    <ul>
-      <li><strong>Playback stats</strong>: codec, resolution, frame rate, bitrate and more; while mirroring, also the phone's frame rate and network (see <a href="/tech">How it works</a>).</li>
-      <li><strong>Picture</strong> (video and mirroring): Fit (all of it, perhaps with black bars), Fill (the whole screen, perhaps cropping the edges) or Stretch (the whole screen, perhaps distorted).</li>
-      <li><strong>Lyrics</strong> (music): on or off.</li>
-      <li><strong>Audio</strong> and <strong>Subtitles</strong> (videos cast from apps, when there is a choice): another language, or subtitles off.</li>
-      <li><strong>Stop casting</strong>.</li>
-    </ul>
-
-    <h2>The music screen</h2>
-    <p>The blurred album cover fills the background; in front are the cover, title, artist, album and progress, with the playback buttons below. With lyrics on, they scroll along with the song on the right, or it says there are none. The top left shows which device is casting.</p>
-
-    <h2>Settings</h2>
-    <p>Choose Settings on the home screen, and move between the four tabs at the top with Left and Right. Text fields, such as the device name, open the keyboard only when you press OK.</p>
-    <h3>Connection</h3>
-    <p>Changing these restarts the receiver; a device that was casting connects again.</p>
-    <ul>
-      <li><strong>Device name</strong>: the name phones see; "CastBay" by default.</li>
-      <li><strong>Add the TV's name after it</strong>: adds the TV's model or name after it, so several TVs are told apart. The full name phones see is shown below.</li>
-      <li><strong>DLNA casting (apps' cast button)</strong>: whether apps' own cast buttons can cast here.</li>
-      <li><strong>Casting verification</strong>: Not required, Confirm, PIN or Password; see "The first time a device connects" above. Password needs at least 4 digits.</li>
-      <li><strong>When another device casts</strong>: while one device is casting, another is refused, or takes over (the current cast ends).</li>
-      <li><strong>Devices that have cast</strong>: each can be allowed or blocked; blocked devices can't cast. Remove all (press twice) makes every device new again.</li>
-    </ul>
-    <h3>Screen mirroring</h3>
-    <p>Only for mirroring a phone's screen, not apps' video and music. Changing these restarts the receiver.</p>
-    <ul>
-      <li><strong>Maximum Resolution</strong>: Auto (2160p on a 4K TV with H.265, otherwise 1080p), 720p or 1080p.</li>
-      <li><strong>Maximum Frame Rate</strong>: Auto (60 fps) or 30 fps. On a weak network, 30 can be smoother.</li>
-      <li><strong>Codec</strong>: Auto (H.265 when the TV decodes it in hardware) or H.264 only. If H.265 mirroring looks wrong, try H.264 only.</li>
-    </ul>
-    <h3>Playback</h3>
-    <p>These apply at once, and can also be changed from the quick menu while casting.</p>
-    <ul>
-      <li><strong>Show playback stats</strong>.</li>
-      <li><strong>Show lyrics for music</strong>: looks the song's title and artist up on lrclib.net; off by default.</li>
-      <li><strong>Picture</strong>: Fit, Fill or Stretch.</li>
-    </ul>
-    <h3>General</h3>
-    <ul>
-      <li><strong>Language</strong>: System (the TV's), 中文 or English.</li>
-      <li><strong>Check for Updates</strong>: looks for a newer version on GitHub once a day.</li>
-      <li><strong>Restore Defaults</strong>: press twice to put every setting back as it was when CastBay was installed.</li>
-    </ul>
-
-    <h2>Help and About</h2>
-    <p>Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, the website, privacy policy and source code, and a QR code that opens the website on your phone; when a newer version is out, it shows that version, and the QR code opens the download page instead.</p>
 </main>
+
 
 <footer>
   <div class="wrap">
     <div>
       <div>© 2026 CastBay · A <a href="https://weenas.com">Weenas</a> project</div>
-      <div style="margin-top:6px;max-width:44em">
-        AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.
-      </div>
+      <div style="margin-top:6px;max-width:44em">AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.</div>
     </div>
     <div class="links">
-      <a href="/">Home</a>
-      <a href="/tech">How it works</a>
-      <a href="/privacy">Privacy</a>
-      <a href="https://github.com/weenas/castbay/releases">Releases</a>
-      <a href="https://github.com/weenas/castbay">GitHub</a>
+      <a href="/">Home</a><a href="/tech">How it works</a><a href="/privacy">Privacy</a><a href="https://github.com/weenas/castbay/releases">Releases</a><a href="https://github.com/weenas/castbay">GitHub</a>
     </div>
   </div>
 </footer>

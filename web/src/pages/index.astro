@@ -1,8 +1,8 @@
-<!--
-title: CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone
-description: Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.
-structured-data: yes
--->
+---
+import Page from '../layouts/Page.astro';
+import { APK_URL } from '../i18n';
+---
+<Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone' description='Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.'>
 <main>
   <section class="hero">
     <div class="wrap">
@@ -14,7 +14,7 @@ structured-data: yes
         CastBay lets an Android TV receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.
       </p>
       <div class="actions">
-        <a class="btn btn-primary" href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">
+        <a class="btn btn-primary" href={APK_URL}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>Download APK
         </a>
         <a class="btn btn-ghost" href="https://github.com/weenas/castbay">View source
@@ -194,3 +194,4 @@ structured-data: yes
     </div>
   </section>
 </main>
+</Page>

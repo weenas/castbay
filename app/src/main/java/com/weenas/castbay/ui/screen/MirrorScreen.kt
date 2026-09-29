@@ -199,7 +199,8 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                     viewModel = viewModel,
                     hasPicture = kind != StreamKind.AUDIO,
                     player = if (kind == StreamKind.VIDEO) viewModel.videoPlayer else null,
-                    modifier = Modifier.align(Alignment.CenterEnd).padding(48.dp)
+                    onDismiss = { menuOpen = false },
+                    modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 48.dp, vertical = 32.dp)
                 )
             }
         }

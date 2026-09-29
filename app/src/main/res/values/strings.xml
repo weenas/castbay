@@ -62,14 +62,12 @@
     <string name="music_fast_forward">Fast forward</string>
 
     <!-- Quick menu -->
-    <string name="menu_title">Playback</string>
     <string name="menu_stats">Playback stats</string>
     <string name="menu_picture">Picture</string>
     <string name="menu_audio">Audio</string>
     <string name="menu_subtitles">Subtitles</string>
-    <string name="menu_stop_casting">Stop casting</string>
     <string name="menu_lyrics">Lyrics</string>
-    <string name="menu_hint">OK: change    Back: close</string>
+    <string name="menu_hint">←→ choose  ·  OK change  ·  Back close</string>
     <string name="picture_fit">Fit</string>
     <string name="picture_fill">Fill</string>
     <string name="picture_stretch">Stretch</string>

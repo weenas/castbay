@@ -64,14 +64,12 @@
     <string name="music_fast_forward">快进</string>
 
     <!-- Quick menu -->
-    <string name="menu_title">播放</string>
     <string name="menu_stats">播放统计信息</string>
     <string name="menu_picture">画面</string>
     <string name="menu_audio">音轨</string>
     <string name="menu_subtitles">字幕</string>
-    <string name="menu_stop_casting">结束投屏</string>
     <string name="menu_lyrics">歌词</string>
-    <string name="menu_hint">OK：切换    返回：关闭</string>
+    <string name="menu_hint">←→ 选择 · OK 切换 · 返回 关闭</string>
     <string name="picture_fit">适应</string>
     <string name="picture_fill">填充</string>
     <string name="picture_stretch">拉伸</string>

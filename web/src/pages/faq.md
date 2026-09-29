@@ -62,7 +62,7 @@ Bilibili keeps 1080p and above for its own TV app; casting to other devices tops
 
 ### How do I stop a cast with the remote?
 
-Press Back twice, or press Down for the quick menu and choose Stop casting. Pressing Home keeps the cast playing in the background.
+Press Back twice. Pressing Home keeps the cast playing in the background.
 
 ### Why did changing a setting stop my cast?
 

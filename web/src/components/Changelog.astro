@@ -1,10 +1,13 @@
 ---
-// Every release's notes in one language, newest first, each under its version and date.
+// Every release's notes in one language, newest first, each under its version and date, with
+// its APK's SHA-256 when GitHub could be asked for it.
 import { render } from 'astro:content';
 import { formatDate, type Lang } from '../i18n';
 import { releases } from '../releases';
+import { apkDigests } from '../checksums';
 
 const { lang } = Astro.props as { lang: Lang };
+const digests = await apkDigests();
 const entries = await Promise.all(
   (await releases(lang)).map(async (entry) => ({ entry, Content: (await render(entry)).Content })),
 );
@@ -13,5 +16,8 @@ const entries = await Promise.all(
   <section class="release" id={`v${entry.data.version}`}>
     <h2>{entry.data.version} <span class="release-date">{formatDate(lang, entry.data.date)}</span></h2>
     <Content />
+    {digests.has(entry.data.version) && (
+      <p class="checksum">SHA-256 (CastBay-{entry.data.version}.apk): <code>{digests.get(entry.data.version)}</code></p>
+    )}
   </section>
 ))}

@@ -85,6 +85,7 @@ jobs:
             echo "::error::The APK is debug-signed"
             exit 1
           fi
+          echo "CERT_SHA256=$(echo "$certs" | sed -n 's/.*certificate SHA-256 digest: //p' | head -1)" >> "$GITHUB_ENV"
 
       # The release notes are the website's changelog entries for this version, in English
       # then Chinese (web/src/content/releases/<lang>/<version>.md); a full release must have
@@ -105,6 +106,14 @@ jobs:
             awk 'n >= 2 { print } /^---$/ { n++ }' "$file" >> "$notes"
             echo >> "$notes"
           done
+          # How to check the download (the website's changelog lists the same, from GitHub).
+          {
+            echo "## Verification"
+            echo
+            echo "- SHA-256 of \`CastBay-$VERSION.apk\`: \`$(sha256sum "$RUNNER_TEMP/CastBay-$VERSION.apk" | cut -d' ' -f1)\`"
+            echo "- Signing certificate (CN=CastBay, O=weenas), SHA-256: \`$CERT_SHA256\`"
+            echo
+          } >> "$notes"
           echo "NOTES_FILE=$notes" >> "$GITHUB_ENV"
 
       - name: Publish the release
@@ -124,6 +133,17 @@ jobs:
             "$kind" \
             --notes-file "$NOTES_FILE" \
             --generate-notes
+
+      # Rebuilds the website, so its changelog lists this release's checksum at once. Needs a
+      # Cloudflare deploy hook URL in the CLOUDFLARE_DEPLOY_HOOK secret; without one it is skipped
+      # and the checksum appears with the website's next update.
+      - name: Rebuild the website
+        env:
+          HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then echo "No CLOUDFLARE_DEPLOY_HOOK secret; skipped"; exit 0; fi
+          curl -fsS -X POST "$HOOK" > /dev/null && echo "Website rebuild started"
+
       - name: Clean up the key
         if: always()
         run: rm -f "$RUNNER_TEMP/castbay-release.jks"

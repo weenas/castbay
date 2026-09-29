@@ -1,11 +1,17 @@
 ---
 import Page from '../../layouts/Page.astro';
+import { CERT_SHA256 } from '../../i18n';
 import Changelog from '../../components/Changelog.astro';
 ---
 <Page lang="zh" page="changelog" title="更新日志 – 映湾 CastBay" description="映湾每个版本的更新内容。">
 <main class="wrap doc">
     <h1>更新日志</h1>
     <p class="date" set:html={`每个版本更新了什么。最新版可以直接下载 <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk">CastBay.apk</a>，其他版本在<a href="https://github.com/weenas/castbay/releases">发布页</a>。可以通过 <a href="/zh/changelog.xml">RSS</a> 订阅新版本。`}></p>
+    <details class="verify">
+      <summary>校验下载的安装包</summary>
+      <p>下面每个版本都列出了 APK 的 SHA-256 校验值，可以和下载的文件对比：Mac 或 Linux 上运行 <code>shasum -a 256 CastBay-1.0.79.apk</code>，Windows 上运行 <code>certutil -hashfile CastBay-1.0.79.apk SHA256</code>。（最新版的 <code>CastBay.apk</code> 和带版本号的那个文件完全相同。）</p>
+      <p>所有版本都用同一个证书签名（CN=CastBay, O=weenas），证书的 SHA-256 指纹是 <code>{CERT_SHA256}</code>，可以用 Android SDK 里的 <code>apksigner verify --print-certs</code> 查看。安卓也不允许用其他证书签名的安装包覆盖更新映湾。</p>
+    </details>
     <Changelog lang="zh" />
 </main>
 </Page>

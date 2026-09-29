@@ -20,6 +20,9 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Build the website
         working-directory: web
+        env:
+          # For the release checksums the changelog fetches from GitHub.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           npm ci --no-fund --no-audit
           npm run build

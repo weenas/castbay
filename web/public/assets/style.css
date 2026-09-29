@@ -210,6 +210,11 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 .release-date { font-size: 15px; font-weight: 400; color: var(--text-3); margin-left: 10px; }
 .doc section.release { padding: 0; margin-top: 36px; }
 .release h2 { scroll-margin-top: 100px; }
+.checksum { font-size: 13px; color: var(--text-3); overflow-wrap: anywhere; }
+.checksum code, .verify code { font-size: 12.5px; overflow-wrap: anywhere; }
+.verify { margin: 0 0 12px; padding: 12px 16px; border-radius: 12px; background: var(--card); border: 1px solid var(--card-border); }
+.verify summary { cursor: pointer; font-weight: 600; color: var(--text-2); }
+.verify p { font-size: 15px; }
 /* The 404 page: English, then Chinese. */
 .not-found { min-height: 55vh; }
 .not-found p + h1 { margin-top: 48px; }

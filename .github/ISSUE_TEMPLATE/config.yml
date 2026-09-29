@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: FAQ / 常见问题
+    url: https://castbay.weenas.com/#faq
+    about: Answers to common questions. / 常见问题的解答。
+  - name: User guide / 使用说明
+    url: https://castbay.weenas.com/guide
+    about: How to use every feature. / 每个功能的用法。

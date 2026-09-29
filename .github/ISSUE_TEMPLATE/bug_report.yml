@@ -1,0 +1,68 @@
+name: Problem report / 问题报告
+description: Something doesn't work as it should. / 有功能不正常。
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! English or Chinese both fine. Leave out anything private (passwords, addresses, phone numbers).
+        感谢反馈！中英文都可以。请不要填写隐私信息（密码、住址、电话号码）。
+  - type: input
+    id: version
+    attributes:
+      label: CastBay version / 映湾版本
+      description: On the About screen. / 在"关于"页里。
+      placeholder: "1.0.80"
+    validations:
+      required: true
+  - type: input
+    id: tv
+    attributes:
+      label: TV and its Android version / 电视型号和 Android 版本
+      placeholder: "Sony BRAVIA XR-55X90L, Android 12"
+    validations:
+      required: true
+  - type: input
+    id: sender
+    attributes:
+      label: Phone or computer, and its system / 手机或电脑，及系统版本
+      placeholder: "iPhone 17, iOS 26"
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How you cast / 投屏方式
+      options:
+        - Screen mirroring / 屏幕镜像
+        - AirPlay from an app (music) / App 里的 AirPlay（音乐）
+        - AirPlay from an app (video) / App 里的 AirPlay（视频）
+        - An app's cast button (DLNA) / App 自带的投屏按钮（DLNA）
+        - Not sure / 不确定
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: App / 使用的 App
+      placeholder: "Apple Music, YouTube, NetEase Cloud Music…"
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected / 发生了什么，期望的结果
+      description: A photo or short video of the TV helps a lot. / 附上电视的照片或短视频会很有帮助。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to make it happen / 复现步骤
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: input
+    id: network
+    attributes:
+      label: Network / 网络情况
+      description: Wi-Fi or wired; mesh, VPN or proxy if any. / Wi-Fi 还是网线；有无 Mesh、VPN 或代理。

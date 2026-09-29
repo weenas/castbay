@@ -1,6 +1,6 @@
 // The words the shared header and footer use, and where each page lives in each language.
 export type Lang = 'en' | 'zh';
-export type PageName = 'index' | 'guide' | 'tech' | 'changelog' | 'privacy';
+export type PageName = 'index' | 'guide' | 'tech' | 'changelog' | 'compatibility' | 'feedback' | 'privacy';
 
 export const BASE_URL = 'https://castbay.weenas.com';
 
@@ -19,6 +19,8 @@ export const strings = {
     faq: 'FAQ',
     tech: 'How it works',
     changelog: 'Changelog',
+    compatibility: 'Compatibility',
+    feedback: 'Feedback',
     privacy: 'Privacy',
     releases: 'Releases',
     trademarks: 'AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.',
@@ -37,6 +39,8 @@ export const strings = {
     faq: '常见问题',
     tech: '技术原理',
     changelog: '更新日志',
+    compatibility: '兼容性',
+    feedback: '反馈',
     privacy: '隐私政策',
     releases: '版本下载',
     trademarks: 'AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。',

@@ -70,4 +70,32 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/changelog"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/changelog"/>
   </url>
+  <url>
+    <loc>https://castbay.weenas.com/compatibility</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/compatibility"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/compatibility"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/compatibility"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/compatibility</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/compatibility"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/compatibility"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/compatibility"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/feedback</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/feedback"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/feedback"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/feedback"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/feedback</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/feedback"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/feedback"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/feedback"/>
+  </url>
 </urlset>

@@ -1,6 +1,7 @@
 ---
 layout: ../../layouts/Doc.astro
 lang: zh
+toc: true
 page: tech
 title: '映湾是怎么工作的 – 映湾 CastBay'
 description: '映湾的技术原理：三种投屏方式的区别、手机如何找到电视、AirPlay 音乐为什么按时播放、如何看镜像统计信息，以及谁可以投屏。'

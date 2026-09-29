@@ -1,14 +1,57 @@
 ---
 // A document page written in Markdown (the user guide, how it works, privacy). Its front
-// matter gives the language, page, <title>, description, heading and an intro line (HTML).
+// matter gives the language, page, <title>, description, heading and an intro line (HTML);
+// `toc: true` adds a table of contents built from its headings: a sidebar that follows the
+// reader on wide screens, a folded list under the title on narrow ones.
 import Page from './Page.astro';
 
-const { lang, page, title, description, heading, intro } = Astro.props.frontmatter;
+const { frontmatter, headings = [] } = Astro.props;
+const { lang, page, title, description, heading, intro, toc } = frontmatter;
+const entries: { depth: number; slug: string; text: string }[] = toc
+  ? headings.filter((h: { depth: number }) => h.depth === 2 || h.depth === 3)
+  : [];
+const label = lang === 'zh' ? '目录' : 'Contents';
 ---
 <Page lang={lang} page={page} title={title} description={description}>
-<main class="wrap doc">
+<main class:list={['wrap doc', { 'has-toc': entries.length > 0 }]}>
+  {entries.length > 0 && (
+    <nav class="toc toc-side" aria-label={label}>
+      <div class="toc-title">{label}</div>
+      <ol>{entries.map((h) => <li class={`toc-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+    </nav>
+  )}
+  <article class="doc-body">
     <h1>{heading}</h1>
     <p class="date" set:html={intro}></p>
+    {entries.length > 0 && (
+      <details class="toc toc-inline">
+        <summary>{label}</summary>
+        <ol>{entries.map((h) => <li class={`toc-${h.depth}`}><a href={`#${h.slug}`}>{h.text}</a></li>)}</ol>
+      </details>
+    )}
 <slot />
+  </article>
 </main>
+{entries.length > 0 && (
+  <script is:inline>
+    // Marks the section being read in the sidebar: the last heading scrolled up to just under
+    // the header, or the last one of all at the bottom of the page (short final sections
+    // never reach the top).
+    (() => {
+      const links = [...document.querySelectorAll('.toc-side a')];
+      const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+      const update = () => {
+        let current = 0;
+        targets.forEach((el, i) => { if (el && el.getBoundingClientRect().top < 160) current = i; });
+        if (innerHeight + scrollY >= document.documentElement.scrollHeight - 4) current = links.length - 1;
+        links.forEach((a, i) => (i === current ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current')));
+      };
+      addEventListener('scroll', update, { passive: true });
+      update();
+      // Picking a section on a phone folds the list away again.
+      document.querySelectorAll('.toc-inline a').forEach((a) =>
+        a.addEventListener('click', () => a.closest('details').removeAttribute('open')));
+    })();
+  </script>
+)}
 </Page>

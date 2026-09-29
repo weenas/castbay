@@ -60,7 +60,7 @@ def structured_data(lang, meta, url, s):
         "applicationCategory": "MultimediaApplication",
         "operatingSystem": "Android TV, Google TV (Android 8.0 or later)",
         "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
-        "downloadUrl": "https://github.com/weenas/castbay/releases",
+        "downloadUrl": "https://github.com/weenas/castbay/releases/latest/download/CastBay.apk",
         "softwareHelp": "https://github.com/weenas/castbay",
         "license": "https://www.gnu.org/licenses/gpl-3.0.html",
         "isAccessibleForFree": True,

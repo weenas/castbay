@@ -1,5 +1,5 @@
-// castbay.weenas.com: static pages. `npm run build` builds them into dist/ and copies that to
-// ../website, which is committed and which Cloudflare publishes as it is.
+// castbay.weenas.com: static pages, built into dist/, which Cloudflare builds and publishes
+// (see wrangler.jsonc).
 import { defineConfig } from 'astro/config';
 import { satteri } from '@astrojs/markdown-satteri';
 

@@ -1,14 +1,14 @@
 name: Website
 
-# website/ is built from web/ (Astro) by `npm run build` and committed; this fails when a
-# page was edited in website/ directly, or web/ changed without rebuilding.
+# Cloudflare builds and publishes web/ (Astro) from main; this catches a change that would
+# break that build, before it's merged.
 on:
   push:
     branches: [main]
   pull_request:
 
 jobs:
-  pages-up-to-date:
+  website-build:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -23,10 +23,3 @@ jobs:
         run: |
           npm ci --no-fund --no-audit
           npm run build
-      - name: Check website/ matches the build
-        run: |
-          if [ -n "$(git status --porcelain website)" ]; then
-            git status --short website
-            echo "::error::website/ is out of date: run npm run build in web/ and commit it"
-            exit 1
-          fi

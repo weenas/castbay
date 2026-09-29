@@ -79,8 +79,7 @@ castbay/
 │   └── build.gradle.kts
 ├── airplay/                # Android library, JNI bridge, and native protocol build
 ├── third_party/            # Pinned UxPlay, libplist and ALAC submodules
-├── web/                    # Website sources (Astro): pages, layouts, static assets
-├── website/                # castbay.weenas.com as published (built from web/, Cloudflare)
+├── web/                    # castbay.weenas.com (Astro), built and published by Cloudflare
 ├── branding/               # Logo and wordmark masters (SVG and PNG)
 └── README.md
 ```
@@ -98,10 +97,10 @@ The website is built with [Astro](https://astro.build) from `web/` (Node 22.12 o
 cd web
 npm install        # once
 npm run dev        # preview at http://localhost:4321, updating as you edit
-npm run build      # build, and copy the result to ../website
+npm run build      # build into dist/, as Cloudflare does
 ```
 
-Commit `web/` together with the rebuilt `website/`, which Cloudflare publishes; CI fails if they don't match. A new page also goes in `public/sitemap.xml`.
+Cloudflare builds and publishes the site from `web/` whenever `main` changes (`web/wrangler.jsonc`); CI checks that it builds. A new page also goes in `public/sitemap.xml`.
 
 ## License
 

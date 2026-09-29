@@ -136,6 +136,12 @@ section.alt { background: var(--bg-raised); }
 .section-head h2 { font-size: clamp(28px, 3.6vw, 38px); line-height: 1.2; margin: 0 0 12px; text-wrap: balance; }
 .section-head p { color: var(--text-2); margin: 0; }
 
+/* Screenshots: two a row, one on phones; each opens full size. */
+.shots { display: grid; gap: 28px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.shots figure { margin: 0; }
+.shots img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
+.shots figcaption { margin-top: 12px; color: var(--text-2); font-size: 15px; }
+@media (max-width: 760px) { .shots { grid-template-columns: 1fr; } }
 .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .card {
   background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);

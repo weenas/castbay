@@ -2,6 +2,7 @@
 import Page from '../layouts/Page.astro';
 import { APK_URL, formatDate } from '../i18n';
 import { releases } from '../releases';
+import Screenshots from '../components/Screenshots.astro';
 
 // The newest release, shown under the download button.
 const [latest] = await releases('en');
@@ -80,7 +81,17 @@ const [latest] = await releases('en');
     </div>
   </section>
 
-  <section id="start" class="alt">
+  <section id="screens" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>See it on the TV</h2>
+        <p>Screenshots from a Sony TV.</p>
+      </div>
+      <Screenshots lang="en" />
+    </div>
+  </section>
+
+  <section id="start">
     <div class="wrap">
       <div class="section-head">
         <h2>User guide</h2>
@@ -104,7 +115,7 @@ const [latest] = await releases('en');
     </div>
   </section>
 
-  <section>
+  <section class="alt">
     <div class="wrap">
       <div class="section-head">
         <h2>Two ways to cast</h2>
@@ -131,7 +142,7 @@ const [latest] = await releases('en');
     </div>
   </section>
 
-  <section id="faq" class="alt">
+  <section id="faq">
     <div class="wrap">
       <div class="section-head">
         <h2>FAQ</h2>
@@ -189,7 +200,7 @@ const [latest] = await releases('en');
     </div>
   </section>
 
-  <section>
+  <section class="alt">
     <div class="wrap oss">
       <div>
         <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)">Open source, and open to you</h2>

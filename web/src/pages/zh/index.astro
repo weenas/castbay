@@ -2,6 +2,7 @@
 import Page from '../../layouts/Page.astro';
 import { APK_URL, formatDate } from '../../i18n';
 import { releases } from '../../releases';
+import Screenshots from '../../components/Screenshots.astro';
 
 // The newest release, shown under the download button.
 const [latest] = await releases('zh');
@@ -82,7 +83,17 @@ const [latest] = await releases('zh');
     </div>
   </section>
 
-  <section id="start" class="alt">
+  <section id="screens" class="alt">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>在电视上的样子</h2>
+        <p>在索尼电视上的实际截图。</p>
+      </div>
+      <Screenshots lang="zh" />
+    </div>
+  </section>
+
+  <section id="start">
     <div class="wrap">
       <div class="section-head">
         <h2>使用说明</h2>
@@ -106,7 +117,7 @@ const [latest] = await releases('zh');
     </div>
   </section>
 
-  <section>
+  <section class="alt">
     <div class="wrap">
       <div class="section-head">
         <h2>两种投屏方式</h2>
@@ -133,7 +144,7 @@ const [latest] = await releases('zh');
     </div>
   </section>
 
-  <section id="faq" class="alt">
+  <section id="faq">
     <div class="wrap">
       <div class="section-head">
         <h2>常见问题</h2>
@@ -191,7 +202,7 @@ const [latest] = await releases('zh');
     </div>
   </section>
 
-  <section>
+  <section class="alt">
     <div class="wrap oss">
       <div>
         <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)">开源，也欢迎参与</h2>

@@ -1,0 +1,34 @@
+---
+// Screenshots of CastBay on a TV (a Sony, 1080p UI), in the English UI for both languages.
+// Each is served as WebP in the size the screen needs, and links to the full 1920×1080 one.
+import { getImage, Image } from 'astro:assets';
+import type { Lang } from '../i18n';
+import home from '../assets/screens/home.webp';
+import music from '../assets/screens/music.webp';
+import mirror from '../assets/screens/mirror.webp';
+import pin from '../assets/screens/pin.webp';
+import settings from '../assets/screens/settings.webp';
+import help from '../assets/screens/help.webp';
+
+const { lang } = Astro.props as { lang: Lang };
+const zh = lang === 'zh';
+const shots = [
+  { src: home, en: 'The home screen: ready for a cast, with the name phones see and the network.', zh: '主界面：随时等待投屏，显示手机上看到的名称和网络。' },
+  { src: music, en: 'Music, with the blurred cover behind and lyrics in sync. (“Code Monkey” by Jonathan Coulton, CC BY-NC.)', zh: '音乐：模糊的封面背景和同步歌词。（歌曲：Jonathan Coulton《Code Monkey》，CC BY-NC 授权。）' },
+  { src: mirror, en: 'Screen mirroring in H.265, with the playback stats: the TV’s and the phone’s.', zh: '屏幕镜像（H.265），打开了播放统计：电视端和手机端的数据。' },
+  { src: pin, en: 'PIN pairing, as on an Apple TV: a new device enters it once.', zh: 'PIN 码配对，和 Apple TV 一样：新设备只需输入一次。' },
+  { src: settings, en: 'Settings on tabs, made for the remote.', zh: '分页的设置，为遥控器设计。' },
+  { src: help, en: 'Help on the TV, for each way of casting.', zh: '电视上的帮助，每种投屏方式怎么用。' },
+];
+const full = await Promise.all(shots.map((shot) => getImage({ src: shot.src, format: 'webp', width: 1920 })));
+---
+<div class="shots">
+  {shots.map((shot, i) => (
+    <figure>
+      <a href={full[i].src}>
+        <Image src={shot.src} alt={zh ? shot.zh : shot.en} widths={[640, 960, 1280]} sizes="(max-width: 760px) 100vw, 560px" format="webp" quality={80} loading="lazy" />
+      </a>
+      <figcaption>{zh ? shot.zh : shot.en}</figcaption>
+    </figure>
+  ))}
+</div>

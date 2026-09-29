@@ -44,9 +44,11 @@ class AirPlayManager private constructor(private val context: Context) {
 
     private val nativeBridge = NativeBridge(
         onConnectionStarted = ::onNativeConnectionStarted,
-        onVideoData = { data, pts, isH265 -> onNativeVideoData(data, pts, isH265) },
-        onAudioData = { data, _ -> audioRenderer.render(data) },
-        onPcmData = { data, playAtUs, compressedBytes -> onPcmAudio(data, playAtUs, compressedBytes) },
+        onVideoData = { data, pts, isH265 -> if (!endedFromTv) onNativeVideoData(data, pts, isH265) },
+        onAudioData = { data, _ -> if (!endedFromTv) audioRenderer.render(data) },
+        onPcmData = { data, playAtUs, compressedBytes ->
+            if (!endedFromTv) onPcmAudio(data, playAtUs, compressedBytes)
+        },
         onAudioFlush = {
             audioRenderer.flush()
             updateNowPlaying { it.paused() }
@@ -113,6 +115,11 @@ class AirPlayManager private constructor(private val context: Context) {
     private val hevcSupport by lazy { HevcSupport.detect() }
 
     /** The mirroring profile offered by the running receiver; decoders are sized to it. */
+    /**
+     * Set when the TV ends a cast, until a sender connects again: frames still on their way
+     * (a Mac keeps sending for a moment) mustn't bring the mirroring screen back.
+     */
+    @Volatile private var endedFromTv = false
     @Volatile private var advertised = MirroringProfile(h265 = false, width = DEFAULT_VIDEO_WIDTH, height = DEFAULT_VIDEO_HEIGHT)
 
     /** The codec and display size [settings] offer senders on this TV. */
@@ -449,6 +456,7 @@ class AirPlayManager private constructor(private val context: Context) {
     }
 
     private fun onNativeConnectionStarted() {
+        endedFromTv = false
         currentError = null
         // A new sender's first poll mustn't be told about a video that finished before it came.
         hlsPlayer.forgetFinished()
@@ -732,6 +740,7 @@ class AirPlayManager private constructor(private val context: Context) {
             return
         }
         lastHeartbeatAtMs = 0L
+        endedFromTv = true
         nativeBridge.disconnect()
         // Leave the screen now rather than when the connections have closed.
         videoRenderer.stop()

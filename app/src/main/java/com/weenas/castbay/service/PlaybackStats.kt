@@ -20,7 +20,9 @@ data class VideoStats(
     val fps: Double? = null,
     val bitrateBps: Long? = null,
     val decoder: String? = null,
-    val droppedFrames: Long = 0
+    val droppedFrames: Long = 0,
+    /** From a frame's arrival to its release for display. */
+    val decodeLatencyMs: Int? = null
 )
 
 /**

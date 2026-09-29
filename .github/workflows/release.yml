@@ -1,7 +1,12 @@
 name: Release
 
-# Push a tag like v1.0.26 to build a signed release APK and publish it, with the complete
-# source (including submodules, as GPL-3.0 requires), as a GitHub pre-release.
+# Push a tag like v1.0.80 to build a signed release APK and publish it, with the complete
+# source (including submodules, as GPL-3.0 requires), as the latest release. A tag with a
+# suffix, like v1.0.80-beta, is published as a pre-release instead, for testers.
+#
+# A full release also carries the APK as CastBay.apk, so
+# https://github.com/weenas/castbay/releases/latest/download/CastBay.apk (the website's
+# download button) always serves the newest one.
 on:
   push:
     tags: ['v*']
@@ -21,11 +26,14 @@ jobs:
       - name: Check the tag matches the app version
         run: |
           version="$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)"
-          echo "VERSION=$version" >> "$GITHUB_ENV"
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+          tag="${GITHUB_REF_NAME#v}"
+          if [ "${tag%%-*}" != "$version" ]; then
             echo "::error::Tag $GITHUB_REF_NAME does not match versionName $version"
             exit 1
           fi
+          # VERSION names the files: 1.0.80, or 1.0.80-beta for a pre-release.
+          echo "VERSION=$tag" >> "$GITHUB_ENV"
+          if [ "$tag" != "$version" ]; then echo "PRERELEASE=true" >> "$GITHUB_ENV"; fi
 
       # GitHub's automatic source archives leave out submodules (UxPlay, libplist, ALAC).
       - name: Package the complete source
@@ -78,15 +86,21 @@ jobs:
             exit 1
           fi
 
-      - name: Publish the pre-release
+      - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
-            "$RUNNER_TEMP/CastBay-$VERSION.apk" \
-            "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz" \
+          files=("$RUNNER_TEMP/CastBay-$VERSION.apk" "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz")
+          if [ "$PRERELEASE" = true ]; then
+            kind=--prerelease
+          else
+            kind=--latest
+            cp "$RUNNER_TEMP/CastBay-$VERSION.apk" "$RUNNER_TEMP/CastBay.apk"
+            files+=("$RUNNER_TEMP/CastBay.apk")
+          fi
+          gh release create "$GITHUB_REF_NAME" "${files[@]}" \
             --title "CastBay $VERSION" \
-            --prerelease \
+            "$kind" \
             --generate-notes
       - name: Clean up the key
         if: always()

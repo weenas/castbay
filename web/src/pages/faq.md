@@ -1,0 +1,75 @@
+---
+layout: ../layouts/Doc.astro
+lang: en
+page: faq
+toc: true
+faq: true
+title: 'FAQ – CastBay'
+description: 'CastBay FAQ: supported TVs, installing, phones that don''t find the TV, casting and playback, privacy and security.'
+heading: 'FAQ'
+intro: 'Not answered here? See the <a href="/guide">user guide</a>, or <a href="/feedback">ask us</a>.'
+---
+
+## Getting started
+
+### Which TVs are supported?
+
+Android TV and Google TV devices, TVs and boxes alike, on Android 8.0 or later. Tested on TCL (Android 9) and Sony (Android 12) TVs; see the [compatibility list](/compatibility).
+
+### How do I install the APK on a TV?
+
+Copy the APK to a USB drive, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources.
+
+### Can I trust the APK I download?
+
+Each release is built by GitHub from the tagged source, not on anyone's computer, and signed with CastBay's own key; the build checks the signature before publishing. The complete source of that exact version is attached to every release. Android also only installs an update over CastBay if it carries the same signature, so an altered copy can't replace the one you have.
+
+## Connecting
+
+### My phone doesn't find CastBay. What now?
+
+Make sure the TV and phone are on the same Wi-Fi and CastBay is open, waiting for a connection. Some routers enable "AP isolation", which stops devices finding each other; turn it off in the router's settings. Turning the phone's Wi-Fi off and on can also help.
+
+### Why can't YouTube on my Android phone find CastBay?
+
+YouTube for Android only casts with Google Cast, which only Google-certified devices can receive. Use the YouTube app on the TV itself, or cast from an iPhone or iPad, whose YouTube app uses AirPlay. Apps with a DLNA cast button (Bilibili, iQiyi, NetEase Cloud Music and others) work from Android phones.
+
+### Does it support Google Cast (Chromecast) or Miracast?
+
+No. Only Google-certified devices can receive Google Cast, and Miracast needs system-level access an app doesn't get. CastBay supports AirPlay and DLNA.
+
+### Can I send music from a Mac?
+
+Mac screen mirroring works. Music from the Mac's Music app doesn't: it uses an encryption the open-source AirPlay library CastBay is built on can't handle.
+
+## Casting and playback
+
+### Why does music start about two seconds late?
+
+To stay in step with the phone. An iPhone sends music about two seconds ahead, stamped with when each part should be heard, and CastBay plays it then, as an Apple TV does. That keeps lyrics in sync and lets pausing and resuming pick up where they left off. See [How it works](/tech).
+
+### A video won't play. Why?
+
+Videos cast from apps are fetched by the TV itself. If your phone needs a proxy or VPN to open them (YouTube, for example), the TV needs one too. Screen mirroring isn't affected: the picture comes from the phone.
+
+### Why is Bilibili limited to 720p?
+
+Bilibili keeps 1080p and above for its own TV app; casting to other devices tops out at 720p. Use screen mirroring for 1080p.
+
+### How do I stop a cast with the remote?
+
+Press Back twice, or press Down for the quick menu and choose Stop casting. Pressing Home keeps the cast playing in the background.
+
+### Why did changing a setting stop my cast?
+
+Connection and screen-mirroring settings (the device name, casting verification, resolution and so on) only take effect when the receiver restarts, so the device that was casting has to connect again. Playback settings, such as picture fit, stats and lyrics, apply at once without interrupting anything.
+
+## Privacy and security
+
+### Can I stop other people from casting to my TV?
+
+Yes. In Settings → Connection → Casting verification, choose Confirm (the TV asks before a new device casts), PIN (a new device enters a PIN shown on the TV, once) or Password. Any device that has cast can be blocked there too.
+
+### Does CastBay collect my data?
+
+No. There's no account, analytics or ads. Only when you turn on lyrics does it send the song's title and artist to lrclib.net to look them up. See the [privacy policy](/privacy).

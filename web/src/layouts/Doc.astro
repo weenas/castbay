@@ -2,17 +2,32 @@
 // A document page written in Markdown (the user guide, how it works, privacy). Its front
 // matter gives the language, page, <title>, description, heading and an intro line (HTML);
 // `toc: true` adds a table of contents built from its headings: a sidebar that follows the
-// reader on wide screens, a folded list under the title on narrow ones.
+// reader on wide screens, a folded list under the title on narrow ones. `faq: true` tells
+// search engines its ### headings are questions answered by what follows each (FAQPage).
 import Page from './Page.astro';
 
-const { frontmatter, headings = [] } = Astro.props;
-const { lang, page, title, description, heading, intro, toc } = frontmatter;
+const { frontmatter, headings = [], compiledContent } = Astro.props;
+const { lang, page, title, description, heading, intro, toc, faq } = frontmatter;
+
+// Question (an h3) → its answer: the text up to the next heading.
+let faqData: string | null = null;
+if (faq) {
+  const html: string = await compiledContent();
+  const text = (s: string) => s.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+  const questions = [...html.matchAll(/<h3[^>]*>(.*?)<\/h3>([\s\S]*?)(?=<h[23]|$)/g)].map(([, q, a]) => ({
+    '@type': 'Question',
+    name: text(q),
+    acceptedAnswer: { '@type': 'Answer', text: text(a) },
+  }));
+  faqData = JSON.stringify({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: questions }, null, 2);
+}
 const entries: { depth: number; slug: string; text: string }[] = toc
   ? headings.filter((h: { depth: number }) => h.depth === 2 || h.depth === 3)
   : [];
 const label = lang === 'zh' ? '目录' : 'Contents';
 ---
 <Page lang={lang} page={page} title={title} description={description}>
+{faqData && <script is:inline type="application/ld+json" slot="head" set:html={faqData} />}
 <main class:list={['wrap doc', { 'has-toc': entries.length > 0 }]}>
   {entries.length > 0 && (
     <nav class="toc toc-side" aria-label={label}>

@@ -19,7 +19,7 @@ Open a [problem report](https://github.com/weenas/castbay/issues/new?template=bu
 - **What happened**, what you expected, and the steps that lead to it. A photo or a short video of the TV helps a lot.
 - **The network**: Wi-Fi or wired, and anything unusual, like a mesh network, a VPN or a proxy.
 
-Before posting, check the [FAQ](/#faq) and whether someone has [already reported it](https://github.com/weenas/castbay/issues). Leave out anything private: passwords, your address, phone numbers.
+Before posting, check the [FAQ](/faq) and whether someone has [already reported it](https://github.com/weenas/castbay/issues). Leave out anything private: passwords, your address, phone numbers.
 
 ## Tell us it works on your device
 

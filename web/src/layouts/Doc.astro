@@ -1,0 +1,14 @@
+---
+// A document page written in Markdown (the user guide, how it works, privacy). Its front
+// matter gives the language, page, <title>, description, heading and an intro line (HTML).
+import Page from './Page.astro';
+
+const { lang, page, title, description, heading, intro } = Astro.props.frontmatter;
+---
+<Page lang={lang} page={page} title={title} description={description}>
+<main class="wrap doc">
+    <h1>{heading}</h1>
+    <p class="date" set:html={intro}></p>
+<slot />
+</main>
+</Page>

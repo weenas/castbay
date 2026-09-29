@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
@@ -25,6 +25,7 @@
   <link rel="icon" href="/assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
   <link rel="stylesheet" href="/assets/style.css">
+  <!-- Sets the theme before the page draws, so it never flashes the wrong one. -->
   <script src="/assets/site.js"></script>
 </head>
 <body>
@@ -33,92 +34,78 @@
   <div class="wrap">
     <a class="brand" href="/zh/"><img class="wm-dark" src="/assets/wordmark@2x.png?v=2" srcset="/assets/wordmark@2x.png?v=2 2x, /assets/wordmark@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"><img class="wm-light" src="/assets/wordmark-light@2x.png?v=2" srcset="/assets/wordmark-light@2x.png?v=2 2x, /assets/wordmark-light@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"></a>
     <nav class="nav">
-      <a href="/zh/">主页</a>
-      <a href="/zh/guide">使用说明</a>
-      <a href="/zh/tech" aria-current="page">技术原理</a>
-      <a href="https://github.com/weenas/castbay">GitHub</a>
+      <a href="/zh/">主页</a><a href="/zh/guide">使用说明</a><a href="/zh/tech" aria-current="page">技术原理</a><a href="https://github.com/weenas/castbay">GitHub</a>
     </nav>
-    <button id="theme-btn" class="theme" type="button" title="深色或浅色" aria-label="切换到浅色" data-to-light="切换到浅色" data-to-dark="切换到深色"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"/></svg></button>
+    <button id="theme-btn" class="theme" type="button" title="深色或浅色" aria-label="切换到浅色" data-to-light="切换到浅色" data-to-dark="切换到深色"><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"></path></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"></path></svg></button>
     <a class="lang" href="/tech" hreflang="en" lang="en" data-lang-link="en">English</a>
   </div>
 </header>
 
+
 <main class="wrap doc">
     <h1>映湾是怎么工作的</h1>
     <p class="date">手机和电视之间发生了什么，以及映湾为什么这样设计。</p>
+<h2 id="三种投屏方式传的是什么">三种投屏方式，传的是什么</h2>
+<ul>
+<li><strong>屏幕镜像</strong>（控制中心 → 屏幕镜像）：手机把自己的屏幕实时录下来，压缩成视频（H.264，4K 时用 H.265），通过 Wi-Fi 发给电视，电视用硬件解码播放。画面全部来自手机，所以手机要一直开着、放在附近。</li>
+<li><strong>在 App 里用 AirPlay 投送</strong>（YouTube、爱奇艺、Apple Music 等的 AirPlay 图标）：投视频时，手机只告诉电视视频<em>在哪里</em>，电视自己从网上获取，所以手机可以锁屏或去用别的 App。这也意味着电视必须能直接访问视频：如果手机要通过代理或 VPN 才能打开 YouTube，电视也需要。音乐不同，由手机以无损 ALAC 格式直接传给电视。</li>
+<li><strong>App 自带的投屏按钮（DLNA）</strong>，如哔哩哔哩、爱奇艺、网易云音乐、QQ 音乐：同样是把播放地址交给电视，iPhone 和安卓手机都能用。画质由 App 决定，比如哔哩哔哩把 1080P 留给它的官方电视 App，投到其他设备最高 720P；屏幕镜像则没有这个限制。</li>
+</ul>
+<h2 id="手机是怎么找到电视的">手机是怎么找到电视的</h2>
+<p>映湾像 Apple TV 一样在局域网里广播自己（Bonjour，也叫 mDNS），手机会列出它听到的所有接收器。前提是两者在同一个网络里、并且允许互相发现：访客网络、以及开启了"AP 隔离"的路由器都会把设备隔开。手机上找不到电视，几乎都是这个原因。</p>
+<h2 id="音乐为什么晚两秒左右才响这为什么是好事">音乐为什么晚两秒左右才响，这为什么是好事</h2>
+<p>iPhone 投音乐时，并不是"放到哪里就发到哪里"。它会提前约两秒把每一段音频发出去，并标上"应该在什么时刻播出"，同时让电视和手机的时钟保持同步。映湾严格按这个时刻播放每一段，和 Apple TV、HomePod 的做法一样。这两秒的等待换来了：</p>
+<ul>
+<li><strong>歌词始终同步</strong>：手机认为"正在播放"的位置，就是你在电视上听到的位置。</li>
+<li><strong>暂停后恢复能无缝接上</strong>，不丢也不重复。（如果音频一到就播，电视会比手机快两秒，每次恢复都会把这两秒重放一遍。）</li>
+<li>Wi-Fi 偶尔卡一下，也被手里这两秒的余量吸收，不会听到断续。</li>
+</ul>
+<p>不同 App 暂停的方式不一样，映湾像 Apple TV 一样顺着 App 来：Apple Music 一按暂停，电视立即停下；网易云音乐只是停止发送，电视会把已收到的两秒左右播完再停，恢复后接着播放，中间不断。</p>
+<p>AirPlay 音乐是无损的（Apple 的 ALAC 格式）。安卓系统没有 ALAC 解码器，所以映湾内置了 Apple 开源的解码器。</p>
+<h2 id="镜像画质以及怎么看统计信息">镜像画质，以及怎么看统计信息</h2>
+<p>在带硬件 H.265 解码的 4K 电视上，映湾会向手机提供 H.265、最高 4K、最高 60 帧；否则是 H.264、最高 1080P。手机在这个范围内决定实际发送什么。</p>
+<p>打开<strong>显示统计信息</strong>（设置 → 播放，或播放时的快捷菜单）就能看到详细情况。屏幕镜像时，手机还会报告它自己的状态：</p>
+<ul>
+<li><strong>Video</strong>：电视收到并解码的视频（编码、分辨率、帧率、码率），以及电视丢弃的帧数。</li>
+<li><strong>Sender</strong>：手机实际发送的帧数和目标帧数（如 60/60）、屏幕实际绘制的帧数（画面静止时会降低，这是正常的），以及手机端丢弃的帧数。</li>
+<li><strong>Network</strong>：网络往返延迟、丢包率，以及已用带宽和手机估计的可用带宽。</li>
+</ul>
+<p>这样卡顿就能找到原因：丢包多、或者带宽接近上限，是 Wi-Fi 的问题；手机发送的帧数低于目标，是手机太忙；电视端丢帧，则是电视解码跟不上。</p>
+<h2 id="谁可以投屏到你的电视">谁可以投屏到你的电视</h2>
+<p>在设置 → 连接 → 投屏验证中有四种选择：</p>
+<ul>
+<li><strong>不需要</strong>：同一网络里的任何人都可以投屏。</li>
+<li><strong>电视确认</strong>：设备第一次投屏时，电视会询问是否允许。询问期间这次投屏会先被拒绝，允许之后在设备上重新投屏即可。（电视无法让手机一直等着：AirPlay 核心依次处理所有连接，一直等待会让正在播放的内容卡住。）</li>
+<li><strong>PIN 码</strong>：和 Apple TV 一样，新设备第一次投屏时输入电视上显示的 4 位 PIN 码。之后双方互相信任对方的密钥，这台设备就能直接连上；没输过 PIN 的设备无法冒充已配对。</li>
+<li><strong>密码</strong>：每台设备都要输入同一个密码。</li>
+</ul>
+<p>无论选哪种，投屏过的设备都会列在那里，任何一台都可以拒绝。"全部移除"会让所有设备重新变成新设备；如果有设备用 PIN 码配对过，电视还会换一个新的身份，让手机重新配对，而不是连接失败。</p>
+<h2 id="遥控器与连接">遥控器与连接</h2>
+<ul>
+<li><strong>用电视遥控器控制手机上的音乐</strong>：音乐 App 通过 AirPlay 播放时，电视上的播放/暂停、上一首、下一首会通过 AirPlay 的远程控制通道（DACP）发回手机，由手机执行，和用 Apple TV 遥控器一样。这个通道只有播放、暂停、切歌等命令，没有"跳到某个时间"，所以 AirPlay 音乐没有快进/快退 10 秒的按钮，调进度请在手机上操作。（DLNA 音乐由电视自己播放，可以精确快进快退。）</li>
+<li><strong>另一台设备投屏时</strong>：由设置 → 连接 →"其他设备投屏时"决定。选<em>拒绝</em>（默认）会保留当前投屏，拒绝新设备；选<em>让它接管</em>则结束当前投屏，改为显示新设备的内容，界面上的设备名也随之更新。</li>
+<li><strong>投屏为什么会自动结束</strong>：屏幕镜像或播放音乐时，手机即使暂停也会每两秒发一次心跳。如果 5 秒都没收到（手机离开了 Wi-Fi、没电了或关掉了 App），电视就认为投屏已结束，回到主界面，而不是停在最后一帧。从 App 投送的视频由电视自己播放，不需要心跳。</li>
+</ul>
+<h2 id="哪些不支持为什么">哪些不支持，为什么</h2>
+<ul>
+<li><strong>Google Cast（Chromecast）</strong>：只有经过 Google 认证的设备才能接收。</li>
+<li><strong>Miracast 和安卓自带的"屏幕镜像""无线投屏"</strong>：需要电视系统级的权限，普通 App 拿不到。安卓手机请使用 App 自带的投屏按钮（DLNA）。</li>
+<li><strong>Mac 上的"音乐"App</strong>：它用一种开源 AirPlay 实现无法处理的 FairPlay 加密来保护音频。Mac 的屏幕镜像可以正常使用。</li>
+</ul>
+<h2 id="基于开源">基于开源</h2>
+<p>映湾以 GPL-3.0 协议开源，AirPlay 协议基于 <a href="https://github.com/FDH2/UxPlay">UxPlay</a>，并使用了 <a href="https://github.com/libimobiledevice/libplist">libplist</a>、<a href="https://github.com/macosforge/alac">Apple ALAC 解码器</a>和 <a href="https://developer.android.com/media/media3">Media3 ExoPlayer</a>，视频由安卓的硬件解码器播放。完整源代码在 <a href="https://github.com/weenas/castbay">GitHub</a> 上。</p>
 
-    <h2>三种投屏方式，传的是什么</h2>
-    <ul>
-      <li><strong>屏幕镜像</strong>（控制中心 → 屏幕镜像）：手机把自己的屏幕实时录下来，压缩成视频（H.264，4K 时用 H.265），通过 Wi-Fi 发给电视，电视用硬件解码播放。画面全部来自手机，所以手机要一直开着、放在附近。</li>
-      <li><strong>在 App 里用 AirPlay 投送</strong>（YouTube、爱奇艺、Apple Music 等的 AirPlay 图标）：投视频时，手机只告诉电视视频<em>在哪里</em>，电视自己从网上获取，所以手机可以锁屏或去用别的 App。这也意味着电视必须能直接访问视频：如果手机要通过代理或 VPN 才能打开 YouTube，电视也需要。音乐不同，由手机以无损 ALAC 格式直接传给电视。</li>
-      <li><strong>App 自带的投屏按钮（DLNA）</strong>，如哔哩哔哩、爱奇艺、网易云音乐、QQ 音乐：同样是把播放地址交给电视，iPhone 和安卓手机都能用。画质由 App 决定，比如哔哩哔哩把 1080P 留给它的官方电视 App，投到其他设备最高 720P；屏幕镜像则没有这个限制。</li>
-    </ul>
-
-    <h2>手机是怎么找到电视的</h2>
-    <p>映湾像 Apple TV 一样在局域网里广播自己（Bonjour，也叫 mDNS），手机会列出它听到的所有接收器。前提是两者在同一个网络里、并且允许互相发现：访客网络、以及开启了"AP 隔离"的路由器都会把设备隔开。手机上找不到电视，几乎都是这个原因。</p>
-
-    <h2>音乐为什么晚两秒左右才响，这为什么是好事</h2>
-    <p>iPhone 投音乐时，并不是"放到哪里就发到哪里"。它会提前约两秒把每一段音频发出去，并标上"应该在什么时刻播出"，同时让电视和手机的时钟保持同步。映湾严格按这个时刻播放每一段，和 Apple TV、HomePod 的做法一样。这两秒的等待换来了：</p>
-    <ul>
-      <li><strong>歌词始终同步</strong>：手机认为"正在播放"的位置，就是你在电视上听到的位置。</li>
-      <li><strong>暂停后恢复能无缝接上</strong>，不丢也不重复。（如果音频一到就播，电视会比手机快两秒，每次恢复都会把这两秒重放一遍。）</li>
-      <li>Wi-Fi 偶尔卡一下，也被手里这两秒的余量吸收，不会听到断续。</li>
-    </ul>
-    <p>不同 App 暂停的方式不一样，映湾像 Apple TV 一样顺着 App 来：Apple Music 一按暂停，电视立即停下；网易云音乐只是停止发送，电视会把已收到的两秒左右播完再停，恢复后接着播放，中间不断。</p>
-    <p>AirPlay 音乐是无损的（Apple 的 ALAC 格式）。安卓系统没有 ALAC 解码器，所以映湾内置了 Apple 开源的解码器。</p>
-
-    <h2>镜像画质，以及怎么看统计信息</h2>
-    <p>在带硬件 H.265 解码的 4K 电视上，映湾会向手机提供 H.265、最高 4K、最高 60 帧；否则是 H.264、最高 1080P。手机在这个范围内决定实际发送什么。</p>
-    <p>打开<strong>显示统计信息</strong>（设置 → 播放，或播放时的快捷菜单）就能看到详细情况。屏幕镜像时，手机还会报告它自己的状态：</p>
-    <ul>
-      <li><strong>Video</strong>：电视收到并解码的视频（编码、分辨率、帧率、码率），以及电视丢弃的帧数。</li>
-      <li><strong>Sender</strong>：手机实际发送的帧数和目标帧数（如 60/60）、屏幕实际绘制的帧数（画面静止时会降低，这是正常的），以及手机端丢弃的帧数。</li>
-      <li><strong>Network</strong>：网络往返延迟、丢包率，以及已用带宽和手机估计的可用带宽。</li>
-    </ul>
-    <p>这样卡顿就能找到原因：丢包多、或者带宽接近上限，是 Wi-Fi 的问题；手机发送的帧数低于目标，是手机太忙；电视端丢帧，则是电视解码跟不上。</p>
-
-    <h2>谁可以投屏到你的电视</h2>
-    <p>在设置 → 连接 → 投屏验证中有四种选择：</p>
-    <ul>
-      <li><strong>不需要</strong>：同一网络里的任何人都可以投屏。</li>
-      <li><strong>电视确认</strong>：设备第一次投屏时，电视会询问是否允许。询问期间这次投屏会先被拒绝，允许之后在设备上重新投屏即可。（电视无法让手机一直等着：AirPlay 核心依次处理所有连接，一直等待会让正在播放的内容卡住。）</li>
-      <li><strong>PIN 码</strong>：和 Apple TV 一样，新设备第一次投屏时输入电视上显示的 4 位 PIN 码。之后双方互相信任对方的密钥，这台设备就能直接连上；没输过 PIN 的设备无法冒充已配对。</li>
-      <li><strong>密码</strong>：每台设备都要输入同一个密码。</li>
-    </ul>
-    <p>无论选哪种，投屏过的设备都会列在那里，任何一台都可以拒绝。"全部移除"会让所有设备重新变成新设备；如果有设备用 PIN 码配对过，电视还会换一个新的身份，让手机重新配对，而不是连接失败。</p>
-
-    <h2>遥控器与连接</h2>
-    <ul>
-      <li><strong>用电视遥控器控制手机上的音乐</strong>：音乐 App 通过 AirPlay 播放时，电视上的播放/暂停、上一首、下一首会通过 AirPlay 的远程控制通道（DACP）发回手机，由手机执行，和用 Apple TV 遥控器一样。这个通道只有播放、暂停、切歌等命令，没有"跳到某个时间"，所以 AirPlay 音乐没有快进/快退 10 秒的按钮，调进度请在手机上操作。（DLNA 音乐由电视自己播放，可以精确快进快退。）</li>
-      <li><strong>另一台设备投屏时</strong>：由设置 → 连接 →"其他设备投屏时"决定。选<em>拒绝</em>（默认）会保留当前投屏，拒绝新设备；选<em>让它接管</em>则结束当前投屏，改为显示新设备的内容，界面上的设备名也随之更新。</li>
-      <li><strong>投屏为什么会自动结束</strong>：屏幕镜像或播放音乐时，手机即使暂停也会每两秒发一次心跳。如果 5 秒都没收到（手机离开了 Wi-Fi、没电了或关掉了 App），电视就认为投屏已结束，回到主界面，而不是停在最后一帧。从 App 投送的视频由电视自己播放，不需要心跳。</li>
-    </ul>
-
-    <h2>哪些不支持，为什么</h2>
-    <ul>
-      <li><strong>Google Cast（Chromecast）</strong>：只有经过 Google 认证的设备才能接收。</li>
-      <li><strong>Miracast 和安卓自带的"屏幕镜像""无线投屏"</strong>：需要电视系统级的权限，普通 App 拿不到。安卓手机请使用 App 自带的投屏按钮（DLNA）。</li>
-      <li><strong>Mac 上的"音乐"App</strong>：它用一种开源 AirPlay 实现无法处理的 FairPlay 加密来保护音频。Mac 的屏幕镜像可以正常使用。</li>
-    </ul>
-
-    <h2>基于开源</h2>
-    <p>映湾以 GPL-3.0 协议开源，AirPlay 协议基于 <a href="https://github.com/FDH2/UxPlay">UxPlay</a>，并使用了 <a href="https://github.com/libimobiledevice/libplist">libplist</a>、<a href="https://github.com/macosforge/alac">Apple ALAC 解码器</a>和 <a href="https://developer.android.com/media/media3">Media3 ExoPlayer</a>，视频由安卓的硬件解码器播放。完整源代码在 <a href="https://github.com/weenas/castbay">GitHub</a> 上。</p>
 </main>
+
 
 <footer>
   <div class="wrap">
     <div>
       <div>© 2026 映湾 CastBay · <a href="https://weenas.com">Weenas</a> 出品</div>
-      <div style="margin-top:6px;max-width:44em">
-        AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。
-      </div>
+      <div style="margin-top:6px;max-width:44em">AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。</div>
     </div>
     <div class="links">
-      <a href="/zh/">主页</a>
-      <a href="/zh/guide">使用说明</a>
-      <a href="/zh/privacy">隐私政策</a>
-      <a href="https://github.com/weenas/castbay/releases">版本下载</a>
-      <a href="https://github.com/weenas/castbay">GitHub</a>
+      <a href="/zh/">主页</a><a href="/zh/guide">使用说明</a><a href="/zh/privacy">隐私政策</a><a href="https://github.com/weenas/castbay/releases">版本下载</a><a href="https://github.com/weenas/castbay">GitHub</a>
     </div>
   </div>
 </footer>

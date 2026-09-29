@@ -47,3 +47,8 @@ debug.keystore
 
 # Designers' asset archives: what they contain is committed unpacked (branding/).
 *.zip
+
+# The website's build tooling (web/): installed by npm, rebuilt by astro.
+web/node_modules/
+web/dist/
+web/.astro/

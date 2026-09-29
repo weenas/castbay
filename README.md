@@ -79,23 +79,29 @@ castbay/
 │   └── build.gradle.kts
 ├── airplay/                # Android library, JNI bridge, and native protocol build
 ├── third_party/            # Pinned UxPlay, libplist and ALAC submodules
-├── site/                   # Website sources: page bodies, the shared header/footer, strings
-├── website/                # castbay.weenas.com as published (built from site/, Cloudflare)
-├── scripts/                # build_website.py, serve_website.py
+├── web/                    # Website sources (Astro): pages, layouts, static assets
+├── website/                # castbay.weenas.com as published (built from web/, Cloudflare)
 ├── branding/               # Logo and wordmark masters (SVG and PNG)
 └── README.md
 ```
 
 ### Website
 
-The pages in `website/` are generated: each page's own content is in `site/pages/<lang>/`, and the header, navigation and footer they share are in `site/templates/page.html` and `site/strings.json`. After editing `site/`, rebuild and preview:
+The website is built with [Astro](https://astro.build) from `web/` (Node 22.12 or later):
+
+- `web/src/pages/`: the pages. The user guide, How it works and the privacy policy are Markdown (`guide.md`, `tech.md`, `privacy.md`, and the same under `zh/`); the home pages are `index.astro`.
+- `web/src/layouts/`: the `<head>`, header, navigation and footer every page shares (`Page.astro`), and the layout of the Markdown pages (`Doc.astro`).
+- `web/src/i18n.ts`: the words the shared parts use in each language.
+- `web/public/`: styles, images, scripts, `robots.txt` and `sitemap.xml`, published as they are.
 
 ```bash
-python3 scripts/build_website.py
-python3 scripts/serve_website.py
+cd web
+npm install        # once
+npm run dev        # preview at http://localhost:4321, updating as you edit
+npm run build      # build, and copy the result to ../website
 ```
 
-Commit both `site/` and the rebuilt `website/`; CI fails if they don't match. Styles, images and scripts (`website/assets/`) and `website/sitemap.xml` are edited directly; add a new page to both `PAGES` in the script and the sitemap.
+Commit `web/` together with the rebuilt `website/`, which Cloudflare publishes; CI fails if they don't match. A new page also goes in `public/sitemap.xml`.
 
 ## License
 

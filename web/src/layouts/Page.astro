@@ -1,0 +1,130 @@
+---
+// The shell every page shares: <head>, the header with its navigation and language link,
+// and the footer. Pages give their language, name, title and description, and their <main>.
+import { APK_URL, BASE_URL, otherLang, pagePath, strings, type Lang, type PageName } from '../i18n';
+
+interface Props {
+  lang: Lang;
+  page: PageName;
+  title: string;
+  description: string;
+}
+
+const { lang, page, title, description } = Astro.props;
+const s = strings[lang];
+const other = otherLang(lang);
+const url = BASE_URL + pagePath(lang, page);
+const current = pagePath(lang, page);
+
+// The home page links to its own sections; the others to each page.
+const nav =
+  page === 'index'
+    ? [
+        { href: '#features', text: s.features },
+        { href: '#start', text: s.guide },
+        { href: '#faq', text: s.faq },
+        { href: pagePath(lang, 'tech'), text: s.tech },
+      ]
+    : [
+        { href: pagePath(lang, 'index'), text: s.home },
+        { href: pagePath(lang, 'guide'), text: s.guide },
+        { href: pagePath(lang, 'tech'), text: s.tech },
+      ];
+nav.push({ href: 'https://github.com/weenas/castbay', text: 'GitHub' });
+
+// Every page but this one, then the releases and the source.
+const footerPages: PageName[] = ['index', 'guide', 'tech', 'privacy'];
+const labels = { index: s.home, guide: s.guide, tech: s.tech, privacy: s.privacy };
+const footerLinks = [
+  ...footerPages.filter((p) => p !== page).map((p) => ({ href: pagePath(lang, p), text: labels[p] })),
+  { href: 'https://github.com/weenas/castbay/releases', text: s.releases },
+  { href: 'https://github.com/weenas/castbay', text: 'GitHub' },
+];
+
+// schema.org data for search engines, on the home pages.
+const structuredData =
+  page === 'index'
+    ? JSON.stringify(
+        {
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          name: 'CastBay',
+          alternateName: '映湾',
+          url,
+          description,
+          inLanguage: s.htmlLang,
+          applicationCategory: 'MultimediaApplication',
+          operatingSystem: 'Android TV, Google TV (Android 8.0 or later)',
+          offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+          downloadUrl: APK_URL,
+          softwareHelp: 'https://github.com/weenas/castbay',
+          license: 'https://www.gnu.org/licenses/gpl-3.0.html',
+          isAccessibleForFree: true,
+          image: BASE_URL + '/assets/og.jpg?v=2',
+        },
+        null,
+        2,
+      )
+    : null;
+---
+<!doctype html>
+<html lang={s.htmlLang}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{title}</title>
+  <meta name="description" content={description}>
+  <link rel="canonical" href={url}>
+  <link rel="alternate" hreflang="en" href={BASE_URL + pagePath('en', page)}>
+  <link rel="alternate" hreflang="zh-CN" href={BASE_URL + pagePath('zh', page)}>
+  <link rel="alternate" hreflang="x-default" href={BASE_URL + pagePath('en', page)}>
+  <meta name="theme-color" content="#0b0910">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="CastBay">
+  <meta property="og:locale" content={s.ogLocale}>
+  <meta property="og:locale:alternate" content={strings[other].ogLocale}>
+  <meta property="og:title" content={title}>
+  <meta property="og:description" content={description}>
+  <meta property="og:url" content={url}>
+  <meta property="og:image" content="https://castbay.weenas.com/assets/og.jpg?v=2">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="icon" href="/assets/logo.svg?v=2" type="image/svg+xml">
+  <link rel="icon" href="/assets/favicon-32.png?v=2" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=2">
+  <link rel="stylesheet" href="/assets/style.css">
+  <!-- Sets the theme before the page draws, so it never flashes the wrong one. -->
+  <script is:inline src="/assets/site.js"></script>
+  {structuredData && <script is:inline type="application/ld+json" set:html={structuredData} />}
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href={s.prefix}><img class="wm-dark" src="/assets/wordmark@2x.png?v=2" srcset="/assets/wordmark@2x.png?v=2 2x, /assets/wordmark@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"><img class="wm-light" src="/assets/wordmark-light@2x.png?v=2" srcset="/assets/wordmark-light@2x.png?v=2 2x, /assets/wordmark-light@3x.png?v=2 3x" alt="CastBay 映湾" width="250" height="60"></a>
+    <nav class="nav">
+      {nav.map(({ href, text }) => <a href={href} aria-current={href === current ? 'page' : undefined}>{text}</a>)}
+    </nav>
+    <button id="theme-btn" class="theme" type="button" title={s.themeTitle} aria-label={s.themeToLight} data-to-light={s.themeToLight} data-to-dark={s.themeToDark}><svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3h.393a7.5 7.5 0 0 0 7.92 12.446A9 9 0 1 1 12 2.992z"/></svg><svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.828 14.828a4 4 0 1 0-5.656-5.656 4 4 0 0 0 5.656 5.656M6.343 17.657l-1.414 1.414M6.343 6.343 4.929 4.929M17.657 6.343l1.414-1.414M17.657 17.657l1.414 1.414M4 12H2M12 4V2M20 12h2M12 20v2"/></svg></button>
+    <a class="lang" href={pagePath(other, page)} hreflang={strings[other].htmlLang} lang={strings[other].htmlLang} data-lang-link={other}>{strings[other].label}</a>
+  </div>
+</header>
+
+<slot />
+
+<footer>
+  <div class="wrap">
+    <div>
+      {lang === 'en'
+        ? <div>© 2026 CastBay · A <a href="https://weenas.com">Weenas</a> project</div>
+        : <div>© 2026 映湾 CastBay · <a href="https://weenas.com">Weenas</a> 出品</div>}
+      <div style="margin-top:6px;max-width:44em">{s.trademarks}</div>
+    </div>
+    <div class="links">
+      {footerLinks.map(({ href, text }) => <a href={href}>{text}</a>)}
+    </div>
+  </div>
+</footer>
+</body>
+</html>

@@ -2,6 +2,7 @@
 // The shell every page shares: <head>, the header with its navigation and language link,
 // and the footer. Pages give their language, name, title and description, and their <main>.
 // A page without a name (the 404 page) isn't indexed, and its language link goes home.
+// Pages can add to <head> with slot="head".
 import { APK_URL, BASE_URL, otherLang, pagePath, strings, type Lang, type PageName } from '../i18n';
 
 interface Props {
@@ -22,14 +23,14 @@ const nav = [
   { href: pagePath(lang, 'guide'), text: s.guide },
   { href: pagePath(lang, 'tech'), text: s.tech },
   { href: pagePath(lang, 'changelog'), text: s.changelog },
-  { href: s.prefix + '#faq', text: s.faq },
+  { href: pagePath(lang, 'faq'), text: s.faq },
   { href: 'https://github.com/weenas/castbay', text: 'GitHub' },
 ];
 
 // Every page but this one, then the releases and the source.
-const footerPages: PageName[] = ['index', 'guide', 'tech', 'changelog', 'compatibility', 'feedback', 'privacy'];
+const footerPages: PageName[] = ['index', 'guide', 'tech', 'faq', 'changelog', 'compatibility', 'feedback', 'privacy'];
 const labels = {
-  index: s.home, guide: s.guide, tech: s.tech, changelog: s.changelog,
+  index: s.home, guide: s.guide, tech: s.tech, faq: s.faq, changelog: s.changelog,
   compatibility: s.compatibility, feedback: s.feedback, privacy: s.privacy,
 };
 const footerLinks = [
@@ -99,6 +100,7 @@ const structuredData =
   <!-- Sets the theme before the page draws, so it never flashes the wrong one. -->
   <script is:inline src="/assets/site.js"></script>
   {structuredData && <script is:inline type="application/ld+json" set:html={structuredData} />}
+  <slot name="head" />
 </head>
 <body>
 

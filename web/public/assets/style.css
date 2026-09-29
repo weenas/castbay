@@ -184,6 +184,7 @@ section.alt { background: var(--bg-raised); }
 
 /* FAQ */
 .faq { max-width: 820px; }
+.faq-more { margin: 22px 0 0; font-weight: 600; }
 details {
   background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
   padding: 0 22px; margin-bottom: 12px;

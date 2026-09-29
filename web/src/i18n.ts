@@ -1,6 +1,6 @@
 // The words the shared header and footer use, and where each page lives in each language.
 export type Lang = 'en' | 'zh';
-export type PageName = 'index' | 'guide' | 'tech' | 'changelog' | 'compatibility' | 'feedback' | 'privacy';
+export type PageName = 'index' | 'guide' | 'tech' | 'faq' | 'changelog' | 'compatibility' | 'feedback' | 'privacy';
 
 export const BASE_URL = 'https://castbay.weenas.com';
 

@@ -14,23 +14,27 @@ interface AudioInfoListener {
     fun onProgress(positionSec: Double, durationSec: Double)
 }
 
+/**
+ * Connects the protocol library to the app. Its callbacks are internal so debug builds'
+ * simulated sender can drive the app exactly as the protocol does.
+ */
 class NativeBridge(
-    private val onConnectionStarted: () -> Unit,
-    private val onVideoData: (ByteArray, Long, Boolean) -> Unit,
-    private val onAudioData: (ByteArray, Long) -> Unit,
-    private val onPcmData: (ByteArray, Long, Int) -> Unit,
-    private val onAudioFlush: () -> Unit,
-    private val onVolume: (Float) -> Unit,
-    private val audioInfo: AudioInfoListener,
-    private val videoPlayback: VideoPlaybackListener,
-    private val onRemoteControl: (dacpId: String, activeRemote: String) -> Unit,
+    internal val onConnectionStarted: () -> Unit,
+    internal val onVideoData: (ByteArray, Long, Boolean) -> Unit,
+    internal val onAudioData: (ByteArray, Long) -> Unit,
+    internal val onPcmData: (ByteArray, Long, Int) -> Unit,
+    internal val onAudioFlush: () -> Unit,
+    internal val onVolume: (Float) -> Unit,
+    internal val audioInfo: AudioInfoListener,
+    internal val videoPlayback: VideoPlaybackListener,
+    internal val onRemoteControl: (dacpId: String, activeRemote: String) -> Unit,
     /** Whether to admit a sender setting up a session; see [AirPlayNative.clientListener]. */
-    private val onClient: (deviceId: String, name: String, model: String) -> Boolean,
-    private val onFeedback: () -> Unit,
-    private val onPin: (pin: String) -> Unit,
-    private val onSenderReport: (SenderReport) -> Unit,
-    private val onPaired: (PairedDevice) -> Unit,
-    private val onSessionEnd: () -> Unit
+    internal val onClient: (deviceId: String, name: String, model: String) -> Boolean,
+    internal val onFeedback: () -> Unit,
+    internal val onPin: (pin: String) -> Unit,
+    internal val onSenderReport: (SenderReport) -> Unit,
+    internal val onPaired: (PairedDevice) -> Unit,
+    internal val onSessionEnd: () -> Unit
 ) {
     companion object {
         private const val TAG = "NativeBridge"

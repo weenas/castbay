@@ -9,7 +9,8 @@ import android.provider.Settings
  * model), e.g. "CastBay (Living Room TV)", so several TVs on one network tell apart.
  */
 object DeviceName {
-    const val BRAND = "CastBay"
+    /** Debug builds (installed beside the release app) are listed apart from it. */
+    val BRAND = if (com.weenas.castbay.BuildConfig.DEBUG) "CastBay Dev" else "CastBay"
 
     /** mDNS names are at most 63 bytes; a little under, as the advertiser allows. */
     private const val MAX_BYTES = 60
@@ -34,7 +35,7 @@ object DeviceName {
         return listOf(system.takeUnless { isCode(it) }, bluetooth, system, model)
             // Some makers' names read like identifiers ("TCL_Android_TV").
             .map { it?.replace('_', ' ')?.trim().orEmpty() }
-            .firstOrNull { it.isNotEmpty() && !it.equals(BRAND, ignoreCase = true) }
+            .firstOrNull { it.isNotEmpty() && !it.equals(BRAND, ignoreCase = true) && !it.equals("CastBay", ignoreCase = true) }
             .orEmpty()
     }
 

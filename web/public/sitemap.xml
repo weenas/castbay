@@ -56,4 +56,18 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/guide"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/guide"/>
   </url>
+  <url>
+    <loc>https://castbay.weenas.com/changelog</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/changelog"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/changelog"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/changelog"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/changelog</loc>
+    <lastmod>2026-09-29</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/changelog"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/changelog"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/changelog"/>
+  </url>
 </urlset>

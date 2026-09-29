@@ -200,6 +200,14 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 .doc h3 { font-size: 17px; margin: 22px 0 6px; }
 .doc code { font-size: .92em; }
 .doc p, .doc li { color: var(--text-2); }
+/* The changelog: each release's date beside its version. */
+.release-date { font-size: 15px; font-weight: 400; color: var(--text-3); margin-left: 10px; }
+.doc section.release { padding: 0; margin-top: 36px; }
+.release h2 { scroll-margin-top: 100px; }
+/* The 404 page: English, then Chinese. */
+.not-found { min-height: 55vh; }
+.not-found p + h1 { margin-top: 48px; }
+
 /* Anchored headings clear the sticky header. */
 .doc h2, .doc h3 { scroll-margin-top: 100px; }
 

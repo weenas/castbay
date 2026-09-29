@@ -91,6 +91,7 @@ The website is built with [Astro](https://astro.build) from `web/` (Node 22.12 o
 - `web/src/pages/`: the pages. The user guide, How it works and the privacy policy are Markdown (`guide.md`, `tech.md`, `privacy.md`, and the same under `zh/`); the home pages are `index.astro`.
 - `web/src/layouts/`: the `<head>`, header, navigation and footer every page shares (`Page.astro`), and the layout of the Markdown pages (`Doc.astro`).
 - `web/src/i18n.ts`: the words the shared parts use in each language.
+- `web/src/content/releases/<en|zh>/<version>.md`: the release notes, shown on the changelog pages and used as the GitHub release notes. Add both before tagging a release (`vX.Y.Z`); the release workflow refuses a full release without them.
 - `web/public/`: styles, images, scripts, `robots.txt` and `sitemap.xml`, published as they are.
 
 ```bash

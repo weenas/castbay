@@ -65,7 +65,7 @@ If casting verification is on in Settings, a new device casting for the first ti
 - **Video cast from an app**: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds.
 - **Music**: Left and Right move between the buttons, OK presses one. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.
 - **Screen mirroring**: the phone controls the picture; the remote only opens the menu and stops the cast.
-- **Down or Menu**: opens the quick menu; OK changes an option, Back closes it.
+- **Down or Menu**: opens the quick menu along the bottom of the screen; Left and Right choose an option, OK changes it, Back or Down closes the menu.
 - **Back twice**: stops the cast and goes back to the home screen.
 - **Home**: goes to the TV's home screen; the cast keeps playing in the background.
 - **Volume**: set it on the phone; the TV shows a volume bar in the corner for a moment.
@@ -78,7 +78,6 @@ Press Down or Menu while playing. What it offers depends on what's playing:
 - **Picture** (video and mirroring): Fit (all of it, perhaps with black bars), Fill (the whole screen, perhaps cropping the edges) or Stretch (the whole screen, perhaps distorted).
 - **Lyrics** (music): on or off.
 - **Audio** and **Subtitles** (videos cast from apps, when there is a choice): another language, or subtitles off.
-- **Stop casting**.
 
 ## The music screen
 

@@ -1,0 +1,9 @@
+// How Cloudflare publishes the website: Workers Builds runs `npx astro build` in web/, then
+// `npx wrangler deploy`, which uploads dist/ as static assets (no Worker code). /guide serves
+// guide.html and /zh/ zh/index.html, by default.
+{
+  "name": "castbay",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist" },
+  "routes": [{ "pattern": "castbay.weenas.com", "custom_domain": true }]
+}

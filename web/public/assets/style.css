@@ -68,13 +68,20 @@ img { max-width: 100%; display: block; }
 .brand { display: flex; align-items: center; }
 .brand img { width: auto; height: 60px; }
 .nav { display: flex; gap: 22px; margin-left: auto; }
-.nav a { color: var(--text-2); font-size: 15px; }
+.nav a { color: var(--text-2); font-size: 15px; white-space: nowrap; }
 .nav a:hover { color: var(--text); text-decoration: none; }
 .nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
+/* Below this the mark, five links and the two buttons don't fit a line: the links go (the
+   footer has them all), as on phones. */
+@media (max-width: 920px) {
+  .nav { display: none; }
+  .theme { margin-left: auto; }
+}
 /* The link to the same page in the other language. */
 .lang {
   border: 1px solid var(--card-border); background: var(--card); color: var(--text);
   border-radius: 999px; padding: 6px 14px; font-size: 14px;
+  white-space: nowrap;
 }
 .lang:hover { border-color: var(--accent); text-decoration: none; }
 

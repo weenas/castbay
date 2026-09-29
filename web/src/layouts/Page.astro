@@ -17,21 +17,14 @@ const other = otherLang(lang);
 const url = page ? BASE_URL + pagePath(lang, page) : null;
 const current = page ? pagePath(lang, page) : null;
 
-// The home page links to its own sections; the others to each page.
-const nav =
-  page === 'index'
-    ? [
-        { href: '#features', text: s.features },
-        { href: '#start', text: s.guide },
-        { href: '#faq', text: s.faq },
-        { href: pagePath(lang, 'tech'), text: s.tech },
-      ]
-    : [
-        { href: pagePath(lang, 'index'), text: s.home },
-        { href: pagePath(lang, 'guide'), text: s.guide },
-        { href: pagePath(lang, 'tech'), text: s.tech },
-      ];
-nav.push({ href: 'https://github.com/weenas/castbay', text: 'GitHub' });
+// The same navigation on every page (the mark goes home), the current page marked.
+const nav = [
+  { href: pagePath(lang, 'guide'), text: s.guide },
+  { href: pagePath(lang, 'tech'), text: s.tech },
+  { href: pagePath(lang, 'changelog'), text: s.changelog },
+  { href: s.prefix + '#faq', text: s.faq },
+  { href: 'https://github.com/weenas/castbay', text: 'GitHub' },
+];
 
 // Every page but this one, then the releases and the source.
 const footerPages: PageName[] = ['index', 'guide', 'tech', 'changelog', 'compatibility', 'feedback', 'privacy'];

@@ -50,7 +50,7 @@ To stay in step with the phone. An iPhone sends music about two seconds ahead, s
 
 ### Screen mirroring lags a little. Is that normal?
 
-Some delay is, as with an Apple TV: the sender has to capture and compress its screen before the TV can show it. Two things shorten it. First, switch the TV's picture mode to **Game**: TVs process the picture to make films look better, and on our Sony that alone took 160 ms. Second, if you mirror a Mac to a 4K TV, set **Maximum Resolution** to 1080p: a Mac encodes 1080p much faster than 4K. In our test (MacBook to a Sony 4K TV) mirroring lagged about 350 ms in the standard picture mode, 190 ms in Game mode, and under 100 ms in Game mode at 1080p. The stats overlay shows how much of it the TV's decoding takes (decode, usually 10–20 ms).
+Some delay is, as with an Apple TV: the sender has to capture and compress its screen before the TV can show it. Two things shorten it. First, switch the TV's picture mode to **Game**: TVs process the picture to make films look better, and on our Sony that alone took 160 ms. Second, if you mirror a Mac to a 4K TV, choose 1080p: a Mac encodes 1080p much faster than 4K. Set **Maximum Resolution** to 1080p in CastBay, or pick the resolution for CastBay in the Mac's System Settings → Displays while mirroring (the Mac remembers it). In our test (MacBook to a Sony 4K TV) mirroring lagged about 350 ms in the standard picture mode, 190 ms in Game mode, and under 100 ms in Game mode at 1080p. The stats overlay shows how much of it the TV's decoding takes (decode, usually 10–20 ms).
 
 ### A video won't play. Why?
 

@@ -7,7 +7,8 @@
 #   install                     build the debug app, install it and open it
 #   open                        open the debug app
 #   mirror [SECONDS] [WxH] [FPS]   mirror a test picture (default: until stopped, 1920x1080, 30)
-#   music [SECONDS] [TITLE]     play a generated tune with title, artist, album and cover
+#   music [SECONDS] [TITLE] [ARTIST] [ALBUM]
+#                               play a generated tune with title, artist, album and cover
 #   pause | resume              pause or resume that music, as the phone would
 #   video [URL]                 cast a video URL (default: Apple's HLS sample)
 #   stop                        the sender stops casting
@@ -31,8 +32,16 @@ cmd="${1:-}"
 [[ -n "$cmd" ]] || { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 1; }
 shift
 
+# adb shell joins its arguments into one command line for the device's shell, so each is
+# single-quoted to keep spaces (a title like "Code Monkey") in one piece.
+quote() {
+  local out="" arg
+  for arg in "$@"; do out+=" '$(printf '%s' "$arg" | sed "s/'/'\\\\''/g")'"; done
+  printf '%s' "$out"
+}
+
 simulate() {
-  adb shell am broadcast -a "$ACTION" -p "$PACKAGE" --es cmd "$@" >/dev/null
+  adb shell "am broadcast -a $ACTION -p $PACKAGE --es cmd$(quote "$@")" >/dev/null
 }
 
 keycode() {
@@ -69,8 +78,11 @@ case "$cmd" in
     simulate mirror --ei seconds "${1:-0}" --ei width "${size%x*}" --ei height "${size#*x}" --ei fps "${3:-30}"
     ;;
   music)
-    if [[ -n "${2:-}" ]]; then simulate music --ei seconds "${1:-180}" --es title "$2"
-    else simulate music --ei seconds "${1:-180}"; fi
+    args=(music --ei seconds "${1:-180}")
+    [[ -n "${2:-}" ]] && args+=(--es title "$2")
+    [[ -n "${3:-}" ]] && args+=(--es artist "$3")
+    [[ -n "${4:-}" ]] && args+=(--es album "$4")
+    simulate "${args[@]}"
     ;;
   pause | resume | stop) simulate "$cmd" ;;
   video)

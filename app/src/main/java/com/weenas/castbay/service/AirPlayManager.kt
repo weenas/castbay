@@ -173,6 +173,19 @@ class AirPlayManager private constructor(private val context: Context) {
     }
     private val dacp = DacpClient(context)
     private val mediaSession = NowPlayingSession(context, onCommand = ::remoteControl)
+    private val audioFocus = AudioFocus(context, onLost = ::onAudioFocusLost)
+
+    /**
+     * Another app started playing: music and video are paused, as other players pause for
+     * CastBay (mirroring can't be, and plays on). Resuming on the phone takes the focus back.
+     */
+    private fun onAudioFocusLost() {
+        val stream = currentStreamInfo
+        when {
+            stream.isAudioOnly -> remoteControl(DacpClient.Command.PAUSE)
+            stream.isVideoPlayback || stream.isDlna -> hlsPlayer.setRate(0f)
+        }
+    }
     private val dlna = com.weenas.castbay.dlna.DlnaReceiver(context)
     /** The running receiver's settings (DLNA checks the second-device policy against them). */
     @Volatile private var activeSettings = ReceiverSettings()
@@ -302,6 +315,12 @@ class AirPlayManager private constructor(private val context: Context) {
     private var currentState: AirPlayConnectionState = AirPlayConnectionState.Idle
         set(value) {
             field = value
+            // Held while anything is cast; given back once nothing is.
+            when (value) {
+                AirPlayConnectionState.Streaming -> audioFocus.acquire()
+                AirPlayConnectionState.Connecting, AirPlayConnectionState.Connected -> Unit
+                else -> audioFocus.release()
+            }
             notifyStateChange(value)
         }
 
@@ -500,7 +519,11 @@ class AirPlayManager private constructor(private val context: Context) {
         val now = android.os.SystemClock.elapsedRealtime()
         lastAudioAtMs = now
         // Heard when the sender means it to be, so the position counts from then.
-        if (!nowPlaying.playing) updateNowPlaying { it.resumed(now + audioRenderer.musicDelayMs()) }
+        if (!nowPlaying.playing) {
+            updateNowPlaying { it.resumed(now + audioRenderer.musicDelayMs()) }
+            // Resumed after another app took the focus (no-op while CastBay holds it).
+            audioFocus.acquire()
+        }
         if (currentState == AirPlayConnectionState.Connecting || videoSource == VideoSource.DLNA) {
             stopDlnaVideo()
             currentStreamInfo = StreamInfo(isAudioOnly = true, sender = airPlaySender, nowPlaying = nowPlaying)

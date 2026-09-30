@@ -3,6 +3,11 @@ package com.weenas.castbay.ui.screen
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import android.graphics.BitmapFactory
@@ -136,6 +141,15 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                     if (event.key != Key.DirectionDown && event.key != Key.Menu) return@onPreviewKeyEvent false
                     menuOpen = true
                     true
+                }
+                // Touch screens (car head units have no Down key): a tap on the picture, or
+                // anywhere the controls don't take it, opens or closes the quick menu.
+                .pointerInput(Unit) {
+                    awaitEachGesture {
+                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
+                        // Null when a button under the finger took the tap, or it became a drag.
+                        if (waitForUpOrCancellation(pass = PointerEventPass.Final) != null) menuOpen = !menuOpen
+                    }
                 }
         ) {
             val contentModifier = Modifier.focusRequester(contentFocus)

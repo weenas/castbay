@@ -68,7 +68,8 @@ If casting verification is on in Settings, a new device casting for the first ti
 - **Video cast from an app**: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds.
 - **Music**: Left and Right move between the buttons, OK presses one. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.
 - **Screen mirroring**: the phone controls the picture; the remote only opens the menu and stops the cast.
-- **Down or Menu**: opens the quick menu along the bottom of the screen; Left and Right choose an option, OK changes it, Back or Down closes the menu.
+- **Down or Menu**: opens the quick menu along the bottom of the screen; Left and Right choose an option, OK changes it, Back or Down closes the menu. On a touch screen (a car's, for example), tap the screen to open or close it.
+- **Media keys** (a remote's, or a car's steering-wheel buttons): play/pause, next and previous control the music, carried out by the phone.
 - **Back twice**: stops the cast and goes back to the home screen.
 - **Home**: goes to the TV's home screen; the cast keeps playing in the background.
 - **Volume**: set it on the phone; the TV shows a volume bar in the corner for a moment.

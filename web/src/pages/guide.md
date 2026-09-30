@@ -4,7 +4,7 @@ lang: en
 toc: true
 page: guide
 title: 'User guide – CastBay'
-description: 'How to use CastBay: installing and updating it, casting from iPhone, iPad, Mac and Android, the remote and quick menu, and every setting.'
+description: 'How to use CastBay: installing and updating it, casting from iPhone, iPad, Mac and Android, the remote, touch screens and the quick menu, and every setting.'
 heading: 'User guide'
 intro: 'Everything about using CastBay, from installing it to each setting. For problems, see the <a href="/faq">FAQ</a>; for how it works, see <a href="/tech">How it works</a>.'
 ---
@@ -63,11 +63,11 @@ If casting verification is on in Settings, a new device casting for the first ti
 - **PIN**: enters the four-digit PIN the TV shows in the box that appears on the phone, once; the device is remembered after that. OK or Back puts the PIN away, and the device gets a new one when it tries again.
 - **Password**: enters the password from Settings. The phone remembers it until the password changes.
 
-## The remote while playing
+## While playing: remote and touch screen
 
-- **Video cast from an app**: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds.
-- **Music**: Left and Right move between the buttons, OK presses one. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.
-- **Screen mirroring**: the phone controls the picture; the remote only opens the menu and stops the cast.
+- **Video cast from an app**: OK or Play pauses and resumes; Left and Right skip back and ahead 10 seconds. On a touch screen, tap it and pause or skip in the menu.
+- **Music**: Left and Right move between the buttons, OK presses one; on a touch screen, tap them. For AirPlay music they are previous, play/pause and next, carried out by the phone; for DLNA music, back 10 seconds, play/pause and ahead 10 seconds. The remote's own play/pause key works too.
+- **Screen mirroring**: the phone controls the picture; on the TV or car you only open the menu and stop the cast.
 - **Down or Menu**: opens the quick menu along the bottom of the screen; Left and Right choose an option, OK changes it, Back or Down closes the menu. On a touch screen (a car's, for example), tap the screen to open or close it.
 - **Media keys** (a remote's, or a car's steering-wheel buttons): play/pause, next and previous control the music, carried out by the phone.
 - **Back twice**: stops the cast and goes back to the home screen.

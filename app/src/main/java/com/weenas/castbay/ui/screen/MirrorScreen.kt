@@ -344,7 +344,8 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
         // Centred like the lines around it, and small enough for the English one to fit a line.
         BrandSlogan(fontSize = 19.sp, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(modifier = Modifier.height(6.dp))
-        Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray)
+        // Centred like the slogan above it: the English one takes two lines.
+        Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(modifier = Modifier.height(16.dp))
         Column(
             modifier = Modifier.heightIn(min = HOME_STATUS_MIN_HEIGHT),

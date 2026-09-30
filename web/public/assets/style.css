@@ -143,12 +143,20 @@ section.alt { background: var(--bg-raised); }
 .section-head h2 { font-size: clamp(28px, 3.6vw, 38px); line-height: 1.2; margin: 0 0 12px; text-wrap: balance; }
 .section-head p { color: var(--text-2); margin: 0; }
 
-/* Screenshots: two a row, one on phones; each opens full size. */
+/* Screenshots: two a row, one on phones; each opens full size over the page (site.js). */
 .shots { display: grid; gap: 28px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .shots figure { margin: 0; }
 .shots img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25); }
 .shots figcaption { margin-top: 12px; color: var(--text-2); font-size: 15px; }
 @media (max-width: 760px) { .shots { grid-template-columns: 1fr; } }
+.shots a { cursor: zoom-in; }
+/* A screenshot opened over the page (site.js): the whole screen, dimmed, a click closes it. */
+.lightbox { max-width: none; max-height: none; width: 100vw; height: 100vh; margin: 0; padding: 24px 16px; border: 0; background: transparent; cursor: zoom-out; box-sizing: border-box; }
+.lightbox[open] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.lightbox::backdrop { background: rgba(5, 4, 8, 0.88); }
+.lightbox img { max-width: min(100%, 1920px); max-height: calc(100vh - 110px); width: auto; height: auto; border-radius: 12px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+.lightbox p { margin: 0; max-width: 900px; color: #e8e4f0; font-size: 15px; text-align: center; }
+html.lightbox-open { overflow: hidden; }
 .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .card {
   background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);

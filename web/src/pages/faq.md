@@ -60,9 +60,9 @@ Videos cast from apps are fetched by the TV itself. If your phone needs a proxy 
 
 Bilibili keeps 1080p and above for its own TV app; casting to other devices tops out at 720p. Use screen mirroring for 1080p.
 
-### How do I stop a cast with the remote?
+### How do I stop a cast from the TV or car?
 
-Press Back twice. Pressing Home keeps the cast playing in the background.
+Press Back twice (the remote's Back key, or a car display's or tablet's Back button or gesture). Pressing Home keeps the cast playing in the background.
 
 ### Why did changing a setting stop my cast?
 

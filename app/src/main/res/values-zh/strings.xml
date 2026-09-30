@@ -83,7 +83,7 @@
     <string name="setting_language">语言</string>
     <string name="language_system">跟随系统</string>
     <string name="setting_check_updates">检查更新</string>
-    <string name="setting_check_updates_note">每天向 GitHub 查询一次最新版本号，不会发送这台电视的任何信息。</string>
+    <string name="setting_check_updates_note">每天向 castbay.weenas.com（或 GitHub）查询一次最新版本号，不会发送这台电视的任何信息。</string>
     <string name="setting_reset">恢复默认设置</string>
     <string name="setting_reset_action">恢复</string>
     <string name="setting_reset_confirm">再按一次确认</string>

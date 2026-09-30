@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
@@ -26,6 +27,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -98,6 +100,8 @@ fun QuickMenu(
             .focusProperties { exit = { FocusRequester.Cancel } }
             .focusGroup()
             .horizontalScroll(rememberScrollState())
+            // A tap on the bar between options isn't a tap on the picture (which closes it).
+            .pointerInput(Unit) { detectTapGestures { } }
             .padding(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {

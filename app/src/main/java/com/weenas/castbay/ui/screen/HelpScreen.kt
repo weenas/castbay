@@ -1,5 +1,6 @@
 package com.weenas.castbay.ui.screen
 
+import com.weenas.castbay.ui.usingKeys
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -41,18 +42,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weenas.castbay.R
 import com.weenas.castbay.ui.AppBackground
+import com.weenas.castbay.ui.hasTouchScreen
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 /** One topic: its title and text, which may name the TV with %1$s. */
 private data class HelpTopic(@StringRes val title: Int, @StringRes val body: Int)
 
-private val TOPICS = listOf(
+/** The topics; on a touch screen, taps and buttons in place of the remote's keys. */
+private fun topics(touch: Boolean) = listOf(
     HelpTopic(R.string.help_mirror_title, R.string.help_mirror),
     HelpTopic(R.string.help_airplay_apps_title, R.string.help_airplay_apps),
     HelpTopic(R.string.help_dlna_title, R.string.help_dlna),
     HelpTopic(R.string.help_android_title, R.string.help_android),
     HelpTopic(R.string.help_mac_title, R.string.help_mac),
-    HelpTopic(R.string.help_remote_title, R.string.help_remote),
+    if (touch) HelpTopic(R.string.help_touch_title, R.string.help_touch)
+    else HelpTopic(R.string.help_remote_title, R.string.help_remote),
     HelpTopic(R.string.help_access_title, R.string.help_access),
     HelpTopic(R.string.help_not_found_title, R.string.help_not_found),
     HelpTopic(R.string.help_video_title, R.string.help_video),
@@ -66,8 +70,11 @@ private val TOPICS = listOf(
 fun HelpScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
     val name = settings.advertisedName
+    val touch = hasTouchScreen()
+    val topics = remember(touch) { topics(touch) }
     val firstTopic = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { firstTopic.requestFocus() } }
+    val keys = usingKeys()
+    LaunchedEffect(Unit) { if (keys) runCatching { firstTopic.requestFocus() } }
     val gridState = rememberLazyGridState()
     val scope = rememberCoroutineScope()
 
@@ -88,7 +95,7 @@ fun HelpScreen(viewModel: AirPlayViewModel) {
                     }
                 }
             }
-            TOPICS.forEachIndexed { index, topic ->
+            topics.forEachIndexed { index, topic ->
                 item {
                     HelpCard(
                         title = stringResource(topic.title),
@@ -99,7 +106,7 @@ fun HelpScreen(viewModel: AirPlayViewModel) {
                                 // last rows, go all the way so the title and margins show too.
                                 if (!state.isFocused) return@onFocusChanged
                                 if (index < 2) scope.launch { gridState.animateScrollToItem(0) }
-                                if (index >= TOPICS.size - 2) scope.launch { gridState.animateScrollToItem(TOPICS.size) }
+                                if (index >= topics.size - 2) scope.launch { gridState.animateScrollToItem(topics.size) }
                             }
                     )
                 }

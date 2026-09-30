@@ -27,7 +27,7 @@ object UpnpDescriptions {
     <friendlyName>${Soap.escape(friendlyName)}</friendlyName>
     <manufacturer>CastBay</manufacturer>
     <manufacturerURL>https://castbay.weenas.com</manufacturerURL>
-    <modelDescription>AirPlay and DLNA receiver for Android TV</modelDescription>
+    <modelDescription>AirPlay and DLNA receiver for Android TVs, car displays and tablets</modelDescription>
     <modelName>CastBay</modelName>
     <modelNumber>1</modelNumber>
     <UDN>uuid:$uuid</UDN>

@@ -1,5 +1,6 @@
 package com.weenas.castbay.ui.screen
 
+import com.weenas.castbay.ui.usingKeys
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -106,7 +107,8 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
 private fun UpdateAction(viewModel: AirPlayViewModel, version: String) {
     val state by viewModel.updateInstall.collectAsState()
     val focus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { focus.requestFocus() }
+    val keys = usingKeys()
+    LaunchedEffect(Unit) { if (keys) focus.requestFocus() }
     Column(modifier = Modifier.padding(start = 120.dp, top = 8.dp, bottom = 12.dp)) {
         val busy = state is UpdateInstall.Downloading
         HomeButton(

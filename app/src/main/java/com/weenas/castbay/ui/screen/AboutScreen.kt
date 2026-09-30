@@ -59,6 +59,7 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                 Text(stringResource(R.string.app_tagline), fontSize = 20.sp, color = Color.White.copy(alpha = 0.7f))
                 Spacer(modifier = Modifier.height(28.dp))
                 AboutLine(stringResource(R.string.info_version), version)
+                if (update == null && BuildConfig.SELF_UPDATE) CheckAction(viewModel)
                 update?.let {
                     Text(
                         stringResource(R.string.about_update, it.version),
@@ -95,6 +96,36 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                     )
                 }
             }
+        }
+    }
+}
+
+/** Checks for a newer version now, and says how it went; a newer one replaces it with [UpdateAction]. */
+@Composable
+private fun CheckAction(viewModel: AirPlayViewModel) {
+    val state by viewModel.updateCheck.collectAsState()
+    val focus = remember { FocusRequester() }
+    val keys = usingKeys()
+    LaunchedEffect(Unit) { if (keys) focus.requestFocus() }
+    Row(
+        modifier = Modifier.padding(start = 120.dp, top = 4.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val checking = state == AirPlayViewModel.UpdateCheck.CHECKING
+        HomeButton(
+            text = stringResource(if (checking) R.string.update_checking else R.string.update_check),
+            muted = checking,
+            modifier = Modifier.focusRequester(focus),
+            onClick = { viewModel.checkForUpdateNow() }
+        )
+        val note = when (state) {
+            AirPlayViewModel.UpdateCheck.UP_TO_DATE -> R.string.update_latest
+            AirPlayViewModel.UpdateCheck.FAILED -> R.string.update_check_failed
+            else -> null
+        }
+        note?.let {
+            Spacer(modifier = Modifier.width(16.dp))
+            Text(stringResource(it), fontSize = 15.sp, color = Color.White.copy(alpha = 0.75f))
         }
     }
 }

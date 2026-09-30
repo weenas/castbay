@@ -23,7 +23,7 @@ intro: 'Everything about using CastBay, from installing it to each setting. For 
 2. The first time, the TV may ask you to allow installing apps from unknown sources; allow it.
 3. Open CastBay from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on.
 
-**Updates**: when a newer version is out, a red dot appears on the home screen's About button. Open About and press **Download and install**: CastBay downloads the new version, checks it, and opens Android's installer, where you confirm. The first time, the TV asks you to allow CastBay to install apps; allow it. Your settings are kept. (Or scan the QR code on About with your phone to download it yourself.)
+**Updates**: CastBay looks for a newer version once a day; to look now, press **Check for updates** on About. When a newer version is out, a red dot appears on the home screen's About button. Open About and press **Download and install**: CastBay downloads the new version, checks it, and opens Android's installer, where you confirm. The first time, the TV asks you to allow CastBay to install apps; allow it. Your settings are kept. (Or scan the QR code on About with your phone to download it yourself.)
 
 ## The home screen
 

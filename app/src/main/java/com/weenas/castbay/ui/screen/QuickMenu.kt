@@ -40,7 +40,6 @@ import com.weenas.castbay.viewmodel.AirPlayViewModel
 import androidx.compose.ui.res.stringResource
 import com.weenas.castbay.R
 import com.weenas.castbay.ui.DIALOG_ACCENT
-import com.weenas.castbay.ui.hasTouchScreen
 import com.weenas.castbay.ui.usingKeys
 import kotlinx.coroutines.delay
 import com.weenas.castbay.ui.settingValueLabel
@@ -151,13 +150,6 @@ fun QuickMenu(
                 MediaTracks.next(subtitleChoices)?.let { MediaTracks.select(player, C.TRACK_TYPE_TEXT, it) }
             })
         }
-        // Keys to press: nothing to do with a touch screen.
-        if (!hasTouchScreen()) Text(
-            stringResource(R.string.menu_hint),
-            color = Color.White.copy(alpha = 0.45f),
-            fontSize = 12.sp,
-            modifier = Modifier.padding(horizontal = 16.dp)
-        )
     }
 }
 

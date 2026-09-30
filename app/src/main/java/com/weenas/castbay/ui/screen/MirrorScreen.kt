@@ -91,6 +91,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -403,17 +404,18 @@ fun HomeButton(
     badge: Boolean = false,
     onClick: () -> Unit
 ) {
-    val interaction = remember { MutableInteractionSource() }
-    val focused by interaction.collectIsFocusedAsState()
+    // Read from the focus state itself: a screen that focuses the button as it opens does so
+    // before an interaction-source collector starts, and the outline was missing.
+    var focused by remember { mutableStateOf(false) }
     Button(
         onClick = onClick,
-        interactionSource = interaction,
         // Muted: grey, e.g. a switch that is off.
         colors = if (muted) ButtonDefaults.buttonColors(containerColor = Color(0xFF4A4A52), contentColor = Color(0xFFDDDDDD))
         else ButtonDefaults.buttonColors(),
         border = if (focused) BorderStroke(3.dp, Color.White) else null,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
         modifier = modifier
+            .onFocusChanged { focused = it.hasFocus }
             .widthIn(min = LocalHomeButtonMinWidth.current)
             .then(if (badge) Modifier.drawWithContent {
                 drawContent()

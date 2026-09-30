@@ -55,6 +55,20 @@ class UpdateChecker(context: Context, private val appVersion: String) {
     /** Asks if the last check was over a day ago (or [force]); then as [known]. */
     fun check(nowMs: Long = System.currentTimeMillis(), force: Boolean = false): AppUpdate? {
         if (!force && nowMs - preferences.getLong(KEY_CHECKED_AT, 0) < CHECK_INTERVAL_MS) return known()
+        fetch(nowMs)
+        // Without an answer, it is tried again at the next start.
+        return known()
+    }
+
+    /**
+     * Asks now, whatever the time of the last check (About's Check for updates): a newer
+     * release, null if this is the latest, or a failure if neither server answered.
+     */
+    fun checkNow(nowMs: Long = System.currentTimeMillis()): Result<AppUpdate?> =
+        if (fetch(nowMs) != null) Result.success(known()) else Result.failure(java.io.IOException("no answer"))
+
+    /** The latest release from the website, else GitHub, kept as [known]; null if neither answered. */
+    private fun fetch(nowMs: Long): AppUpdate? {
         val latest = runCatching { fromWebsite() }
             .onFailure { Log.w(TAG, "Website update check failed: ${it.message}") }
             .getOrNull()
@@ -65,8 +79,7 @@ class UpdateChecker(context: Context, private val appVersion: String) {
             preferences.edit().putString(KEY_UPDATE, latest.toJson()).putLong(KEY_CHECKED_AT, nowMs).apply()
             Log.i(TAG, "Latest release ${latest.version} (this is $appVersion)")
         }
-        // Without an answer, it is tried again at the next start.
-        return known()
+        return latest
     }
 
     private fun fromWebsite(): AppUpdate? = AppUpdate.fromJson(get(WEBSITE_URL))

@@ -126,6 +126,28 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     /** Where downloading and installing [update] has got to (About's Update button). */
     val updateInstall: StateFlow<UpdateInstall> = _updateInstall.asStateFlow()
 
+    /** How the last Check for updates on About went: null before one. */
+    enum class UpdateCheck { CHECKING, UP_TO_DATE, FAILED }
+    private val _updateCheck = MutableStateFlow<UpdateCheck?>(null)
+    val updateCheck: StateFlow<UpdateCheck?> = _updateCheck.asStateFlow()
+
+    /**
+     * Checks for a newer version now (About's button). Pressing it is asking to check, so it
+     * works with the daily check turned off too.
+     */
+    fun checkForUpdateNow() {
+        if (_updateCheck.value == UpdateCheck.CHECKING) return
+        _updateCheck.value = UpdateCheck.CHECKING
+        kotlin.concurrent.thread(name = "CastBay-update-check") {
+            updateChecker.checkNow()
+                .onSuccess { found ->
+                    _update.value = found
+                    _updateCheck.value = if (found == null) UpdateCheck.UP_TO_DATE else null
+                }
+                .onFailure { _updateCheck.value = UpdateCheck.FAILED }
+        }
+    }
+
     /** Downloads [update] and opens Android's installer on it; the person confirms there. */
     fun installUpdate() {
         val target = _update.value ?: return

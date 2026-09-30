@@ -8,7 +8,7 @@ heading: 'Privacy Policy'
 intro: 'Effective: September 30, 2026'
 ---
 
-CastBay is an open-source casting receiver app for Android TV. It needs no account and contains no ads, analytics or tracking code.
+CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads, analytics or tracking code.
 
 ## What we don't collect
 

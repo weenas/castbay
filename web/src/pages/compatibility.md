@@ -8,14 +8,15 @@ heading: 'Compatibility'
 intro: 'What CastBay has been tested with so far. Tried it on something not listed, or found something that doesn''t work? <a href="/feedback">Tell us</a>.'
 ---
 
-## TVs
+## TVs and car displays
 
-| TV | Android | Status |
+| Device | Android | Status |
 | --- | --- | --- |
 | Sony BRAVIA XR-55X90L (4K) | 12 | ✅ Tested: H.265 mirroring in 4K, everything else |
 | TCL TV | 9 | ✅ Tested |
+| BYD car display (touch screen) | — | ✅ Tested: mirroring, music; steering-wheel buttons to be confirmed |
 
-CastBay needs Android TV or Google TV on Android 8.0 or later. Other brands and TV boxes should work; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
+CastBay needs an Android device on Android 8.0 or later. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
 
 ## Phones and computers
 

@@ -5,16 +5,16 @@ page: faq
 toc: true
 faq: true
 title: '常见问题 – 映湾 CastBay'
-description: '映湾常见问题：支持哪些电视、如何安装、手机找不到电视、投屏和播放、隐私和安全。'
+description: '映湾常见问题：支持哪些设备、如何安装、手机找不到电视、投屏和播放、隐私和安全。'
 heading: '常见问题'
 intro: '找不到答案？看看<a href="/zh/guide">使用说明</a>，或者<a href="/zh/feedback">告诉我们</a>。'
 ---
 
 ## 开始使用
 
-### 支持哪些电视？
+### 支持哪些设备？
 
-Android 8.0 及以上的 Android TV 和 Google TV 设备，包括电视和电视盒子。已在 TCL（Android 9）和索尼（Android 12）电视上测试，详见[兼容性列表](/zh/compatibility)。
+Android 8.0 及以上的安卓设备：电视、电视盒子、车机和平板都可以，用遥控器或触摸屏操作。已在 TCL（Android 9）和索尼（Android 12）电视以及比亚迪车机上测试，详见[兼容性列表](/zh/compatibility)。
 
 ### 如何把 APK 安装到电视上？
 

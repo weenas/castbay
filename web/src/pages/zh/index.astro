@@ -7,16 +7,16 @@ import Screenshots from '../../components/Screenshots.astro';
 // The newest release, shown under the download button.
 const [latest] = await releases('zh');
 ---
-<Page lang="zh" page="index" title='映湾 CastBay：安卓电视 AirPlay 投屏接收器，iPhone 投屏到电视' description='免费开源的 Android TV 投屏 App：把 iPhone、iPad、Mac 的屏幕镜像、音乐和视频通过 AirPlay 投到安卓电视和电视盒子，也支持哔哩哔哩、爱奇艺等 App 的 DLNA 投屏。无广告，无需账号。'>
+<Page lang="zh" page="index" title='映湾 CastBay：安卓电视、车机 AirPlay 投屏接收器，iPhone 投屏到大屏' description='免费开源的安卓大屏投屏 App：把 iPhone、iPad、Mac 的屏幕镜像、音乐和视频通过 AirPlay 投到安卓电视、电视盒子、车机和平板，也支持哔哩哔哩、爱奇艺等 App 的 DLNA 投屏。无广告，无需账号。'>
 <main>
   <section class="hero">
     <div class="wrap">
       <p class="eyebrow slogan">一投即达，自在映湾</p>
       <h1>
-        把 iPhone 的画面和声音，投到你的 Android 电视上
+        把 iPhone 的画面和声音，投到你的安卓大屏上
       </h1>
       <p class="lead">
-        映湾（CastBay）让 Android 电视接收 AirPlay 屏幕镜像、音乐和视频，也支持视频和音乐 App 自带的投屏按钮（DLNA）。免费、开源、无广告。
+        映湾（CastBay）让安卓电视、车机和平板接收 AirPlay 屏幕镜像、音乐和视频，也支持视频和音乐 App 自带的投屏按钮（DLNA）。免费、开源、无广告。
       </p>
       <div class="actions">
         <a class="btn btn-primary" href={APK_URL}>
@@ -29,7 +29,7 @@ const [latest] = await releases('zh');
       </div>
       <p class="note">
         版本 {latest.data.version} · {formatDate('zh', latest.data.date)} · <a href="/zh/changelog">更新内容</a><br>
-        适用于 Android 8.0 及以上的 Android TV / Google TV 设备
+        适用于 Android 8.0 及以上的安卓电视、电视盒子、车机和平板
       </p>
       <div class="chips">
         <span class="chip">屏幕镜像</span>
@@ -71,8 +71,8 @@ const [latest] = await releases('zh');
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><circle cx="12" cy="8" r="2"/><path d="M12 14v3"/></svg></div>
-          <h3>为遥控器设计</h3>
-          <p>播放时按下键打开快捷菜单：画面比例、播放统计（屏幕镜像时还有手机端的帧率和网络状况）、音轨字幕。连按两次返回结束投屏，按主页键可在后台继续播放。</p>
+          <h3>遥控器和触摸屏都好用</h3>
+          <p>播放时按遥控器的下键，或在触摸屏上点一下，打开快捷菜单：画面比例、播放统计（屏幕镜像时还有手机端的帧率和网络状况）、音轨字幕，视频还能暂停和快进快退。方向盘上的媒体键可以切歌、暂停。连按两次返回结束投屏。</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
@@ -151,8 +151,8 @@ const [latest] = await releases('zh');
       </div>
       <div class="faq">
         <details>
-          <summary>支持哪些电视？</summary>
-          <p>Android 8.0 及以上的 Android TV 和 Google TV 设备，包括电视和电视盒子。已在 TCL（Android 9）和索尼（Android 12）电视上测试，详见<a href="/zh/compatibility">兼容性列表</a>。</p>
+          <summary>支持哪些设备？</summary>
+          <p>Android 8.0 及以上的安卓设备：电视、电视盒子、车机和平板都可以，用遥控器或触摸屏操作。已在 TCL（Android 9）和索尼（Android 12）电视以及比亚迪车机上测试，详见<a href="/zh/compatibility">兼容性列表</a>。</p>
         </details>
         <details>
           <summary>如何把 APK 安装到电视上？</summary>

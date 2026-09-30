@@ -7,16 +7,16 @@ import Screenshots from '../components/Screenshots.astro';
 // The newest release, shown under the download button.
 const [latest] = await releases('en');
 ---
-<Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TV – Mirror Your iPhone' description='Free, open-source app that turns an Android TV or Google TV into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.'>
+<Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TVs, Cars and Tablets – Mirror Your iPhone' description='Free, open-source app that turns an Android TV, TV box, car display or tablet into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.'>
 <main>
   <section class="hero">
     <div class="wrap">
       <p class="eyebrow slogan">Cast it, it's there. Kick back with CastBay.</p>
       <h1>
-        Cast your iPhone to your Android TV
+        Cast your iPhone to your Android screen
       </h1>
       <p class="lead">
-        CastBay lets an Android TV receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.
+        CastBay lets an Android TV, car display or tablet receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.
       </p>
       <div class="actions">
         <a class="btn btn-primary" href={APK_URL}>
@@ -27,7 +27,7 @@ const [latest] = await releases('en');
       </div>
       <p class="note">
         Version {latest.data.version} · {formatDate('en', latest.data.date)} · <a href="/changelog">What's new</a><br>
-        For Android TV / Google TV devices on Android 8.0 or later
+        For Android TVs, TV boxes, car displays and tablets on Android 8.0 or later
       </p>
       <div class="chips">
         <span class="chip">Screen mirroring</span>
@@ -69,8 +69,8 @@ const [latest] = await releases('en');
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><circle cx="12" cy="8" r="2"/><path d="M12 14v3"/></svg></div>
-          <h3>Made for the remote</h3>
-          <p>Press Down while playing for the quick menu: picture fit, playback stats (for mirroring, the phone's frame rate and network too), audio and subtitles. Back twice ends a cast; Home keeps it playing in the background.</p>
+          <h3>Remote or touch screen</h3>
+          <p>Press Down on the remote while playing, or tap a touch screen, for the quick menu: picture fit, playback stats (for mirroring, the phone's frame rate and network too), audio and subtitles, and for videos pause and skip. A steering wheel's media buttons pause and change tracks. Back twice ends a cast.</p>
         </article>
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
@@ -149,8 +149,8 @@ const [latest] = await releases('en');
       </div>
       <div class="faq">
         <details>
-          <summary>Which TVs are supported?</summary>
-          <p>Android TV and Google TV devices, TVs and boxes alike, on Android 8.0 or later. Tested on TCL (Android 9) and Sony (Android 12) TVs; see the <a href="/compatibility">compatibility list</a>.</p>
+          <summary>Which devices are supported?</summary>
+          <p>Android devices on Android 8.0 or later: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. Tested on TCL (Android 9) and Sony (Android 12) TVs and a BYD car display; see the <a href="/compatibility">compatibility list</a>.</p>
         </details>
         <details>
           <summary>How do I install the APK on a TV?</summary>

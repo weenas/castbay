@@ -5,16 +5,16 @@ page: faq
 toc: true
 faq: true
 title: 'FAQ – CastBay'
-description: 'CastBay FAQ: supported TVs, installing, phones that don''t find the TV, casting and playback, privacy and security.'
+description: 'CastBay FAQ: supported devices, installing, phones that don''t find the TV, casting and playback, privacy and security.'
 heading: 'FAQ'
 intro: 'Not answered here? See the <a href="/guide">user guide</a>, or <a href="/feedback">ask us</a>.'
 ---
 
 ## Getting started
 
-### Which TVs are supported?
+### Which devices are supported?
 
-Android TV and Google TV devices, TVs and boxes alike, on Android 8.0 or later. Tested on TCL (Android 9) and Sony (Android 12) TVs; see the [compatibility list](/compatibility).
+Android devices on Android 8.0 or later: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. Tested on TCL (Android 9) and Sony (Android 12) TVs and a BYD car display; see the [compatibility list](/compatibility).
 
 ### How do I install the APK on a TV?
 

@@ -5,13 +5,13 @@
   </picture>
 </p>
 
-# 映湾 CastBay: AirPlay and DLNA Receiver for Android TV
+# 映湾 CastBay: AirPlay and DLNA Receiver for Android TVs, Car Displays and Tablets
 
 **Cast it, it's there. Kick back with CastBay.** · 一投即达，自在映湾
 
 **Website: [castbay.weenas.com](https://castbay.weenas.com)** · [User guide](https://castbay.weenas.com/guide) · [How it works](https://castbay.weenas.com/tech) · **Download: [CastBay.apk](https://github.com/weenas/castbay/releases/latest/download/CastBay.apk)** ([all releases](https://github.com/weenas/castbay/releases)) · [Privacy policy](https://castbay.weenas.com/privacy)
 
-CastBay (Chinese: 映湾) turns an Android TV into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). Free, open source, no ads.
+CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). Free, open source, no ads.
 
 ## Features
 
@@ -19,16 +19,16 @@ CastBay (Chinese: 映湾) turns an Android TV into a receiver for iPhone, iPad a
 - **Music**: a blurred-cover backdrop, optional synced lyrics (via lrclib.net) and round playback controls; AirPlay music is lossless ALAC, played when the phone means it heard (as on an Apple TV), so lyrics stay in sync and pausing and resuming pick up where they left off.
 - **Video casting**: apps' AirPlay video (e.g. YouTube, iQiyi) plays straight from the source, with audio track and subtitle choices.
 - **DLNA**: the cast button in apps such as Bilibili, iQiyi, NetEase Cloud Music and QQ Music, from iPhone and Android phones.
-- **Made for the remote**: a quick menu while playing (picture fit, playback stats, audio/subtitles), Back twice to stop, Home keeps playing. For mirroring, the stats include the phone's own report: frames sent and dropped, round trip, packet loss and bandwidth.
+- **Remote or touch screen**: a quick menu while playing (picture fit, playback stats, audio/subtitles, pause and skip for videos), opened with Down on a remote or a tap on a touch screen; media keys (a steering wheel's too) pause and change tracks; Back twice to stop, Home keeps playing. For mirroring, the stats include the phone's own report: frames sent and dropped, round trip, packet loss and bandwidth.
 - **Private**: choose who can cast (anyone, devices allowed on the TV, a PIN shown on the TV the first time as on an Apple TV, or a password), allow or block each device, refuse or allow a second device; no account and no data collection.
 - English and Chinese.
 
 ## Requirements
 
-- An Android TV or Google TV device on Android 8.0 (API 26) or later
+- An Android device on Android 8.0 (API 26) or later: a TV, TV box, car display or tablet
 - The sender on the same local network
 
-Tested on TCL (Android 9) and Sony BRAVIA (Android 12) TVs with iPhones.
+Tested on TCL (Android 9) and Sony BRAVIA (Android 12) TVs and a BYD car display with iPhones.
 
 Mac screen mirroring works, but music from the Mac's Music app can't be sent to CastBay: it uses a FairPlay type (2) that UxPlay can't handle ([UxPlay#570](https://github.com/FDH2/UxPlay/issues/570)).
 

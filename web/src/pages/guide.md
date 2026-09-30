@@ -11,7 +11,7 @@ intro: 'Everything about using CastBay, from installing it to each setting. For 
 
 ## What you need
 
-- An Android TV or Google TV device (a TV or a box) on Android 8.0 or later.
+- An Android device on Android 8.0 or later: a TV, a TV box, a car display or a tablet, worked with a remote or a touch screen.
 - The TV and your phone on the same network, not a guest network. The TV can be wired and the phone on Wi-Fi, as long as both go through the same router.
 
 ## Install and update
@@ -76,7 +76,9 @@ If casting verification is on in Settings, a new device casting for the first ti
 
 ## The quick menu
 
-Press Down or Menu while playing. What it offers depends on what's playing:
+Press Down or Menu while playing, or tap a touch screen. It closes by itself after five seconds untouched. What it offers depends on what's playing:
+
+- **Pause** and **Back** / **Ahead** 10 seconds (videos cast from apps), with where the video is.
 
 - **Playback stats**: codec, resolution, frame rate, bitrate and more; while mirroring, also the phone's frame rate and network (see [How it works](/tech)).
 - **Picture** (video and mirroring): Fit (all of it, perhaps with black bars), Fill (the whole screen, perhaps cropping the edges) or Stretch (the whole screen, perhaps distorted).

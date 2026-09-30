@@ -18,7 +18,7 @@ const shots = [
   { src: music, en: 'Music, with the blurred cover behind and lyrics in sync. (“Code Monkey” by Jonathan Coulton, CC BY-NC.)', zh: '音乐：模糊的封面背景和同步歌词。（歌曲：Jonathan Coulton《Code Monkey》，CC BY-NC 授权。）' },
   { src: mirror, en: 'Screen mirroring in H.265, with the playback stats: the TV’s and the phone’s.', zh: '屏幕镜像（H.265），打开了播放统计：电视端和手机端的数据。' },
   { src: pin, en: 'PIN pairing, as on an Apple TV: a new device enters it once.', zh: 'PIN 码配对，和 Apple TV 一样：新设备只需输入一次。' },
-  { src: settings, en: 'Settings on tabs, made for the remote.', zh: '分页的设置，为遥控器设计。' },
+  { src: settings, en: 'Settings on tabs, easy with a remote or a touch screen.', zh: '分页的设置，遥控器和触摸屏都好操作。' },
   { src: help, en: 'Help on the TV, for each way of casting.', zh: '电视上的帮助，每种投屏方式怎么用。' },
 ];
 const full = await Promise.all(shots.map((shot) => getImage({ src: shot.src, format: 'webp', width: 1920 })));

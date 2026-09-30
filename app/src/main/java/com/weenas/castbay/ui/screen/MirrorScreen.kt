@@ -1,5 +1,6 @@
 package com.weenas.castbay.ui.screen
 
+import com.weenas.castbay.ui.usingKeys
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.ui.viewinterop.AndroidView
@@ -1159,6 +1160,8 @@ fun ErrorScreen(error: String, onRetry: () -> Unit) {
 @Composable
 private fun Modifier.initialFocus(): Modifier {
     val requester = remember { FocusRequester() }
-    LaunchedEffect(requester) { requester.requestFocus() }
+    // On a touch screen nothing is focused up front (see usingKeys).
+    val keys = usingKeys()
+    LaunchedEffect(requester) { if (keys) requester.requestFocus() }
     return focusRequester(requester)
 }

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">CastBay</string>
-    <string name="app_tagline">AirPlay and DLNA receiver for Android TV</string>
+    <string name="app_tagline">AirPlay and DLNA receiver for Android TVs, car displays and tablets</string>
     <string name="app_slogan">Cast it, it\'s there. Kick back with CastBay.</string>
 
     <!-- Common -->
@@ -168,6 +168,14 @@
     <string name="help_mac">Click Control Center in the menu bar → Screen Mirroring and pick “%1$s”.\nMusic from the Mac’s Music app can’t be sent to CastBay: it uses an encryption the open-source AirPlay library doesn’t support.</string>
     <string name="help_remote_title">The remote</string>
     <string name="help_remote">Video: OK pauses or resumes; Left and Right skip back or ahead 10 seconds.\nMusic: Left and Right choose a button; OK presses it.\nDown or Menu: the playback menu (picture, audio, subtitles, lyrics…).\nBack twice: stop casting. Home: keep playing in the background.</string>
+    <string name="help_touch_title">Touch and buttons</string>
+    <string name="help_touch">Tap the screen: the playback menu (picture, audio, subtitles, lyrics; for videos, pause and skip). It closes by itself after a few seconds.\nMusic: tap the buttons to pause or change tracks.\nMedia buttons (a steering wheel\'s, for example): play/pause, next and previous track.\nBack twice: stop casting.</string>
+    <string name="menu_pause">Pause</string>
+    <string name="menu_resume">Play</string>
+    <string name="menu_back">Back</string>
+    <string name="menu_ahead">Ahead</string>
+    <string name="menu_seconds">%1$d s</string>
+    <string name="section_playback_note_touch">These apply right away. While casting, tap the screen to change them.</string>
     <string name="help_not_found_title">Your phone can\'t find this TV?</string>
     <string name="help_not_found">• Connect the phone and TV to the same Wi-Fi, not a guest network.\n• Check that CastBay is open, showing “Waiting for a connection”.\n• If the router has “AP isolation” on, devices can\'t see each other; turn it off.\n• Reopen CastBay or restart the TV and try again.</string>
     <string name="help_video_title">A video won\'t play?</string>

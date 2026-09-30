@@ -1,5 +1,7 @@
 package com.weenas.castbay.ui.screen
 
+import com.weenas.castbay.ui.usingKeys
+import com.weenas.castbay.ui.hasTouchScreen
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.verticalScroll
@@ -60,8 +62,10 @@ fun SettingsScreen(viewModel: AirPlayViewModel) {
     val tabsFocus = remember { FocusRequester() }
     val languageFocus = remember { FocusRequester() }
     var refocusLanguage by rememberSaveable { mutableStateOf(false) }
+    val keys = usingKeys()
     LaunchedEffect(Unit) {
-        runCatching { (if (refocusLanguage) languageFocus else tabsFocus).requestFocus() }
+        // On a touch screen nothing is focused up front (see usingKeys).
+        if (keys || refocusLanguage) runCatching { (if (refocusLanguage) languageFocus else tabsFocus).requestFocus() }
         refocusLanguage = false
     }
     val activity = LocalContext.current as? android.app.Activity
@@ -88,7 +92,8 @@ fun SettingsScreen(viewModel: AirPlayViewModel) {
             Spacer(modifier = Modifier.height(20.dp))
             // A page fits a 540 dp tall screen; it scrolls in case (e.g. the password field).
             Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState())) {
-                tab.note?.let {
+                val touch = hasTouchScreen()
+                tab.note?.let { if (touch && it == R.string.section_playback_note) R.string.section_playback_note_touch else it }?.let {
                     Text(stringResource(it), color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(start = 8.dp, bottom = 10.dp))
                 }
                 SettingsCard {

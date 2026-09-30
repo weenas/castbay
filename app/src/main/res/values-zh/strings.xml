@@ -1,7 +1,7 @@
 <resources>
     <!-- The Chinese name; senders still see the device name, "CastBay" by default. -->
     <string name="app_name">映湾</string>
-    <string name="app_tagline">Android TV 上的 AirPlay 和 DLNA 接收器</string>
+    <string name="app_tagline">安卓大屏上的 AirPlay 和 DLNA 接收器</string>
     <string name="app_slogan">一投即达，自在映湾</string>
 
     <!-- Common -->
@@ -170,6 +170,14 @@
     <string name="help_mac">点菜单栏的控制中心 → 屏幕镜像，选择“%1$s”。\nMac 上“音乐”App 的 AirPlay 投送暂不支持：它使用的加密方式，开源 AirPlay 库无法兼容。</string>
     <string name="help_remote_title">遥控器</string>
     <string name="help_remote">视频：OK 键暂停或继续，左右键快退、快进 10 秒。\n音乐：左右键选择按钮，OK 键操作。\n下键或菜单键：打开播放菜单（画面、音轨、字幕、歌词等）。\n连按两次返回键：结束投屏。主页键：在后台继续播放。</string>
+    <string name="help_touch_title">触摸和按键</string>
+    <string name="help_touch">点一下屏幕：打开播放菜单（画面、音轨、字幕、歌词；视频还有暂停和快进快退），几秒不操作会自动关闭。\n音乐：点按钮暂停或切歌。\n媒体键（例如方向盘上的按键）：播放/暂停、上一首、下一首。\n连按两次返回键：结束投屏。</string>
+    <string name="menu_pause">暂停</string>
+    <string name="menu_resume">播放</string>
+    <string name="menu_back">快退</string>
+    <string name="menu_ahead">快进</string>
+    <string name="menu_seconds">%1$d 秒</string>
+    <string name="section_playback_note_touch">立即生效。投屏时点一下屏幕也可以修改。</string>
     <string name="help_not_found_title">手机上找不到这台电视？</string>
     <string name="help_not_found">• 手机和电视连接同一个 Wi-Fi，不要用访客网络。\n• 确认映湾已打开，主界面显示“等待投屏连接”。\n• 路由器开启了“AP 隔离”时，设备之间互相看不到，需要关闭。\n• 重新打开映湾或重启电视后再试。</string>
     <string name="help_video_title">视频无法播放？</string>

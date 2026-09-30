@@ -69,7 +69,6 @@
     <string name="menu_audio">音轨</string>
     <string name="menu_subtitles">字幕</string>
     <string name="menu_lyrics">歌词</string>
-    <string name="menu_hint">←→ 选择 · OK 切换 · 返回 关闭</string>
     <string name="picture_fit">适应</string>
     <string name="picture_fill">填充</string>
     <string name="picture_stretch">拉伸</string>

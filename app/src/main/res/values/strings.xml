@@ -67,7 +67,6 @@
     <string name="menu_audio">Audio</string>
     <string name="menu_subtitles">Subtitles</string>
     <string name="menu_lyrics">Lyrics</string>
-    <string name="menu_hint">←→ choose  ·  OK change  ·  Back close</string>
     <string name="picture_fit">Fit</string>
     <string name="picture_fill">Fill</string>
     <string name="picture_stretch">Stretch</string>

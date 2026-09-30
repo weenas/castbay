@@ -75,6 +75,9 @@ jobs:
           ./gradlew assembleRelease :app:testDebugUnitTest \
             -x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease --stacktrace
           cp app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/CastBay-$VERSION.apk"
+          # R8 shortens names in release builds; this maps a crash's stack trace back to the
+          # source (retrace). Names only, nothing secret.
+          cp app/build/outputs/mapping/release/mapping.txt "$RUNNER_TEMP/CastBay-$VERSION-mapping.txt"
 
       - name: Check it is signed with the release key, not the debug key
         run: |
@@ -120,7 +123,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          files=("$RUNNER_TEMP/CastBay-$VERSION.apk" "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz")
+          files=("$RUNNER_TEMP/CastBay-$VERSION.apk" "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz" "$RUNNER_TEMP/CastBay-$VERSION-mapping.txt")
           if [ "$PRERELEASE" = true ]; then
             kind=--prerelease
           else

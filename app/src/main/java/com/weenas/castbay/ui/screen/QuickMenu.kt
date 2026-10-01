@@ -11,6 +11,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -91,71 +94,132 @@ fun QuickMenu(
         action()
     }
 
-    // One translucent row along the bottom, in the colours of the app's dialogs, so the picture
-    // stays in view; more options just extend it (it scrolls when they no longer fit).
-    Row(
+    // Whether the video's seek bar has the focus: Up there closes the menu, while Up on the
+    // options below moves to it.
+    var onSeekBar by remember { mutableStateOf(false) }
+    val seekable = player != null
+
+    // One translucent bar along the bottom, in the colours of the app's dialogs, so the picture
+    // stays in view: for videos a seek bar, then a row of options that scrolls when they no
+    // longer fit.
+    Column(
         modifier = modifier
+            .then(if (seekable) Modifier.fillMaxWidth() else Modifier)
             .clip(RoundedCornerShape(20.dp))
             .background(Brush.verticalGradient(listOf(Color(0xE62E2745), Color(0xE61B1826))))
             .border(BorderStroke(1.dp, Color.White.copy(alpha = 0.12f)), RoundedCornerShape(20.dp))
             .onPreviewKeyEvent { event ->
                 if (event.type == KeyEventType.KeyDown) lastUse++
-                // Down again (or Up) closes it, like Back.
-                if (event.type == KeyEventType.KeyDown &&
-                    (event.key == Key.DirectionDown || event.key == Key.DirectionUp)
-                ) {
-                    onDismiss()
-                    true
-                } else {
-                    false
+                // Down again (or Up) closes it, like Back; between the seek bar and the options
+                // they move the focus instead.
+                val closes = event.type == KeyEventType.KeyDown && when (event.key) {
+                    Key.DirectionDown -> !onSeekBar
+                    Key.DirectionUp -> !seekable || onSeekBar
+                    else -> false
                 }
+                if (closes) onDismiss()
+                closes
             }
             // Right on the last option (or Left on the first) stays in the menu rather than
             // wandering to the controls behind it.
             .focusProperties { exit = { FocusRequester.Cancel } }
             .focusGroup()
-            .horizontalScroll(rememberScrollState())
             // A tap on the bar between options isn't a tap on the picture (which closes it).
             .pointerInput(Unit) { detectTapGestures { lastUse++ } }
-            .padding(8.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .padding(8.dp)
     ) {
-        if (player != null) VideoControls(player, viewModel, Modifier.focusRequester(firstItem), ::used)
-        MenuItem(
-            stringResource(R.string.menu_stats),
-            stringResource(if (settings.showStats) R.string.on else R.string.off),
-            if (player == null) Modifier.focusRequester(firstItem) else Modifier,
-            used { viewModel.updateSettings { it.copy(showStats = !it.showStats) } }
-        )
-        if (hasPicture) {
-            MenuItem(stringResource(R.string.menu_picture), settingValueLabel(settings.pictureMode), onClick = used {
-                val modes = ReceiverSettings.PICTURE_MODES
-                viewModel.updateSettings {
-                    it.copy(pictureMode = modes[(modes.indexOf(it.pictureMode) + 1) % modes.size])
-                }
-            })
-        }
-        if (!hasPicture) {
-            MenuItem(stringResource(R.string.menu_lyrics), stringResource(if (settings.showLyrics) R.string.on else R.string.off), onClick = used {
-                viewModel.updateSettings { it.copy(showLyrics = !it.showLyrics) }
-            })
-        }
-        if (player != null && audioChoices.size > 1) {
-            MenuItem(stringResource(R.string.menu_audio), audioChoices.firstOrNull { it.selected }?.label ?: stringResource(R.string.auto), onClick = used {
-                MediaTracks.next(audioChoices)?.let { MediaTracks.select(player, C.TRACK_TYPE_AUDIO, it) }
-            })
-        }
-        if (player != null && subtitleChoices.isNotEmpty()) {
-            MenuItem(stringResource(R.string.menu_subtitles), subtitleChoices.firstOrNull { it.selected && it.group != null }?.label ?: stringResource(R.string.off), onClick = used {
-                MediaTracks.next(subtitleChoices)?.let { MediaTracks.select(player, C.TRACK_TYPE_TEXT, it) }
-            })
+        if (player != null) SeekBar(player, onUse = { lastUse++ }, Modifier.onFocusChanged { onSeekBar = it.hasFocus })
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (player != null) VideoControls(player, viewModel, Modifier.focusRequester(firstItem), ::used)
+            MenuItem(
+                stringResource(R.string.menu_stats),
+                stringResource(if (settings.showStats) R.string.on else R.string.off),
+                if (player == null) Modifier.focusRequester(firstItem) else Modifier,
+                used { viewModel.updateSettings { it.copy(showStats = !it.showStats) } }
+            )
+            if (hasPicture) {
+                MenuItem(stringResource(R.string.menu_picture), settingValueLabel(settings.pictureMode), onClick = used {
+                    val modes = ReceiverSettings.PICTURE_MODES
+                    viewModel.updateSettings {
+                        it.copy(pictureMode = modes[(modes.indexOf(it.pictureMode) + 1) % modes.size])
+                    }
+                })
+            }
+            if (!hasPicture) {
+                MenuItem(stringResource(R.string.menu_lyrics), stringResource(if (settings.showLyrics) R.string.on else R.string.off), onClick = used {
+                    viewModel.updateSettings { it.copy(showLyrics = !it.showLyrics) }
+                })
+            }
+            if (player != null && audioChoices.size > 1) {
+                MenuItem(stringResource(R.string.menu_audio), audioChoices.firstOrNull { it.selected }?.label ?: stringResource(R.string.auto), onClick = used {
+                    MediaTracks.next(audioChoices)?.let { MediaTracks.select(player, C.TRACK_TYPE_AUDIO, it) }
+                })
+            }
+            if (player != null && subtitleChoices.isNotEmpty()) {
+                MenuItem(stringResource(R.string.menu_subtitles), subtitleChoices.firstOrNull { it.selected && it.group != null }?.label ?: stringResource(R.string.off), onClick = used {
+                    MediaTracks.next(subtitleChoices)?.let { MediaTracks.select(player, C.TRACK_TYPE_TEXT, it) }
+                })
+            }
         }
     }
 }
 
 /**
+ * A video's position, to drag (or move with Left and Right) to a new one: the video jumps
+ * there when the finger lets go. Hidden for live streams, which have no length.
+ */
+@Composable
+private fun SeekBar(player: Player, onUse: () -> Unit, modifier: Modifier = Modifier) {
+    var positionMs by remember { mutableLongStateOf(player.currentPosition) }
+    var durationMs by remember { mutableLongStateOf(player.duration) }
+    // Where the thumb is while it is being moved; null otherwise.
+    var dragMs by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(player) {
+        while (true) {
+            positionMs = player.currentPosition
+            durationMs = player.duration
+            delay(500)
+        }
+    }
+    if (durationMs <= 0) return
+    val max = durationMs.toFloat()
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val label = Modifier.widthIn(min = 64.dp)
+        Text(clock((dragMs ?: positionMs.toFloat()).toLong()), color = Color.White, fontSize = 15.sp, modifier = label)
+        Slider(
+            value = (dragMs ?: positionMs.toFloat()).coerceIn(0f, max),
+            onValueChange = {
+                dragMs = it
+                onUse()
+            },
+            onValueChangeFinished = {
+                dragMs?.let {
+                    player.seekTo(it.toLong())
+                    positionMs = it.toLong()
+                }
+                dragMs = null
+            },
+            valueRange = 0f..max,
+            colors = SliderDefaults.colors(
+                thumbColor = DIALOG_ACCENT,
+                activeTrackColor = DIALOG_ACCENT,
+                inactiveTrackColor = Color.White.copy(alpha = 0.25f)
+            ),
+            modifier = modifier.weight(1f).padding(horizontal = 12.dp)
+        )
+        Text(clock(durationMs), color = Color.White.copy(alpha = 0.7f), fontSize = 15.sp, textAlign = TextAlign.End, modifier = label)
+    }
+}
+
+/**
  * For videos cast from apps (the sender's own controls may be out of reach, e.g. in a car):
- * pause or resume, showing where the video is, and skip back or ahead.
+ * pause or resume, and skip back or ahead.
  */
 @Composable
 private fun VideoControls(player: Player, viewModel: AirPlayViewModel, modifier: Modifier, used: (() -> Unit) -> () -> Unit) {
@@ -170,7 +234,8 @@ private fun VideoControls(player: Player, viewModel: AirPlayViewModel, modifier:
             delay(500)
         }
     }
-    val time = if (durationMs > 0) "${clock(positionMs)} / ${clock(durationMs)}" else clock(positionMs)
+    // Where the video is shows on the seek bar; live streams, without one, show it here.
+    val time = if (durationMs > 0) (if (playing) "❚❚" else "▶") else clock(positionMs)
     MenuItem(stringResource(if (playing) R.string.menu_pause else R.string.menu_resume), time, modifier, used { viewModel.toggleVideoPause() })
     val step = stringResource(R.string.menu_seconds, SKIP_SEC)
     MenuItem(stringResource(R.string.menu_back), step, onClick = used { viewModel.seekVideoBy(-SKIP_SEC) })

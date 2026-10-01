@@ -6,8 +6,11 @@ import android.view.SurfaceView
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.ui.input.pointer.PointerEventPass
+import com.weenas.castbay.util.Log
+import androidx.compose.ui.layout.boundsInParent
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -117,6 +120,8 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             else -> StreamKind.MIRRORING
         }
         var menuOpen by remember(kind) { mutableStateOf(false) }
+        // Where the quick menu is, so a tap on it doesn't count as a tap on the picture.
+        var menuBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }
         // The playing content takes D-pad focus, and gets it back when the quick menu closes.
         val contentFocus = remember(kind) { FocusRequester() }
         LaunchedEffect(kind, menuOpen) {
@@ -144,13 +149,29 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                     menuOpen = true
                     true
                 }
-                // Touch screens (car head units have no Down key): a tap on the picture, or
-                // anywhere the controls don't take it, opens or closes the quick menu.
-                .pointerInput(Unit) {
+                // Touch screens (car head units have no Down key): a tap opens or closes the
+                // quick menu. Video and mirroring have no buttons of their own, so every tap
+                // there counts (seen first, whatever the player's view does with it) except one
+                // on the menu itself; on the music screen, only taps its buttons don't take.
+                .pointerInput(kind) {
+                    val pass = if (kind == StreamKind.AUDIO) PointerEventPass.Final else PointerEventPass.Initial
                     awaitEachGesture {
-                        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
-                        // Null when a button under the finger took the tap, or it became a drag.
-                        if (waitForUpOrCancellation(pass = PointerEventPass.Final) != null) menuOpen = !menuOpen
+                        val down = awaitFirstDown(requireUnconsumed = false, pass = pass)
+                        var up: PointerInputChange? = null
+                        while (true) {
+                            val change = awaitPointerEvent(pass).changes.firstOrNull { it.id == down.id } ?: break
+                            // A drag (or a slide on the seek bar) isn't a tap.
+                            if ((change.position - down.position).getDistance() > viewConfiguration.touchSlop) break
+                            if (!change.pressed) {
+                                up = change
+                                break
+                            }
+                        }
+                        val onMenu = menuOpen && menuBounds?.contains(down.position) == true
+                        val taken = kind == StreamKind.AUDIO && (up?.isConsumed ?: true)
+                        Log.d("CastBayTouch", "Tap ${if (up == null) "cancelled" else "up"}, menu ${if (menuOpen) "open" else "closed"}" +
+                            (if (onMenu) ", on the menu" else "") + (if (taken) ", taken by a control" else ""))
+                        if (up != null && !onMenu && !taken) menuOpen = !menuOpen
                     }
                 }
         ) {
@@ -216,7 +237,10 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                     hasPicture = kind != StreamKind.AUDIO,
                     player = if (kind == StreamKind.VIDEO) viewModel.videoPlayer else null,
                     onDismiss = { menuOpen = false },
-                    modifier = Modifier.align(Alignment.BottomCenter).padding(horizontal = 48.dp, vertical = 32.dp)
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(horizontal = 48.dp, vertical = 32.dp)
+                        .onGloballyPositioned { menuBounds = it.boundsInParent() }
                 )
             }
         }

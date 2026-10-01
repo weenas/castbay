@@ -78,7 +78,7 @@ If casting verification is on in Settings, a new device casting for the first ti
 
 Press Down or Menu while playing, or tap a touch screen. It closes by itself after five seconds untouched. What it offers depends on what's playing:
 
-- **Pause** and **Back** / **Ahead** 10 seconds (videos cast from apps), with where the video is.
+- **A seek bar**, **Pause** and **Back** / **Ahead** 10 seconds (videos cast from apps, AirPlay or DLNA): drag the bar, or press Up to reach it and Left or Right to move it.
 
 - **Playback stats**: codec, resolution, frame rate, bitrate and more; while mirroring, also the phone's frame rate and network (see [How it works](/tech)).
 - **Picture** (video and mirroring): Fit (all of it, perhaps with black bars), Fill (the whole screen, perhaps cropping the edges) or Stretch (the whole screen, perhaps distorted).

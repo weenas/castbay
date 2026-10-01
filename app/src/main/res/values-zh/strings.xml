@@ -174,7 +174,7 @@
     <string name="help_remote_title">遥控器</string>
     <string name="help_remote">视频：OK 键暂停或继续，左右键快退、快进 10 秒。\n音乐：左右键选择按钮，OK 键操作。\n下键或菜单键：打开播放菜单（画面、音轨、字幕、歌词等）。\n连按两次返回键：结束投屏。主页键：在后台继续播放。</string>
     <string name="help_touch_title">触摸和按键</string>
-    <string name="help_touch">点一下屏幕：打开播放菜单（画面、音轨、字幕、歌词；视频还有暂停和快进快退），几秒不操作会自动关闭。\n音乐：点按钮暂停或切歌。\n媒体键（例如方向盘上的按键）：播放/暂停、上一首、下一首。\n连按两次返回键：结束投屏。</string>
+    <string name="help_touch">点一下屏幕：打开播放菜单（画面、音轨、字幕、歌词；视频还有可拖动的进度条、暂停和快进快退），几秒不操作会自动关闭。\n音乐：点按钮暂停或切歌；DLNA 音乐的进度条可以拖动。\n媒体键（例如方向盘上的按键）：播放/暂停、上一首、下一首。\n连按两次返回键：结束投屏。</string>
     <string name="menu_pause">暂停</string>
     <string name="menu_resume">播放</string>
     <string name="menu_back">快退</string>

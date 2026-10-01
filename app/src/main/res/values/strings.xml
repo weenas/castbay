@@ -172,7 +172,7 @@
     <string name="help_remote_title">The remote</string>
     <string name="help_remote">Video: OK pauses or resumes; Left and Right skip back or ahead 10 seconds.\nMusic: Left and Right choose a button; OK presses it.\nDown or Menu: the playback menu (picture, audio, subtitles, lyrics…).\nBack twice: stop casting. Home: keep playing in the background.</string>
     <string name="help_touch_title">Touch and buttons</string>
-    <string name="help_touch">Tap the screen: the playback menu (picture, audio, subtitles, lyrics; for videos, pause and skip). It closes by itself after a few seconds.\nMusic: tap the buttons to pause or change tracks.\nMedia buttons (a steering wheel\'s, for example): play/pause, next and previous track.\nBack twice: stop casting.</string>
+    <string name="help_touch">Tap the screen: the playback menu (picture, audio, subtitles, lyrics; for videos, a seek bar to drag, pause and skip). It closes by itself after a few seconds.\nMusic: tap the buttons to pause or change tracks; DLNA music\'s progress bar can be dragged.\nMedia buttons (a steering wheel\'s, for example): play/pause, next and previous track.\nBack twice: stop casting.</string>
     <string name="menu_pause">Pause</string>
     <string name="menu_resume">Play</string>
     <string name="menu_back">Back</string>

@@ -71,11 +71,29 @@ img { max-width: 100%; display: block; }
 .nav a { color: var(--text-2); font-size: 15px; white-space: nowrap; }
 .nav a:hover { color: var(--text); text-decoration: none; }
 .nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
-/* Below this the mark, five links and the two buttons don't fit a line: the links go (the
-   footer has them all), as on phones. */
+/* Below this the mark, five links and the two buttons don't fit a line: the links fold into a
+   menu under the three-line button, which opens them as a panel below the header. */
+.menu-btn { display: none; }
 @media (max-width: 920px) {
   .nav { display: none; }
   .theme { margin-left: auto; }
+  .menu-btn {
+    display: flex; flex-direction: column; justify-content: center; gap: 5px;
+    width: 38px; height: 38px; padding: 0 8px; border: 0; background: none; cursor: pointer; flex: none;
+  }
+  .menu-btn span { display: block; height: 2px; border-radius: 1px; background: var(--text); transition: transform .25s, opacity .25s; }
+  /* Open: the three lines turn into a cross. */
+  .top.menu-open .menu-btn span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .top.menu-open .menu-btn span:nth-child(2) { opacity: 0; }
+  .top.menu-open .menu-btn span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+  .top.menu-open .nav {
+    display: flex; flex-direction: column; gap: 0; margin: 0;
+    position: absolute; top: 100%; left: 0; right: 0;
+    padding: 8px 24px 16px; background: var(--bg-raised); border-bottom: 1px solid var(--line);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+  }
+  .top.menu-open .nav a { padding: 14px 0; font-size: 17px; color: var(--text); border-bottom: 1px solid var(--line); }
+  .top.menu-open .nav a:last-child { border-bottom: 0; }
 }
 /* The link to the same page in the other language. */
 .lang {
@@ -265,7 +283,7 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 }
 
 @media (max-width: 720px) {
-  .nav { display: none; }
+  .top:not(.menu-open) .nav { display: none; }
   .top .wrap { gap: 12px; height: 72px; }
   .brand img { height: 48px; } /* leaves room for the language button on phones */
   .theme { margin-left: auto; }

@@ -99,3 +99,32 @@ document.addEventListener('DOMContentLoaded', function () {
   var open = dialog.showModal.bind(dialog);
   dialog.showModal = function () { document.documentElement.classList.add('lightbox-open'); open(); };
 });
+
+// On narrow screens the header's links fold into a menu: the three-line button opens it below
+// the header; a link, a tap outside it, Esc or the button again closes it.
+document.addEventListener('DOMContentLoaded', function () {
+  var header = document.querySelector('header.top');
+  var button = document.getElementById('menu-btn');
+  if (!header || !button) return;
+  function set(open) {
+    header.classList.toggle('menu-open', open);
+    button.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  button.addEventListener('click', function (event) {
+    event.stopPropagation();
+    set(!header.classList.contains('menu-open'));
+  });
+  document.addEventListener('click', function (event) {
+    if (header.classList.contains('menu-open') && !header.contains(event.target)) set(false);
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') set(false);
+  });
+  header.querySelectorAll('.nav a').forEach(function (link) {
+    link.addEventListener('click', function () { set(false); });
+  });
+  // Widened past the breakpoint (a rotated tablet), the links are back in the header.
+  window.matchMedia('(min-width: 921px)').addEventListener('change', function (event) {
+    if (event.matches) set(false);
+  });
+});

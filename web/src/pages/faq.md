@@ -44,6 +44,12 @@ Mac screen mirroring works. Music from the Mac's Music app doesn't: it uses an e
 
 ## Casting and playback
 
+### Why can't I drag the progress bar of AirPlay music?
+
+Because AirPlay doesn't let the TV choose where music plays from. The phone plays the song itself and sends it to the TV a moment ahead, stamped with when each part is to be heard; the TV only plays what arrives. What the TV can send back is a short list of remote commands (play, pause, previous and next track), with no "go to a time" among them, which is also why an Apple TV's remote can't seek AirPlay music. So the bar shows where the song is, and you move it on the phone.
+
+DLNA music is different: the TV fetches and plays the file itself, so its bar can be dragged, and so can the bar of any video cast from an app (AirPlay or DLNA).
+
 ### Why does music start about two seconds late?
 
 To stay in step with the phone. An iPhone sends music about two seconds ahead, stamped with when each part should be heard, and CastBay plays it then, as an Apple TV does. That keeps lyrics in sync and lets pausing and resuming pick up where they left off. See [How it works](/tech).

@@ -25,7 +25,7 @@ CastBay needs an Android device on Android 8.0 or later. Other brands of TVs, TV
 | iPhone 17 Pro Max | iOS 26 | ✅ Tested: mirroring, music, video, PIN pairing |
 | Samsung Galaxy (Android phone) | Android 16 | ✅ Tested: DLNA from NetEase Cloud Music |
 | iPad | iPadOS | ❔ Not yet confirmed; uses the same AirPlay as an iPhone |
-| Mac: screen mirroring | macOS | ❔ Not yet confirmed; should work |
+| MacBook: screen mirroring | macOS | ✅ Tested: mirroring in 1080p and 4K; for latency see the [FAQ](/faq) |
 | Mac: the Music app | macOS | ❌ Not supported: it uses an encryption the open-source AirPlay library can't handle |
 
 ## Apps

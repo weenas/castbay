@@ -101,6 +101,8 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     fun skipMusic(forward: Boolean) = manager.skipMusic(forward)
 
+    fun seekMusic(positionSec: Double) = manager.seekMusic(positionSec)
+
     fun toggleVideoPause() = manager.toggleVideoPause()
 
     private val lyricsClient = com.weenas.castbay.service.LyricsClient(appVersion)

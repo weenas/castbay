@@ -200,6 +200,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                         onCommand = viewModel::remoteControl,
                         onSkip = viewModel::skipMusic,
                         canChangeTrack = !stream.isDlna,
+                        onSeek = if (stream.isDlna) viewModel::seekMusic else null,
                         lyrics = (lyrics as? LyricsLookup.Found)?.lyrics,
                         lyricsEnabled = settings.showLyrics,
                         noLyrics = lyrics == LyricsLookup.None,
@@ -631,6 +632,11 @@ fun AudioPlayback(
     onSkip: (Boolean) -> Unit,
     /** Previous/next track: AirPlay senders can; a DLNA sender's playlist is its own. */
     canChangeTrack: Boolean = true,
+    /**
+     * Moves to a time, for music played here (DLNA): the progress bar can then be dragged.
+     * Null for AirPlay music, which the phone plays out and can't be asked to seek.
+     */
+    onSeek: ((Double) -> Unit)? = null,
     lyrics: Lyrics? = null,
     /**
      * Lyrics are on: their space is kept while a song's are looked up (or if it has none), so
@@ -720,16 +726,37 @@ fun AudioPlayback(
                     }
                 }
                 if (nowPlaying.durationSec > 0) {
-                    val position = nowPlaying.currentPositionSec(now)
+                    // Where the thumb is while it is dragged (or moved with Left and Right).
+                    var dragSec by remember { mutableStateOf<Float?>(null) }
+                    val position = dragSec?.toDouble() ?: nowPlaying.currentPositionSec(now)
                     Spacer(modifier = Modifier.height(if (compact) 20.dp else 28.dp))
-                    // No thumb: it would suggest dragging, and senders can't seek to a time.
-                    LinearProgressIndicator(
-                        progress = { (position / nowPlaying.durationSec).toFloat() },
-                        modifier = Modifier.fillMaxWidth().height(6.dp),
-                        color = MUSIC_ACCENT,
-                        trackColor = Color.White.copy(alpha = 0.25f),
-                        drawStopIndicator = {}
-                    )
+                    if (onSeek != null) {
+                        // Music played here moves wherever the thumb is let go.
+                        Slider(
+                            value = position.toFloat().coerceIn(0f, nowPlaying.durationSec.toFloat()),
+                            onValueChange = { dragSec = it },
+                            onValueChangeFinished = {
+                                dragSec?.let { onSeek(it.toDouble()) }
+                                dragSec = null
+                            },
+                            valueRange = 0f..nowPlaying.durationSec.toFloat(),
+                            colors = SliderDefaults.colors(
+                                thumbColor = MUSIC_ACCENT,
+                                activeTrackColor = MUSIC_ACCENT,
+                                inactiveTrackColor = Color.White.copy(alpha = 0.25f)
+                            ),
+                            modifier = Modifier.fillMaxWidth().height(24.dp)
+                        )
+                    } else {
+                        // No thumb: it would suggest dragging, and AirPlay senders can't seek to a time.
+                        LinearProgressIndicator(
+                            progress = { (position / nowPlaying.durationSec).toFloat() },
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
+                            color = MUSIC_ACCENT,
+                            trackColor = Color.White.copy(alpha = 0.25f),
+                            drawStopIndicator = {}
+                        )
+                    }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(formatTime(position), fontSize = 20.sp, color = MUSIC_TEXT_TERTIARY)

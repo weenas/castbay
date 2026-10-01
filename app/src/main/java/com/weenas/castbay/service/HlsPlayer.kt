@@ -181,7 +181,10 @@ class HlsPlayer(
     }
 
     fun seek(positionSec: Float) {
-        main.post { player?.seekTo((positionSec * 1000).toLong().coerceAtLeast(0)) }
+        main.post {
+            player?.seekTo((positionSec * 1000).toLong().coerceAtLeast(0))
+            updateSnapshot()
+        }
     }
 
     fun setRate(rate: Float) {

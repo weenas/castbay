@@ -657,6 +657,12 @@ class AirPlayManager private constructor(private val context: Context) {
      * Skips DLNA music ten seconds forward or back. AirPlay has no seeking: iPhones refuse a
      * time, and scanning forward and resuming skipped unevenly, so the phone does it.
      */
+    /** Moves DLNA music to [positionSec] (its progress bar); AirPlay music can't be (see [skipMusic]). */
+    fun seekMusic(positionSec: Double) {
+        Log.d(TAG, "Remote control: seek to ${positionSec.toInt()} s")
+        if (dlnaMusicPlaying()) hlsPlayer.seek(positionSec.toFloat())
+    }
+
     fun skipMusic(forward: Boolean) {
         Log.d(TAG, "Remote control: skip ${if (forward) "forward" else "back"}")
         if (dlnaMusicPlaying()) hlsPlayer.seekBy(if (forward) DLNA_SKIP_SEC else -DLNA_SKIP_SEC)

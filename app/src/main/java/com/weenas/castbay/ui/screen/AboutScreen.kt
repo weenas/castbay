@@ -3,6 +3,8 @@ package com.weenas.castbay.ui.screen
 import com.weenas.castbay.ui.usingKeys
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -47,8 +49,15 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
     val qr = remember(qrUrl) { QrCode.bitmap(qrUrl, 512)?.asImageBitmap() }
 
     AppBackground {
+        // Centred on a TV; on a short screen (a car's, a phone on its side) it scrolls rather
+        // than cutting off what's below the version.
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 64.dp, vertical = 40.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .heightIn(min = maxHeight)
+                .padding(horizontal = 64.dp, vertical = 40.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
@@ -96,6 +105,7 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                     )
                 }
             }
+        }
         }
     }
 }

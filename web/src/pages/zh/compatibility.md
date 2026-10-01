@@ -25,7 +25,7 @@ intro: '映湾目前已测试过的设备和 App。在列表之外的设备上�
 | iPhone 17 Pro Max | iOS 26 | ✅ 已测试：屏幕镜像、音乐、视频、PIN 码配对 |
 | 三星 Galaxy（安卓手机） | Android 16 | ✅ 已测试：网易云音乐 DLNA 投屏 |
 | iPad | iPadOS | ❔ 尚未确认，和 iPhone 使用相同的 AirPlay |
-| Mac：屏幕镜像 | macOS | ❔ 尚未确认，应该可用 |
+| MacBook：屏幕镜像 | macOS | ✅ 已测试：1080p 和 4K 屏幕镜像；延迟见[常见问题](/zh/faq) |
 | Mac："音乐"App | macOS | ❌ 不支持：它使用的加密方式，开源 AirPlay 库无法兼容 |
 
 ## App

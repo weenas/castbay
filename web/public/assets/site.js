@@ -128,3 +128,16 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.matches) set(false);
   });
 });
+
+// Tables in documents name each cell after its column, for phones, where rows are shown as
+// blocks without the header row (style.css).
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('.doc table').forEach(function (table) {
+    var labels = Array.prototype.map.call(table.querySelectorAll('thead th'), function (th) { return th.textContent.trim(); });
+    table.querySelectorAll('tbody tr').forEach(function (row) {
+      Array.prototype.forEach.call(row.children, function (cell, i) {
+        if (labels[i]) cell.setAttribute('data-label', labels[i]);
+      });
+    });
+  });
+});

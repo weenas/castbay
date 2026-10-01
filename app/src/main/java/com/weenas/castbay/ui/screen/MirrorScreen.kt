@@ -355,6 +355,9 @@ fun DiscoveringScreen(viewModel: AirPlayViewModel, lastError: String? = null) {
 
 /** Room for the home screen's status, so the brand and buttons stay put as it changes. */
 private val HOME_STATUS_MIN_HEIGHT = 190.dp
+/** Less of it on short screens (see [LocalShortHome]). */
+private val SHORT_HOME_STATUS_MIN_HEIGHT = 88.dp
+private val SHORT_HOME_HEIGHT = 500.dp
 
 /**
  * The home screen in every receiver state: the brand at the top, [status] in the middle and the
@@ -373,7 +376,7 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
         Text(stringResource(R.string.app_tagline), fontSize = 18.sp, color = Color.Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
         Spacer(modifier = Modifier.height(16.dp))
         Column(
-            modifier = Modifier.heightIn(min = HOME_STATUS_MIN_HEIGHT),
+            modifier = Modifier.heightIn(min = if (LocalShortHome.current) SHORT_HOME_STATUS_MIN_HEIGHT else HOME_STATUS_MIN_HEIGHT),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             content = status
@@ -454,24 +457,36 @@ fun HomeButton(
 }
 
 /**
+ * Whether the home screen is short (a car display or a phone on its side, under ~500 dp; a
+ * 1080p TV is ~540 dp): its status area then takes less room, so the buttons stay in view.
+ */
+private val LocalShortHome = staticCompositionLocalOf { false }
+
+/**
  * Status and actions beside the receiver info on wide screens (TVs are only ~540 dp tall at
- * 1080p), stacked and scrollable on narrow ones.
+ * 1080p), stacked and scrollable on narrow ones. Each side is centred, and scrolls where the
+ * screen is too short for it, so the buttons are always reachable.
  */
 @Composable
 private fun HomeLayout(info: @Composable () -> Unit, primary: @Composable ColumnScope.() -> Unit) {
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
         if (maxWidth >= 840.dp) {
-            Row(
-                modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    content = primary
-                )
-                Spacer(modifier = Modifier.width(48.dp))
-                Box(modifier = Modifier.weight(1f)) { info() }
+            val padding = if (maxHeight < SHORT_HOME_HEIGHT) 12.dp else 24.dp
+            val side = maxHeight - padding * 2
+            CompositionLocalProvider(LocalShortHome provides (maxHeight < SHORT_HOME_HEIGHT)) {
+                Row(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = padding)) {
+                    Column(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).heightIn(min = side),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        content = primary
+                    )
+                    Spacer(modifier = Modifier.width(48.dp))
+                    Box(
+                        modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).heightIn(min = side),
+                        contentAlignment = Alignment.Center
+                    ) { info() }
+                }
             }
         } else {
             Column(
@@ -671,10 +686,13 @@ fun AudioPlayback(
         // Centred as before; the cover only shrinks where the screen is too short for it to clear
         // the casting badge above it (540 dp tall TVs; 720 dp ones keep 400 dp).
         val coverSize = minOf(COVER_SIZE, LocalConfiguration.current.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2)
+        // Short screens (a car's, a phone on its side): everything starts below the casting
+        // badge, which the title ran into when centred on the whole height.
+        val short = LocalConfiguration.current.screenHeightDp < SHORT_MUSIC_HEIGHT_DP
         Row(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 56.dp),
+                .padding(start = 56.dp, end = 56.dp, top = if (short) MUSIC_BADGE_CLEARANCE * 0.8f else 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -701,19 +719,21 @@ fun AudioPlayback(
                 // onto a second line drawn over the first.
                 // One line each, scrolling when too long, so long names never push the layout
                 // (a TV screen is only ~540 dp tall).
-                Text(nowPlaying.title ?: stringResource(R.string.airplay_audio), fontSize = 48.sp,
+                Text(nowPlaying.title ?: stringResource(R.string.airplay_audio), fontSize = if (short) 36.sp else 48.sp,
                     fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1, modifier = Modifier.marquee())
                 nowPlaying.artist?.let {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(it, fontSize = 32.sp, color = MUSIC_TEXT_SECONDARY, maxLines = 1, modifier = Modifier.marquee())
+                    Spacer(modifier = Modifier.height(if (short) 4.dp else 10.dp))
+                    Text(it, fontSize = if (short) 24.sp else 32.sp, color = MUSIC_TEXT_SECONDARY, maxLines = 1, modifier = Modifier.marquee())
                 }
-                nowPlaying.album?.let {
+                // Short screens leave the album out, to keep the controls in view.
+                nowPlaying.album?.takeUnless { short }?.let {
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(it, fontSize = 24.sp, color = MUSIC_TEXT_TERTIARY, maxLines = 1, modifier = Modifier.marquee())
                 }
                 if (lyrics != null || lyricsEnabled) {
-                    val contextLines = if (compact) 1 else 2
-                    Spacer(modifier = Modifier.height(if (compact) 14.dp else 20.dp))
+                    // Short screens show the line being sung alone.
+                    val contextLines = if (short) 0 else if (compact) 1 else 2
+                    Spacer(modifier = Modifier.height(if (short) 8.dp else if (compact) 14.dp else 20.dp))
                     if (lyrics != null) {
                         LyricsView(lyrics, nowPlaying.currentPositionSec(now), contextLines)
                     } else {
@@ -729,7 +749,7 @@ fun AudioPlayback(
                     // Where the thumb is while it is dragged (or moved with Left and Right).
                     var dragSec by remember { mutableStateOf<Float?>(null) }
                     val position = dragSec?.toDouble() ?: nowPlaying.currentPositionSec(now)
-                    Spacer(modifier = Modifier.height(if (compact) 20.dp else 28.dp))
+                    Spacer(modifier = Modifier.height(if (short) 12.dp else if (compact) 20.dp else 28.dp))
                     if (onSeek != null) {
                         // Music played here moves wherever the thumb is let go.
                         Slider(
@@ -763,7 +783,7 @@ fun AudioPlayback(
                         Text(formatTime(nowPlaying.durationSec), fontSize = 20.sp, color = MUSIC_TEXT_TERTIARY)
                     }
                 }
-                Spacer(modifier = Modifier.height(if (compact) 16.dp else 24.dp))
+                Spacer(modifier = Modifier.height(if (short) 8.dp else if (compact) 16.dp else 24.dp))
                 // Centred under the progress bar, as in Apple Music. The screen's focus (and so
                 // the remote's OK) starts on play/pause.
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -987,6 +1007,7 @@ private val SUNG_LYRIC_LINE_HEIGHT = 42.dp
 private fun lyricsHeight(contextLines: Int) = LYRIC_LINE_HEIGHT * (contextLines * 2) + SUNG_LYRIC_LINE_HEIGHT + 4.dp
 /** Below this, the music screen is compact (see AudioPlayback). */
 private const val COMPACT_MUSIC_HEIGHT_DP = 600
+private const val SHORT_MUSIC_HEIGHT_DP = 500
 private const val LYRICS_LOOKUP_DELAY_MS = 1500L
 
 private fun formatTime(seconds: Double): String {

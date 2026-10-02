@@ -70,6 +70,12 @@ Bilibili keeps 1080p and above for its own TV app; casting to other devices tops
 
 Press Back twice (the remote's Back key, or a car display's or tablet's Back button or gesture). Pressing Home keeps the cast playing in the background.
 
+### Do I have to open CastBay each time I start the car?
+
+On a BYD car display, yes. Switching the car off doesn't shut the display down: it goes to sleep and force-stops every third-party app (CastBay's Diagnostics shows "stop … due to quickboot"). Android doesn't let a force-stopped app hear about anything, or run anything in the background, until it is opened again, so CastBay can't come back by itself when the car starts. Put CastBay on the car's home screen or app bar and tap it once you're in; it then receives until the car is switched off.
+
+On TVs, and on devices that don't force-stop apps, CastBay starts receiving by itself after booting or waking.
+
 ### Why did changing a setting stop my cast?
 
 Connection and screen-mirroring settings (the device name, casting verification, resolution and so on) only take effect when the receiver restarts, so the device that was casting has to connect again. Playback settings, such as picture fit, stats and lyrics, apply at once without interrupting anything.

@@ -34,6 +34,8 @@ Only when you choose **Download and install** on the About screen does CastBay d
 
 Your settings (such as the device name and casting password) stay on the TV and are never uploaded, as does the list of devices that have cast to it (their names and AirPlay device IDs, whether each is allowed, and the pairing keys of devices paired with a PIN). You can remove the devices in Settings; uninstalling CastBay deletes all of it.
 
+The record on About → Diagnostics (recent starts, keys, taps and audio-focus events, and the device's model, Android version and screen size) also stays on the device, at most the latest 120 events, and is never sent anywhere: it is only shown when you open that screen, and can be cleared there.
+
 ## Permissions
 
 - Network: to receive casts and play what apps cast.

@@ -83,6 +83,9 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                 AboutLine(stringResource(R.string.about_source), SOURCE_URL)
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
+                Spacer(modifier = Modifier.height(16.dp))
+                // Out of the way: for reporting a problem on a device without adb (a car's).
+                HomeButton(stringResource(R.string.about_diagnostics), muted = true, onClick = { viewModel.navigateToDiagnostics() })
             }
             if (qr != null) {
                 Spacer(modifier = Modifier.width(48.dp))

@@ -17,6 +17,7 @@ Open a [problem report](https://github.com/weenas/castbay/issues/new?template=bu
 - **The phone or computer**: model and system version, e.g. iPhone 17, iOS 26.
 - **How you cast, and from which app**: screen mirroring, the AirPlay icon in an app, or an app's cast button (DLNA); e.g. Apple Music, YouTube.
 - **What happened**, what you expected, and the steps that lead to it. A photo or a short video of the TV helps a lot.
+- **Diagnostics** (especially useful on devices you can't debug from a computer, like a car's): after the problem, open CastBay's About → Diagnostics and attach a photo of that screen.
 - **The network**: Wi-Fi or wired, and anything unusual, like a mesh network, a VPN or a proxy.
 
 Before posting, check the [FAQ](/faq) and whether someone has [already reported it](https://github.com/weenas/castbay/issues). Leave out anything private: passwords, your address, phone numbers.

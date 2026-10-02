@@ -25,11 +25,17 @@ class NowPlayingSession(
     private var lastCover: ByteArray? = null
 
     private val callback = object : MediaSession.Callback() {
-        override fun onPlay() = onCommand(DacpClient.Command.PLAY)
-        override fun onPause() = onCommand(DacpClient.Command.PAUSE)
-        override fun onStop() = onCommand(DacpClient.Command.PAUSE)
-        override fun onSkipToNext() = onCommand(DacpClient.Command.NEXT)
-        override fun onSkipToPrevious() = onCommand(DacpClient.Command.PREVIOUS)
+        override fun onPlay() = command("play", DacpClient.Command.PLAY)
+        override fun onPause() = command("pause", DacpClient.Command.PAUSE)
+        override fun onStop() = command("stop", DacpClient.Command.PAUSE)
+        override fun onSkipToNext() = command("next", DacpClient.Command.NEXT)
+        override fun onSkipToPrevious() = command("previous", DacpClient.Command.PREVIOUS)
+
+        /** Media keys the system routed here (a steering wheel's, a remote's), for Diagnostics. */
+        private fun command(name: String, command: DacpClient.Command) {
+            com.weenas.castbay.util.Diagnostics.record("media", "Media session: $name")
+            onCommand(command)
+        }
     }
 
     /** Shows [nowPlaying], or releases the session when null. Callable from any thread. */

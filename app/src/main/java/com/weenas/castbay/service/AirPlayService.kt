@@ -1,5 +1,6 @@
 package com.weenas.castbay.service
 
+import com.weenas.castbay.util.Diagnostics
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -41,11 +42,14 @@ class AirPlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        Diagnostics.init(this)
+        Diagnostics.record("service", "Created")
         createNotificationChannel()
         manager.registerStateCallback(stateCallback)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Diagnostics.record("service", "Start command ${intent?.action ?: "(restart)"}" + if (running) ", already running" else "")
         if (intent?.action == ACTION_STOP) {
             if (running) manager.stop()
             running = false
@@ -57,6 +61,7 @@ class AirPlayService : Service() {
         startForeground(NOTIFICATION_ID, buildNotification(getString(com.weenas.castbay.R.string.notification_starting)))
         val settings = ReceiverSettingsStore(this).load()
         if (!manager.start(settings)) {
+            Diagnostics.record("service", "Receiver failed to start")
             stopForeground(STOP_FOREGROUND_REMOVE)
             stopSelf(startId)
             return START_NOT_STICKY
@@ -75,6 +80,7 @@ class AirPlayService : Service() {
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onDestroy() {
+        Diagnostics.record("service", "Destroyed" + if (running) " while running" else "")
         if (running) manager.stop()
         manager.unregisterStateCallback(stateCallback)
         super.onDestroy()

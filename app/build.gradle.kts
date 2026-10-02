@@ -22,8 +22,8 @@ android {
         minSdk = 26
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 99
-        versionName = "1.0.99"
+        versionCode = 100
+        versionName = "1.0.100"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // The in-app updater (download and install from About). App-store builds turn it off

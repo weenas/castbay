@@ -118,7 +118,8 @@
     <string name="about_license">以 GPL-3.0 协议开源，基于 UxPlay、libplist、Apple ALAC 和 Media3。</string>
     <string name="about_update">有新版本 %1$s 可以更新</string>
     <string name="about_scan_update">用手机扫码下载新版本</string>
-    <string name="about_scan">用手机扫码打开官网</string>
+    <string name="about_scan">用手机扫码下载映湾</string>
+    <string name="about_scan_link">本机没有浏览器，用手机扫码打开 %1$s</string>
     <string name="update_install">下载并安装 %1$s</string>
     <string name="update_downloading">正在下载… %1$d%%</string>
     <string name="update_downloading_unknown">正在下载…</string>

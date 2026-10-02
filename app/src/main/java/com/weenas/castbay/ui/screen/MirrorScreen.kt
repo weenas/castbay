@@ -687,7 +687,14 @@ fun AudioPlayback(
         MusicBackdrop(nowPlaying.coverArt)
         // Centred as before; the cover only shrinks where the screen is too short for it to clear
         // the casting badge above it (540 dp tall TVs; 720 dp ones keep 400 dp).
-        val coverSize = minOf(COVER_SIZE, LocalConfiguration.current.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2)
+        // At most 30% of the width too: on a 16:9 TV (960 dp wide) the height alone left a cover
+        // over a third of the screen and the text squeezed; a wide car display looked right at ~30%.
+        val configuration = LocalConfiguration.current
+        val coverSize = minOf(
+            COVER_SIZE,
+            configuration.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2,
+            configuration.screenWidthDp.dp * COVER_WIDTH_SHARE
+        )
         // Short screens (a car's, a phone on its side): everything starts below the casting
         // badge, which the title ran into when centred on the whole height.
         val short = LocalConfiguration.current.screenHeightDp < SHORT_MUSIC_HEIGHT_DP
@@ -888,6 +895,7 @@ private fun MediaButton(
 private val MEDIA_BUTTON_SIZE = 60.dp
 
 private val COVER_SIZE = 400.dp
+private const val COVER_WIDTH_SHARE = 0.3f
 /** Space the cover keeps from the top (and, to stay centred, the bottom) for the casting badge. */
 private val MUSIC_BADGE_CLEARANCE = 100.dp
 

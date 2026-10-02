@@ -168,8 +168,9 @@ fun QuickMenu(
 }
 
 /**
- * A video's position, to drag (or move with Left and Right) to a new one: the video jumps
- * there when the finger lets go. Hidden for live streams, which have no length.
+ * A video's position, to drag to a new one, or with the remote to move by 10 seconds per
+ * Left or Right press (30 while held): the video jumps there when the finger or key lets go.
+ * Hidden for live streams, which have no length.
  */
 @Composable
 private fun SeekBar(player: Player, onUse: () -> Unit, modifier: Modifier = Modifier) {
@@ -177,6 +178,7 @@ private fun SeekBar(player: Player, onUse: () -> Unit, modifier: Modifier = Modi
     var durationMs by remember { mutableLongStateOf(player.duration) }
     // Where the thumb is while it is being moved; null otherwise.
     var dragMs by remember { mutableStateOf<Float?>(null) }
+    var focused by remember { mutableStateOf(false) }
     LaunchedEffect(player) {
         while (true) {
             positionMs = player.currentPosition
@@ -186,6 +188,13 @@ private fun SeekBar(player: Player, onUse: () -> Unit, modifier: Modifier = Modi
     }
     if (durationMs <= 0) return
     val max = durationMs.toFloat()
+    fun seekToDrag() {
+        dragMs?.let {
+            player.seekTo(it.toLong())
+            positionMs = it.toLong()
+        }
+        dragMs = null
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 4.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -198,23 +207,49 @@ private fun SeekBar(player: Player, onUse: () -> Unit, modifier: Modifier = Modi
                 dragMs = it
                 onUse()
             },
-            onValueChangeFinished = {
-                dragMs?.let {
-                    player.seekTo(it.toLong())
-                    positionMs = it.toLong()
-                }
-                dragMs = null
-            },
+            onValueChangeFinished = ::seekToDrag,
             valueRange = 0f..max,
             colors = SliderDefaults.colors(
-                thumbColor = DIALOG_ACCENT,
+                thumbColor = if (focused) Color.White else DIALOG_ACCENT,
                 activeTrackColor = DIALOG_ACCENT,
                 inactiveTrackColor = Color.White.copy(alpha = 0.25f)
             ),
-            modifier = modifier.weight(1f).padding(horizontal = 12.dp)
+            modifier = modifier
+                .onFocusChanged { focused = it.hasFocus }
+                .seekKeys(1000f, max, { dragMs ?: positionMs.toFloat() }, { dragMs = it; onUse() }, ::seekToDrag)
+                .weight(1f)
+                .padding(horizontal = 12.dp)
         )
         Text(clock(durationMs), color = Color.White.copy(alpha = 0.7f), fontSize = 15.sp, textAlign = TextAlign.End, modifier = label)
     }
+}
+
+/**
+ * Left and Right on a seek bar: each press moves the thumb 10 seconds (30 once held) through
+ * [onMove], and letting go of the key seeks ([onRelease]). The Slider's own key handling moves
+ * by a hundredth of the whole and, on some remotes, not at all. [unitsPerSecond] is 1000 for a
+ * bar in milliseconds, 1 for one in seconds.
+ */
+internal fun Modifier.seekKeys(
+    unitsPerSecond: Float,
+    max: Float,
+    current: () -> Float,
+    onMove: (Float) -> Unit,
+    onRelease: () -> Unit
+): Modifier = onPreviewKeyEvent { event ->
+    val direction = when (event.key) {
+        Key.DirectionLeft -> -1
+        Key.DirectionRight -> 1
+        else -> return@onPreviewKeyEvent false
+    }
+    when (event.type) {
+        KeyEventType.KeyDown -> {
+            val seconds = if (event.nativeKeyEvent.repeatCount < 5) 10 else 30
+            onMove((current() + direction * seconds * unitsPerSecond).coerceIn(0f, max))
+        }
+        KeyEventType.KeyUp -> onRelease()
+    }
+    true
 }
 
 /**

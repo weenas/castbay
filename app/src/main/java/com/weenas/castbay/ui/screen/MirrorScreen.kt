@@ -761,20 +761,27 @@ fun AudioPlayback(
                     Spacer(modifier = Modifier.height(if (short) 12.dp else if (compact) 20.dp else 28.dp))
                     if (onSeek != null) {
                         // Music played here moves wherever the thumb is let go.
+                        val maxSec = nowPlaying.durationSec.toFloat()
+                        var focused by remember { mutableStateOf(false) }
+                        fun seekToDrag() {
+                            dragSec?.let { onSeek(it.toDouble()) }
+                            dragSec = null
+                        }
                         Slider(
-                            value = position.toFloat().coerceIn(0f, nowPlaying.durationSec.toFloat()),
+                            value = position.toFloat().coerceIn(0f, maxSec),
                             onValueChange = { dragSec = it },
-                            onValueChangeFinished = {
-                                dragSec?.let { onSeek(it.toDouble()) }
-                                dragSec = null
-                            },
-                            valueRange = 0f..nowPlaying.durationSec.toFloat(),
+                            onValueChangeFinished = ::seekToDrag,
+                            valueRange = 0f..maxSec,
                             colors = SliderDefaults.colors(
-                                thumbColor = MUSIC_ACCENT,
+                                thumbColor = if (focused) Color.White else MUSIC_ACCENT,
                                 activeTrackColor = MUSIC_ACCENT,
                                 inactiveTrackColor = Color.White.copy(alpha = 0.25f)
                             ),
-                            modifier = Modifier.fillMaxWidth().height(24.dp)
+                            modifier = Modifier
+                                .onFocusChanged { focused = it.hasFocus }
+                                .seekKeys(1f, maxSec, { position.toFloat() }, { dragSec = it }, ::seekToDrag)
+                                .fillMaxWidth()
+                                .height(24.dp)
                         )
                     } else {
                         // No thumb: it would suggest dragging, and AirPlay senders can't seek to a time.

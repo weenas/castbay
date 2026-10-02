@@ -1,5 +1,12 @@
 package com.weenas.castbay.ui.screen
 
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
+import android.net.Uri
+import android.content.Intent
 import com.weenas.castbay.ui.usingKeys
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -32,21 +39,31 @@ import com.weenas.castbay.util.AppVersion
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 const val WEBSITE_URL = "https://castbay.weenas.com"
-private const val PRIVACY_URL = "castbay.weenas.com/privacy"
-private const val SOURCE_URL = "github.com/weenas/castbay"
+private const val PRIVACY_URL = "https://castbay.weenas.com/privacy"
+private const val SOURCE_URL = "https://github.com/weenas/castbay"
+/** The latest APK, from the website (short enough to type on a TV, too). */
+private const val APK_URL = "https://castbay.weenas.com/apk"
 
 /**
- * The app, its version and where to find more: the website (also as a QR code, since a TV
- * can't easily open links but a phone can scan one), the privacy policy and the source.
+ * The app, its version and where to find more: the website, the privacy policy and the source,
+ * each a link the device's browser opens, and a QR code to download CastBay with a phone (to
+ * pass it on, or to update by hand). A TV without a browser shows a link's QR code instead.
  */
 @Composable
 fun AboutScreen(viewModel: AirPlayViewModel) {
     val context = LocalContext.current
     val version = remember { AppVersion.name(context) }
     val update by viewModel.update.collectAsState()
-    // With a newer version out, the code opens its download page instead of the website.
-    val qrUrl = update?.url ?: WEBSITE_URL
+    // A link this device couldn't open (no browser, as on many TVs): its QR code, for a phone.
+    var linkForPhone by remember { mutableStateOf<String?>(null) }
+    val qrUrl = linkForPhone ?: APK_URL
     val qr = remember(qrUrl) { QrCode.bitmap(qrUrl, 512)?.asImageBitmap() }
+    val open = { url: String ->
+        val opened = runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        }.isSuccess
+        linkForPhone = if (opened) null else url
+    }
 
     AppBackground {
         // Centred on a TV; on a short screen (a car's, a phone on its side) it scrolls rather
@@ -78,9 +95,9 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                     )
                     if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) UpdateAction(viewModel, it.version)
                 }
-                AboutLine(stringResource(R.string.about_website), WEBSITE_URL.removePrefix("https://"))
-                AboutLine(stringResource(R.string.about_privacy), PRIVACY_URL)
-                AboutLine(stringResource(R.string.about_source), SOURCE_URL)
+                LinkLine(stringResource(R.string.about_website), WEBSITE_URL) { open(WEBSITE_URL) }
+                LinkLine(stringResource(R.string.about_privacy), PRIVACY_URL) { open(PRIVACY_URL) }
+                LinkLine(stringResource(R.string.about_source), SOURCE_URL) { open(SOURCE_URL) }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
                 Spacer(modifier = Modifier.height(16.dp))
@@ -102,9 +119,12 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        stringResource(if (update != null) R.string.about_scan_update else R.string.about_scan),
+                        linkForPhone?.let { stringResource(R.string.about_scan_link, it.removePrefix("https://")) }
+                            ?: stringResource(if (update != null) R.string.about_scan_update else R.string.about_scan),
                         fontSize = 15.sp,
-                        color = if (update != null) UPDATE_COLOR else Color.White.copy(alpha = 0.7f)
+                        color = if (update != null && linkForPhone == null) UPDATE_COLOR else Color.White.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.widthIn(max = 260.dp)
                     )
                 }
             }
@@ -186,6 +206,27 @@ private fun UpdateAction(viewModel: AirPlayViewModel, version: String) {
     }
 }
 
+/** A labelled link: the accent colour, outlined when focused; OK or a tap opens it. */
+@Composable
+private fun LinkLine(label: String, url: String, onClick: () -> Unit) {
+    var focused by remember { mutableStateOf(false) }
+    Row(modifier = Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, fontSize = 18.sp, color = Color.White.copy(alpha = 0.6f), modifier = Modifier.width(120.dp))
+        Text(
+            url.removePrefix("https://"),
+            fontSize = 18.sp,
+            color = LINK_COLOR,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier
+                .clip(RoundedCornerShape(8.dp))
+                .onFocusChanged { focused = it.isFocused }
+                .then(if (focused) Modifier.border(2.dp, Color.White, RoundedCornerShape(8.dp)) else Modifier)
+                .clickable(onClick = onClick)
+                .padding(horizontal = 6.dp, vertical = 3.dp)
+        )
+    }
+}
+
 @Composable
 private fun AboutLine(label: String, value: String) {
     Row(modifier = Modifier.padding(vertical = 5.dp)) {
@@ -193,6 +234,8 @@ private fun AboutLine(label: String, value: String) {
         Text(value, fontSize = 18.sp, color = Color.White)
     }
 }
+
+private val LINK_COLOR = Color(0xFFCBBDFF)
 
 /** The new-version notice: the accent purple, bright on the dark background. */
 private val UPDATE_COLOR = Color(0xFFB9A6FF)

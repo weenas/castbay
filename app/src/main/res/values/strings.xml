@@ -116,7 +116,8 @@
     <string name="about_license">Open source under GPL-3.0, built on UxPlay, libplist, Apple ALAC and Media3.</string>
     <string name="about_update">Version %1$s is available</string>
     <string name="about_scan_update">Scan with your phone to download the new version</string>
-    <string name="about_scan">Scan with your phone to open the website</string>
+    <string name="about_scan">Scan with your phone to download CastBay</string>
+    <string name="about_scan_link">No browser here: scan with your phone to open %1$s</string>
     <string name="update_install">Download and install %1$s</string>
     <string name="update_downloading">Downloading… %1$d%%</string>
     <string name="update_downloading_unknown">Downloading…</string>

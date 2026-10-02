@@ -14,7 +14,7 @@ intro: 'What CastBay has been tested with so far. Tried it on something not list
 | --- | --- | --- |
 | Sony BRAVIA XR-55X90L (4K) | 12 | ✅ Tested: H.265 mirroring in 4K, everything else |
 | TCL TV | 9 | ✅ Tested |
-| BYD car display, DiLink 5.0 (touch screen) | 12 | ✅ Tested: mirroring, music; steering-wheel buttons to be confirmed; force-stopped when switched off, so open CastBay after starting the car |
+| BYD car display, DiLink 5.0 (touch screen) | 12 | ✅ Tested: mirroring, music, video, steering-wheel buttons (pause, change tracks); force-stopped when switched off, so open CastBay after starting the car |
 
 CastBay needs an Android device on Android 8.0 or later. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
 

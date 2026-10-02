@@ -127,6 +127,13 @@
     <string name="update_failed_checksum">下载的文件和发布版本的校验值不一致，没有安装，请重试。</string>
     <string name="update_failed_installer">这台电视没有可用的安装程序，请扫码下载新版本。</string>
     <string name="update_retry">重试</string>
+    <string name="about_diagnostics">诊断信息</string>
+    <string name="diagnostics_title">诊断信息</string>
+    <string name="diagnostics_note">仅保存在本机，不会发送到任何地方。遇到问题时，可以把这一页拍照发给开发者。</string>
+    <string name="diagnostics_device">本机</string>
+    <string name="diagnostics_events">最近的事件（最新在前）</string>
+    <string name="diagnostics_none">还没有记录。</string>
+    <string name="diagnostics_clear">清除记录</string>
     <string name="update_check">检查更新</string>
     <string name="update_checking">正在检查…</string>
     <string name="update_latest">已是最新版本。</string>

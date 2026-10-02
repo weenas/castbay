@@ -169,8 +169,10 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                         }
                         val onMenu = menuOpen && menuBounds?.contains(down.position) == true
                         val taken = kind == StreamKind.AUDIO && (up?.isConsumed ?: true)
-                        Log.d("CastBayTouch", "Tap ${if (up == null) "cancelled" else "up"}, menu ${if (menuOpen) "open" else "closed"}" +
-                            (if (onMenu) ", on the menu" else "") + (if (taken) ", taken by a control" else ""))
+                        val tap = "Tap ${if (up == null) "cancelled" else "up"}, menu ${if (menuOpen) "open" else "closed"}" +
+                            (if (onMenu) ", on the menu" else "") + (if (taken) ", taken by a control" else "")
+                        Log.d("CastBayTouch", tap)
+                        com.weenas.castbay.util.Diagnostics.record("touch", "$tap (${kind.name.lowercase()})")
                         if (up != null && !onMenu && !taken) menuOpen = !menuOpen
                     }
                 }

@@ -337,6 +337,7 @@ class AirPlayManager private constructor(private val context: Context) {
 
     init {
         Log.init(context)
+        com.weenas.castbay.util.Diagnostics.init(context)
         nativeBridge.initialize(context)
     }
 

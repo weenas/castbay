@@ -6,6 +6,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
+import com.weenas.castbay.util.Diagnostics
 import com.weenas.castbay.util.Log
 
 /**
@@ -33,6 +34,7 @@ class AudioFocus(context: Context, private val onLost: () -> Unit) {
             when (change) {
                 AudioManager.AUDIOFOCUS_LOSS -> {
                     Log.i(TAG, "Audio focus lost to another app")
+                    Diagnostics.record("focus", "Lost to another app")
                     held = false
                     onLost()
                 }
@@ -46,6 +48,7 @@ class AudioFocus(context: Context, private val onLost: () -> Unit) {
         if (held) return
         held = audioManager?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         Log.i(TAG, if (held) "Audio focus gained" else "Audio focus refused")
+        Diagnostics.record("focus", if (held) "Gained" else "Refused")
     }
 
     /** Gives the focus back, e.g. when the cast ends. Any thread. */
@@ -54,6 +57,7 @@ class AudioFocus(context: Context, private val onLost: () -> Unit) {
         held = false
         audioManager?.abandonAudioFocusRequest(request)
         Log.i(TAG, "Audio focus released")
+        Diagnostics.record("focus", "Released")
     }
 
     private companion object {

@@ -229,6 +229,11 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     fun navigateToHelp() = navigateTo("help")
 
+    /** About → Diagnostics; Back returns to About. */
+    fun navigateToDiagnostics() {
+        _navigateTo.value = "diagnostics"
+    }
+
     private fun navigateTo(screen: String) {
         homeFocus = screen
         _navigateTo.value = screen

@@ -2,6 +2,8 @@ package com.weenas.castbay
 
 import android.content.Context
 import android.os.Bundle
+import android.view.KeyEvent
+import com.weenas.castbay.util.Diagnostics
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -18,6 +20,7 @@ import com.weenas.castbay.ui.PairingPinDialog
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
 import com.weenas.castbay.ui.screen.AboutScreen
+import com.weenas.castbay.ui.screen.DiagnosticsScreen
 import com.weenas.castbay.ui.screen.HelpScreen
 import com.weenas.castbay.ui.theme.CastBayTheme
 import com.weenas.castbay.viewmodel.AirPlayViewModel
@@ -26,10 +29,21 @@ class MainActivity : ComponentActivity() {
     // The language chosen in Settings (Settings recreates the activity when it changes).
     override fun attachBaseContext(newBase: Context) = super.attachBaseContext(AppLanguage.wrap(newBase))
 
+    /** Every key as it arrives (Diagnostics): which keys a remote or a car's buttons send. */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+            Diagnostics.record("key", KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_") +
+                " (${event.keyCode}) from ${event.device?.name ?: "?"}")
+        }
+        return super.dispatchKeyEvent(event)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         // The manifest theme only paints the launch screen; the app itself has a plain background.
         setTheme(R.style.Theme_CastBay)
         super.onCreate(savedInstanceState)
+        Diagnostics.init(this)
+        Diagnostics.record("app", "Opened")
         setContent {
             // Decoded once for the home and Settings backgrounds (the same artwork as the launch screen).
             val backgroundImage = ImageBitmap.imageResource(R.drawable.splash_image)
@@ -73,7 +87,8 @@ private fun Screens() {
 
     // The remote's Back key leaves Settings, Help and About for the home screen instead of closing the app.
     BackHandler(enabled = currentScreen != "mirror") {
-        currentScreen = "mirror"
+        // Diagnostics is opened from About, and goes back there.
+        currentScreen = if (currentScreen == "diagnostics") "about" else "mirror"
     }
 
     Box {
@@ -82,6 +97,7 @@ private fun Screens() {
             "settings" -> SettingsScreen(viewModel = viewModel)
             "help" -> HelpScreen(viewModel = viewModel)
             "about" -> AboutScreen(viewModel = viewModel)
+            "diagnostics" -> DiagnosticsScreen()
         }
         val pairingPin by viewModel.pairingPin.collectAsState()
         PairingPinDialog(pairingPin, onDismiss = viewModel::dismissPairingPin)

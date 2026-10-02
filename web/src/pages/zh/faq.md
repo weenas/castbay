@@ -14,7 +14,7 @@ intro: '找不到答案？看看<a href="/zh/guide">使用说明</a>，或者<a 
 
 ### 支持哪些设备？
 
-Android 8.0 及以上的安卓设备：电视、电视盒子、车机和平板都可以，用遥控器或触摸屏操作。已在 TCL（Android 9）和索尼（Android 12）电视以及比亚迪车机上测试，详见[兼容性列表](/zh/compatibility)。
+Android 8.0 及以上的安卓设备：电视、电视盒子、车机和平板都可以，用遥控器或触摸屏操作。已在 TCL（Android 9）和索尼（Android 12）电视以及比亚迪 DiLink 5.0 车机（Android 12）上测试，详见[兼容性列表](/zh/compatibility)。
 
 ### 如何把 APK 安装到电视上？
 

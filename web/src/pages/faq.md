@@ -14,7 +14,7 @@ intro: 'Not answered here? See the <a href="/guide">user guide</a>, or <a href="
 
 ### Which devices are supported?
 
-Android devices on Android 8.0 or later: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. Tested on TCL (Android 9) and Sony (Android 12) TVs and a BYD car display; see the [compatibility list](/compatibility).
+Android devices on Android 8.0 or later: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. Tested on TCL (Android 9) and Sony (Android 12) TVs and a BYD DiLink 5.0 car display (Android 12); see the [compatibility list](/compatibility).
 
 ### How do I install the APK on a TV?
 

@@ -24,6 +24,7 @@ object Diagnostics {
 
     private const val PREFS = "diagnostics"
     private const val KEY_EVENTS = "events"
+    private const val KEY_LAST_EXIT = "last_exit"
     private const val MAX_EVENTS = 120
     private val timeFormat = SimpleDateFormat("MM-dd HH:mm:ss", Locale.US)
 
@@ -37,6 +38,34 @@ object Diagnostics {
         appContext = context.applicationContext
         val uptimeMin = SystemClock.elapsedRealtime() / 60_000
         record("process", "Started (pid ${Process.myPid()}), device up $uptimeMin min, boot #${bootCount() ?: "?"}")
+        recordLastExit(context)
+    }
+
+    /**
+     * Why the previous process ended (Android 11+): killed by the system, stopped by the
+     * person or a cleaner app ("user stopped": no broadcasts or jobs reach the app until it is
+     * opened again), low memory, a crash… Each exit is recorded once.
+     */
+    private fun recordLastExit(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return
+        val am = context.getSystemService(android.app.ActivityManager::class.java) ?: return
+        val last = runCatching { am.getHistoricalProcessExitReasons(context.packageName, 0, 1).firstOrNull() }.getOrNull() ?: return
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (prefs.getLong(KEY_LAST_EXIT, 0) == last.timestamp) return
+        prefs.edit().putLong(KEY_LAST_EXIT, last.timestamp).apply()
+        val reason = when (last.reason) {
+            android.app.ApplicationExitInfo.REASON_USER_STOPPED -> "stopped (force stop)"
+            android.app.ApplicationExitInfo.REASON_USER_REQUESTED -> "removed by the person"
+            android.app.ApplicationExitInfo.REASON_LOW_MEMORY -> "low memory"
+            android.app.ApplicationExitInfo.REASON_SIGNALED -> "killed (signal ${last.status})"
+            android.app.ApplicationExitInfo.REASON_CRASH, android.app.ApplicationExitInfo.REASON_CRASH_NATIVE -> "crashed"
+            android.app.ApplicationExitInfo.REASON_ANR -> "not responding"
+            android.app.ApplicationExitInfo.REASON_EXIT_SELF -> "exited by itself"
+            android.app.ApplicationExitInfo.REASON_OTHER -> "other"
+            else -> "reason ${last.reason}"
+        }
+        val at = timeFormat.format(Date(last.timestamp))
+        record("process", "Previous one ended $at: $reason${last.description?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""}")
     }
 
     /** Adds an event; [kind] groups them ("boot", "service", "key", "touch", "focus", …). Any thread. */

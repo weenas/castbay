@@ -18,10 +18,18 @@ class AirPlayService : Service() {
         const val ACTION_STOP = "com.weenas.castbay.action.STOP_RECEIVER"
         const val CHANNEL_ID = "castbay_channel"
         const val NOTIFICATION_ID = 1
+
+        /** Whether the receiver is up, for [com.weenas.castbay.receiver.ReceiverStarter]. */
+        @Volatile var isReceiving = false
+            private set
     }
 
     private val manager by lazy { AirPlayManager.getInstance(this) }
     private var running = false
+        set(value) {
+            field = value
+            isReceiving = value
+        }
     private val stateCallback: (AirPlayConnectionState, StreamInfo, String?) -> Unit = { state, _, _ ->
         if (running) {
             when (state) {
@@ -44,6 +52,8 @@ class AirPlayService : Service() {
         super.onCreate()
         Diagnostics.init(this)
         Diagnostics.record("service", "Created")
+        // Brings the receiver back once the device has a network again, e.g. a car waking up.
+        com.weenas.castbay.receiver.WakeJobService.schedule(this)
         createNotificationChannel()
         manager.registerStateCallback(stateCallback)
     }

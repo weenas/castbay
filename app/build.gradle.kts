@@ -12,6 +12,13 @@ val enableNativeBuild = providers.gradleProperty("enableNativeBuild")
     .map(String::toBoolean)
     .orElse(false)
 
+// The commit a test build comes from, for its version name; "local" outside a git checkout
+// (e.g. building from the release's source archive).
+val gitCommit = providers.exec {
+    commandLine("git", "rev-parse", "--short=7", "HEAD")
+    isIgnoreExitValue = true
+}.standardOutput.asText.map { it.trim().ifEmpty { "local" } }
+
 android {
     namespace = "com.weenas.castbay"
     compileSdk = 35
@@ -21,9 +28,11 @@ android {
         applicationId = "com.weenas.castbay"
         minSdk = 23
         targetSdk = 35
-        // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 103
-        versionName = "1.0.103"
+        // Changed only for a release. versionName follows semantic versioning: the middle
+        // number for new features (1.1.0), the last for fixes only (1.1.1), the first for big
+        // changes. versionCode goes up by one with each release.
+        versionCode = 104
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // The in-app updater (download and install from About). App-store builds turn it off
@@ -63,7 +72,8 @@ android {
         debug {
             // Installs beside the release app, with the simulated sender (src/debug) for tests.
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-dev"
+            // e.g. 1.1.0-dev+6228385: the commit it was built from (test builds keep the version).
+            versionNameSuffix = "-dev+" + gitCommit.get()
         }
         release {
             // R8 drops the unused parts of Compose, Media3 and Kotlin (about 2/3 of the dex).

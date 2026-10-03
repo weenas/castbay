@@ -1,0 +1,21 @@
+# App stores
+
+The store listing (descriptions, icon, screenshots, changelogs) is in `fastlane/metadata/android/`; both stores below read it from this repository.
+
+## F-Droid
+
+F-Droid builds CastBay itself from a tagged commit, with `fdroid-com.weenas.castbay.yml` (this directory) as its build metadata, and signs it with F-Droid's key. Apps from F-Droid and from GitHub/the website therefore have different signatures: one can't update the other (uninstall first).
+
+What the metadata does:
+
+- `submodules: true` fetches UxPlay, libplist, ALAC and OpenSSL (F-Droid's checkout also pulls OpenSSL's own submodules).
+- `scandelete` removes what the build doesn't use and F-Droid's scanner would flag: libplist's fuzzing test cases, OpenSSL's test data and OpenSSL's submodules.
+- `ndk` pins the NDK the app uses; `sudo` installs perl and make for `tools/build-openssl.sh`, which Gradle runs.
+- `gradleprops: castbay.selfUpdate=false` builds without the in-app updater and update check: F-Droid updates the app.
+- `UpdateCheckMode: Tags` and `AutoUpdateMode: Version` let F-Droid pick up each new `vX.Y.Z` tag.
+
+To submit (once, from a GitLab account): fork https://gitlab.com/fdroid/fdroiddata, add the file as `metadata/com.weenas.castbay.yml`, and open a merge request; F-Droid's CI builds it and reviewers reply in the merge request. Check it first with fdroidserver: `fdroid rewritemeta com.weenas.castbay` (formatting), `fdroid lint com.weenas.castbay`, and `fdroid build -v -l com.weenas.castbay` where a build environment is available.
+
+## IzzyOnDroid
+
+IzzyOnDroid serves the APK attached to each GitHub release (`CastBay-<version>.apk`), so its users get the same signature as GitHub and the website, and the in-app updater keeps working. To request inclusion, open an issue at https://codeberg.org/IzzyOnDroid/repodata/issues with the repository URL; it reads the listing from `fastlane/metadata/android/`.

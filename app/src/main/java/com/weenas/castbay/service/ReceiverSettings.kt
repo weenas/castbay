@@ -38,7 +38,9 @@ data class ReceiverSettings(
     /** The app's language: [LANGUAGE_SYSTEM] (the TV's), [LANGUAGE_ZH] or [LANGUAGE_EN]. */
     val language: String = LANGUAGE_SYSTEM,
     /** Look for a newer CastBay on GitHub once a day (UpdateChecker). */
-    val checkUpdates: Boolean = true
+    val checkUpdates: Boolean = true,
+    /** After CastBay stops unexpectedly, send a problem report at the next start (off: ask). */
+    val sendErrorReports: Boolean = false
 ) {
     /**
      * The display size advertised to senders, which they size mirroring to. "Auto" is the
@@ -73,7 +75,8 @@ data class ReceiverSettings(
         withoutLiveSettings() != previous.withoutLiveSettings()
 
     private fun withoutLiveSettings() = copy(
-        showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true
+        showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true,
+        sendErrorReports = false
     )
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
@@ -148,7 +151,8 @@ class ReceiverSettingsStore(context: Context) {
         showLyrics = preferences.getBoolean("show_lyrics", false),
         language = preferences.getString("language", null)
             ?.takeIf { it in ReceiverSettings.LANGUAGES } ?: ReceiverSettings.LANGUAGE_SYSTEM,
-        checkUpdates = preferences.getBoolean("check_updates", true)
+        checkUpdates = preferences.getBoolean("check_updates", true),
+        sendErrorReports = preferences.getBoolean("send_error_reports", false)
     )
 
     /** Before the access setting: a password switch, and before that a saved password alone. */
@@ -177,6 +181,7 @@ class ReceiverSettingsStore(context: Context) {
             .putBoolean("show_lyrics", settings.showLyrics)
             .putString("language", settings.language)
             .putBoolean("check_updates", settings.checkUpdates)
+            .putBoolean("send_error_reports", settings.sendErrorReports)
             .remove("audio_latency")
             .apply()
     }

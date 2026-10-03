@@ -36,6 +36,7 @@ object Diagnostics {
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
+        CrashReports.install(context)
         val uptimeMin = SystemClock.elapsedRealtime() / 60_000
         record("process", "Started (pid ${Process.myPid()}), device up $uptimeMin min, boot #${bootCount() ?: "?"}")
         recordLastExit(context)
@@ -64,6 +65,7 @@ object Diagnostics {
             android.app.ApplicationExitInfo.REASON_OTHER -> "other"
             else -> "reason ${last.reason}"
         }
+        CrashReports.noteExit(context, last)
         val at = timeFormat.format(Date(last.timestamp))
         record("process", "Previous one ended $at: $reason${last.description?.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: ""}")
     }

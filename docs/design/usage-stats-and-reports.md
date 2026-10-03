@@ -1,7 +1,8 @@
 # Usage statistics and problem reports
 
-Status: problem reports (manual upload) are built; automatic crash reports and usage
-statistics are planned and not in the app yet. The privacy policy describes only what the
+Status: problem reports (manual upload) and error reports after a crash are built; usage
+statistics are planned and not in the app yet (the D1 database castbay-stats exists, id
+d2366198-eb53-4ad9-ae52-6bd388d84768, not yet bound to the Worker). The privacy policy describes only what the
 released app does; each part's section is added to it when that part ships.
 
 ## Principles
@@ -30,14 +31,17 @@ About → Diagnostics → Upload log, confirmed on a screen that says what is se
 scrubbing, storage (R2, 90 days, no public access) and the report ID are as in the privacy
 policy's "Problem reports" section and `app/.../util/LogReport.kt`.
 
-## 2. Automatic error reports (planned)
+## 2. Error reports after a crash (built)
 
 - Detected at the next start from Android's record of the last exit (ApplicationExitInfo,
   Android 11+: crash, native crash, not responding), or from CastBay's own record of an
   uncaught exception (all versions).
 - With the switch on: uploaded as a problem report marked "crash", including the stack trace.
-- With it off: the home screen shows a quiet note, "CastBay stopped unexpectedly last time.
-  Send a report?", with Send and Dismiss; nothing is sent without Send.
+- With it off: the home screen shows a note in the status's place, "CastBay stopped
+  unexpectedly last time. Send a problem report?", with Send and Dismiss; nothing is sent
+  without Send. Dismiss forgets the crash; a failed send is offered again at the next start.
+- Started at boot without the app being opened (a car), the service sends it if the switch
+  is on. `tools/sim crash` makes the debug build crash, to test this.
 
 ## 3. Anonymous usage statistics (planned)
 

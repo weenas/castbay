@@ -20,6 +20,7 @@ import com.weenas.castbay.ui.PairingPinDialog
 import com.weenas.castbay.ui.screen.MirrorScreen
 import com.weenas.castbay.ui.screen.SettingsScreen
 import com.weenas.castbay.ui.screen.AboutScreen
+import com.weenas.castbay.ui.screen.ChangelogScreen
 import com.weenas.castbay.ui.screen.DiagnosticsScreen
 import com.weenas.castbay.ui.screen.HelpScreen
 import com.weenas.castbay.ui.theme.CastBayTheme
@@ -87,8 +88,8 @@ private fun Screens() {
 
     // The remote's Back key leaves Settings, Help and About for the home screen instead of closing the app.
     BackHandler(enabled = currentScreen != "mirror") {
-        // Diagnostics is opened from About, and goes back there.
-        currentScreen = if (currentScreen == "diagnostics") "about" else "mirror"
+        // Diagnostics and the release notes are opened from About, and go back there.
+        currentScreen = if (currentScreen == "diagnostics" || currentScreen == "changelog") "about" else "mirror"
     }
 
     Box {
@@ -98,6 +99,7 @@ private fun Screens() {
             "help" -> HelpScreen(viewModel = viewModel)
             "about" -> AboutScreen(viewModel = viewModel)
             "diagnostics" -> DiagnosticsScreen()
+            "changelog" -> ChangelogScreen(viewModel = viewModel)
         }
         val pairingPin by viewModel.pairingPin.collectAsState()
         PairingPinDialog(pairingPin, onDismiss = viewModel::dismissPairingPin)

@@ -86,7 +86,16 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
                 color = UPDATE_COLOR,
                 modifier = Modifier.padding(start = 120.dp, bottom = 4.dp)
             )
-            if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) UpdateAction(viewModel, it.version)
+            val hasNotes = it.notesSince(version).isNotEmpty()
+            if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) {
+                UpdateAction(viewModel, it.version, onNotes = if (hasNotes) viewModel::navigateToChangelog else null)
+            } else if (hasNotes) {
+                // Store builds don't install, but can still say what is new.
+                HomeButton(
+                    stringResource(R.string.update_notes), Modifier.padding(start = 120.dp, top = 8.dp, bottom = 12.dp),
+                    muted = true, onClick = viewModel::navigateToChangelog
+                )
+            }
         }
         LinkLine(stringResource(R.string.about_website), WEBSITE_URL) { open(WEBSITE_URL) }
         LinkLine(stringResource(R.string.about_privacy), PRIVACY_URL) { open(PRIVACY_URL) }
@@ -188,12 +197,18 @@ private fun CheckAction(viewModel: AirPlayViewModel) {
  * opening, so OK is all it takes.
  */
 @Composable
-private fun UpdateAction(viewModel: AirPlayViewModel, version: String) {
+internal fun UpdateAction(
+    viewModel: AirPlayViewModel,
+    version: String,
+    modifier: Modifier = Modifier.padding(start = 120.dp, top = 8.dp, bottom = 12.dp),
+    /** Opens the new versions' release notes; no button without it. */
+    onNotes: (() -> Unit)? = null
+) {
     val state by viewModel.updateInstall.collectAsState()
     val focus = remember { FocusRequester() }
     val keys = usingKeys()
     LaunchedEffect(Unit) { if (keys) focus.requestFocus() }
-    Column(modifier = Modifier.padding(start = 120.dp, top = 8.dp, bottom = 12.dp)) {
+    Column(modifier = modifier) {
         val busy = state is UpdateInstall.Downloading
         HomeButton(
             text = when (val s = state) {
@@ -206,6 +221,8 @@ private fun UpdateAction(viewModel: AirPlayViewModel, version: String) {
             modifier = Modifier.focusRequester(focus),
             onClick = { if (!busy) viewModel.installUpdate() }
         )
+        // Below it: beside it, the two didn't fit next to the QR code.
+        if (onNotes != null) HomeButton(stringResource(R.string.update_notes), Modifier.padding(top = 10.dp), muted = true, onClick = onNotes)
         val note = when (val s = state) {
             UpdateInstall.Installing -> R.string.update_installing
             is UpdateInstall.Failed -> when (s.reason) {

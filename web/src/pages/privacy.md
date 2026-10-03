@@ -32,13 +32,17 @@ Only when you choose **Download and install** on the About screen does CastBay d
 
 ## Problem reports (only when you send one)
 
-To report a problem from a device you can't connect to a computer (a car display, for example), you can upload a problem report: About → Diagnostics → **Upload log**. Nothing is sent until you press Upload on the screen that says what will be sent; CastBay never uploads a report on its own.
+A problem report is sent in two cases, both your choice:
+
+- **You upload one**: About → Diagnostics → **Upload log**, useful on a device you can't connect to a computer (a car display, for example). Nothing is sent until you press Upload on the screen that says what will be sent.
+- **After CastBay stopped unexpectedly** (a crash, or Android closing it as not responding): when it next starts, the home screen asks whether to send a report about it, and sends one only if you press Send. If you turn on **Send Error Reports** (Settings → General, off by default), such reports are sent without asking; turn it off to stop that.
 
 **What a report contains**
 
 - The device: maker, model, Android version and build, screen size and density, whether it has a touch screen, CastBay's version, and how long the device has been on.
 - The Diagnostics events shown on that screen: when CastBay started and stopped, remote and steering-wheel keys, taps, audio focus, and why the app last ended.
 - CastBay's own recent log (at most about 400 KB): what the receiver did, such as connections, the video format and decoder, and errors. Android lets an app read only its own log, not other apps'.
+- For a report after a crash: the error and where in CastBay's code it happened (the stack trace), and CastBay's log lines just before it.
 
 **What is taken out on the device, before sending**
 

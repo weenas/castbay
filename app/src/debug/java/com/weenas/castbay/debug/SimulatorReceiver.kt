@@ -46,6 +46,10 @@ class SimulatorReceiver : BroadcastReceiver() {
                 intent.getStringExtra("url") ?: SimulatedSender.SAMPLE_VIDEO
             )
             "stop" -> sim.stop()
+            // For error reports: an uncaught exception on the main thread, as a real bug would.
+            "crash" -> android.os.Handler(android.os.Looper.getMainLooper()).post {
+                throw IllegalStateException("Simulated crash (tools/sim crash)")
+            }
             else -> Log.w(SimulatedSender.TAG, "Unknown command: $cmd")
         }
     }

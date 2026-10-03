@@ -70,6 +70,14 @@ class AirPlayService : Service() {
 
         startForeground(NOTIFICATION_ID, buildNotification(getString(com.weenas.castbay.R.string.notification_starting)))
         val settings = ReceiverSettingsStore(this).load()
+        // Started at boot without the app being opened (a car): a crash from the last run is
+        // sent here, if the person turned that on; the app asks otherwise, when opened.
+        if (settings.sendErrorReports && com.weenas.castbay.util.CrashReports.pending(this) != null) {
+            val context = applicationContext
+            kotlin.concurrent.thread(name = "CastBay-crash-report") {
+                com.weenas.castbay.util.CrashReports.send(context, com.weenas.castbay.util.AppVersion.name(context))
+            }
+        }
         if (!manager.start(settings)) {
             Diagnostics.record("service", "Receiver failed to start")
             removeForeground()

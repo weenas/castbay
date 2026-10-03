@@ -81,6 +81,15 @@
     <string name="language_system">System</string>
     <string name="setting_check_updates">Check for Updates</string>
     <string name="setting_check_updates_note">Once a day, asks castbay.weenas.com (or GitHub) for the latest version number; nothing about this TV is sent.</string>
+    <string name="setting_error_reports">Send Error Reports</string>
+    <string name="setting_error_reports_note">If CastBay stops unexpectedly, send a problem report (the error and the app\'s recent log, with titles, names and links taken out) when it next starts. Off: you are asked each time.</string>
+    <string name="crash_ask">CastBay stopped unexpectedly last time. Send a problem report to help fix it?</string>
+    <string name="crash_send">Send</string>
+    <string name="crash_dismiss">Dismiss</string>
+    <string name="crash_sending">Sending the report…</string>
+    <string name="crash_sent">Thanks! Report %1$s sent.</string>
+    <string name="crash_failed">The report couldn\'t be sent. It will be offered again next time.</string>
+    <string name="crash_ok">OK</string>
     <string name="setting_reset">Restore Defaults</string>
     <string name="setting_reset_action">Restore</string>
     <string name="setting_reset_confirm">Press again to restore</string>

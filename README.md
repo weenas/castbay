@@ -77,6 +77,7 @@ tools/sim music 60 "My Song"   # a generated tune with title, artist, album and 
 tools/sim pause                # pause / resume, as the phone would
 tools/sim video                # an HLS video (Apple's sample, with audio tracks and subtitles)
 tools/sim stop                 # the sender disconnects
+tools/sim crash                # the app crashes (to test error reports)
 tools/sim key down right ok    # remote keys: up down left right ok back home menu playpause
 tools/sim shot screen.png      # screenshot
 tools/sim log                  # CastBay's recent log

@@ -11,6 +11,8 @@ import com.weenas.castbay.service.StreamInfo
 import com.weenas.castbay.service.UpdateInstall
 import com.weenas.castbay.service.UpdateInstaller
 import com.weenas.castbay.BuildConfig
+import com.weenas.castbay.util.AppVersion
+import com.weenas.castbay.util.CrashReports
 import com.weenas.castbay.util.Log
 import com.weenas.castbay.service.ReceiverSettings
 import com.weenas.castbay.service.ReceiverSettingsStore
@@ -179,6 +181,48 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     // After the checker above: initialisers and init blocks run in the order written.
     init {
         checkForUpdate()
+    }
+
+    /** The home screen's note about a crash in the last run: asking, sending, sent or failed. */
+    sealed interface CrashNotice {
+        data object Ask : CrashNotice
+        data object Sending : CrashNotice
+        data class Sent(val id: String) : CrashNotice
+        data object Failed : CrashNotice
+    }
+    private val _crashNotice = MutableStateFlow<CrashNotice?>(null)
+    val crashNotice: StateFlow<CrashNotice?> = _crashNotice.asStateFlow()
+
+    init {
+        // A crash from the last run: sent quietly if the person turned that on, else asked about.
+        if (CrashReports.pending(getApplication()) != null) {
+            if (_settings.value.sendErrorReports) sendCrashReport(quiet = true) else _crashNotice.value = CrashNotice.Ask
+        }
+    }
+
+    /** Sends the last run's crash as a problem report; [quiet] shows nothing (Settings' switch). */
+    fun sendCrashReport(quiet: Boolean = false) {
+        val app = getApplication<Application>()
+        if (!quiet) _crashNotice.value = CrashNotice.Sending
+        kotlin.concurrent.thread(name = "CastBay-crash-report") {
+            val result = CrashReports.send(app, AppVersion.name(app)) ?: return@thread
+            if (!quiet) _crashNotice.value = result.fold({ CrashNotice.Sent(it) }, { CrashNotice.Failed })
+        }
+    }
+
+    /**
+     * Hides the note: asked, that forgets the crash; after a failed send, it is kept and
+     * offered again at the next start.
+     */
+    fun dismissCrashNotice() {
+        if (_crashNotice.value == CrashNotice.Ask) CrashReports.clear(getApplication())
+        _crashNotice.value = null
+    }
+
+    fun setSendErrorReports(enabled: Boolean) {
+        updateSettings { it.copy(sendErrorReports = enabled) }
+        // Turning it on while asked about a crash: that is a yes.
+        if (enabled && _crashNotice.value == CrashNotice.Ask) sendCrashReport()
     }
 
     /** Synced lyrics for a song, or null; looked up online, so call off the main thread. */

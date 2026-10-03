@@ -370,6 +370,7 @@ private val SHORT_HOME_HEIGHT = 500.dp
  */
 @Composable
 private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnScope.() -> Unit) {
+    val crashNotice by viewModel.crashNotice.collectAsState()
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         BrandTitle()
         Spacer(modifier = Modifier.height(12.dp))
@@ -382,11 +383,55 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
         Column(
             modifier = Modifier.heightIn(min = if (LocalShortHome.current) SHORT_HOME_STATUS_MIN_HEIGHT else HOME_STATUS_MIN_HEIGHT),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            content = status
-        )
+            verticalArrangement = Arrangement.Center
+        ) {
+            // A crash to ask about takes the status's place for a moment, so nothing moves.
+            val notice = crashNotice
+            if (notice != null) CrashNoticeCard(notice, viewModel) else status()
+        }
         Spacer(modifier = Modifier.height(16.dp))
         HomeButtons(viewModel)
+    }
+}
+
+/**
+ * After a crash in the last run (with Send error reports off): asks whether to send a problem
+ * report, then says how that went. In the status's place; Up from the buttons reaches it.
+ */
+@Composable
+private fun CrashNoticeCard(notice: AirPlayViewModel.CrashNotice, viewModel: AirPlayViewModel) {
+    Column(
+        modifier = Modifier
+            .widthIn(max = 460.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.08f))
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(
+            when (notice) {
+                AirPlayViewModel.CrashNotice.Ask -> stringResource(R.string.crash_ask)
+                AirPlayViewModel.CrashNotice.Sending -> stringResource(R.string.crash_sending)
+                is AirPlayViewModel.CrashNotice.Sent -> stringResource(R.string.crash_sent, notice.id)
+                AirPlayViewModel.CrashNotice.Failed -> stringResource(R.string.crash_failed)
+            },
+            fontSize = 16.sp,
+            color = Color.White,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        CompositionLocalProvider(LocalHomeButtonMinWidth provides 96.dp) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                when (notice) {
+                    AirPlayViewModel.CrashNotice.Ask -> {
+                        HomeButton(stringResource(R.string.crash_send), onClick = { viewModel.sendCrashReport() })
+                        HomeButton(stringResource(R.string.crash_dismiss), muted = true, onClick = { viewModel.dismissCrashNotice() })
+                    }
+                    AirPlayViewModel.CrashNotice.Sending -> {}
+                    else -> HomeButton(stringResource(R.string.crash_ok), muted = true, onClick = { viewModel.dismissCrashNotice() })
+                }
+            }
+        }
     }
 }
 

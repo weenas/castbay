@@ -167,6 +167,7 @@ These apply at once, and can also be changed from the quick menu while casting.
 
 - **Language**: System (the TV's), 中文 or English.
 - **Check for Updates**: looks for a newer version once a day (on this website, or GitHub).
+- **Send Error Reports** (off by default): after CastBay stops unexpectedly, sends a problem report when it next starts, without asking. Off, the home screen asks you each time. What a report contains is in the [privacy policy](/privacy#problem-reports-only-when-you-send-one).
 - **Restore Defaults**: press twice to put every setting back as it was when CastBay was installed.
 
 ## Help and About

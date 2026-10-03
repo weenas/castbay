@@ -25,13 +25,21 @@ object LogReport {
     private const val LOGCAT_LINES = 3000
     private const val TIMEOUT_MS = 20_000
 
-    /** The report's text, already scrubbed: what [upload] sends. Blocking (reads logcat). */
-    fun build(context: Context): String {
+    /**
+     * The report's text, already scrubbed: what [upload] sends. With [crash] (from
+     * [CrashReports]), that comes first. Blocking (reads logcat).
+     */
+    fun build(context: Context, crash: String? = null): String {
         val utc = SimpleDateFormat("yyyy-MM-dd HH:mm:ss 'UTC'", Locale.US).apply { timeZone = TimeZone.getTimeZone("UTC") }
         val head = buildString {
             appendLine("CastBay problem report, ${utc.format(Date())}")
             Diagnostics.deviceInfo(context).forEach { (label, value) -> appendLine("$label: $value") }
             appendLine()
+            if (crash != null) {
+                appendLine("== The crash ==")
+                appendLine(crash.trimEnd())
+                appendLine()
+            }
             appendLine("== Diagnostics events (oldest first) ==")
             Diagnostics.events().asReversed().forEach { appendLine(Diagnostics.format(it)) }
             appendLine()
@@ -53,7 +61,7 @@ object LogReport {
     }
 
     /** Sends [text]; the report's ID, or why it failed. Blocking; call off the main thread. */
-    fun upload(context: Context, text: String, appVersion: String): Result<String> = runCatching {
+    fun upload(context: Context, text: String, appVersion: String, crash: Boolean = false): Result<String> = runCatching {
         val connection = URL(context.getString(R.string.reports_url)).openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = TIMEOUT_MS
@@ -62,7 +70,7 @@ object LogReport {
             connection.doOutput = true
             connection.setRequestProperty("Content-Type", "text/plain; charset=utf-8")
             connection.setRequestProperty("X-CastBay-Version", appVersion)
-            connection.setRequestProperty("X-CastBay-Report", "manual")
+            connection.setRequestProperty("X-CastBay-Report", if (crash) "crash" else "manual")
             val bytes = text.toByteArray()
             connection.setFixedLengthStreamingMode(bytes.size)
             connection.outputStream.use { it.write(bytes) }

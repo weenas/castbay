@@ -324,3 +324,11 @@ footer .links { display: flex; gap: 20px; flex-wrap: wrap; }
 .stats-bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
 .stats-bar span { display: block; height: 100%; background: var(--accent); border-radius: 4px; }
 .stats-n { font-variant-numeric: tabular-nums; min-width: 2.5em; text-align: right; }
+/* Its list of problem reports (on phones, rows become blocks like the site's other tables). */
+.stats-reports { margin: 0 0 14px; }
+.stats-reports table { width: 100%; border-collapse: collapse; font-size: 14px; }
+@media (min-width: 601px) {
+  .stats-reports th, .stats-reports td { text-align: left; padding: 6px 10px 6px 0; white-space: nowrap; border-bottom: 1px solid var(--line); }
+}
+.stats-reports th { color: var(--text-3); font-weight: 500; }
+.stats-reports td a { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }

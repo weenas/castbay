@@ -27,10 +27,14 @@ export default {
       '/api/stats': receiveStats,
       '/api/stats/delete': deleteStats,
     };
-    if (url.pathname === '/api/stats/summary') {
+    // The private page's data, under the path Cloudflare Access guards.
+    if (url.pathname === '/api/stats/summary' || url.pathname.startsWith('/api/stats/summary/')) {
       if (request.method !== 'GET') return json({ error: 'method' }, 405, { Allow: 'GET' });
       if (!(await accessAllowed(request, env))) return json({ error: 'forbidden' }, 403);
-      return summary(env);
+      if (url.pathname === '/api/stats/summary') return summary(env);
+      const report = /^\/api\/stats\/summary\/reports\/(CB-[0-9A-Z]{6})$/.exec(url.pathname);
+      if (report) return readReport(env, report[1]);
+      return json({ error: 'not found' }, 404);
     }
     const route = routes[url.pathname];
     if (!route) return json({ error: 'not found' }, 404);
@@ -209,11 +213,43 @@ async function summary(env) {
     settings: `SELECT j.key || ' = ' || j.value AS key, count(*) AS n FROM (${latest}) r, json_each(r.settings) j GROUP BY 1 ORDER BY j.key, n DESC`,
   };
   const names = Object.keys(queries);
+  const reports = await recentReports(env);
   const results = await env.STATS.batch(names.map((name) => env.STATS.prepare(queries[name])));
   const out = { generated: new Date().toISOString() };
   names.forEach((name, i) => {
     const rows = results[i].results;
     out[name] = name.startsWith('devices') ? rows[0].n : rows;
   });
+  out.reports = reports;
   return json(out, 200);
+}
+
+/** The latest problem reports (R2 keeps them 90 days), newest first, without their text. */
+async function recentReports(env) {
+  const all = [];
+  let cursor;
+  do {
+    const page = await env.REPORTS.list({ prefix: 'reports/', include: ['customMetadata'], cursor });
+    all.push(...page.objects);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor && all.length < 2000);
+  const reports = all
+    .map((o) => ({
+      id: o.key.slice('reports/'.length, -'.txt'.length),
+      received: o.customMetadata?.received ?? o.uploaded.toISOString(),
+      version: o.customMetadata?.version ?? '',
+      kind: o.customMetadata?.kind ?? 'manual',
+      size: o.size,
+    }))
+    .sort((a, b) => (a.received < b.received ? 1 : -1));
+  return { total: reports.length, latest: reports.slice(0, 100) };
+}
+
+/** One report's text, to read on the private page. */
+async function readReport(env, id) {
+  const object = await env.REPORTS.get(`reports/${id}.txt`);
+  if (!object) return json({ error: 'not found' }, 404);
+  return new Response(object.body, {
+    headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' },
+  });
 }

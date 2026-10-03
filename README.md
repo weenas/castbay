@@ -85,6 +85,12 @@ tools/sim log                  # CastBay's recent log
 Use `-s SERIAL` (or `ANDROID_SERIAL`) to pick the TV or an emulator. The debug app doesn't start
 at boot, so it only runs while you test.
 
+## Versions and CI
+
+Versions follow [semantic versioning](https://semver.org): the middle number goes up for a release with new features (1.1.0), the last for a release that only fixes things (1.1.1), the first for big changes. `versionName` and `versionCode` (one more each release) in `app/build.gradle.kts` change only when releasing; a debug build's version names the commit it was built from (`1.1.0-dev+6228385`).
+
+CI builds only what a change touches: the app (`Android` workflow) for `app/`, `airplay/`, `third_party/` and the Gradle files, the website (`Website` workflow) for `web/`. The other job shows as skipped.
+
 ## Project Structure
 
 ```

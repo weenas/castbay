@@ -10,7 +10,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Which parts the change touches, so a change to the website alone doesn't build the app
+  # (and the other way round). The job below is then skipped, which counts as passing.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          # A pull request: its base; a push to main: main before it.
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PATTERN: '^(app/|airplay/|third_party/|gradle/|build\.gradle\.kts|settings\.gradle\.kts|gradle\.properties|gradlew|\.gitmodules|\.github/workflows/android\.yml)'
+        run: |
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files="$(git diff --name-only "$BASE" HEAD)"
+          else
+            files="(unknown base: everything)"
+          fi
+          echo "$files"
+          if [ "$files" = "(unknown base: everything)" ] || echo "$files" | grep -qE "$PATTERN"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
   build:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:

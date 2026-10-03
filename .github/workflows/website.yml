@@ -9,7 +9,38 @@ on:
   pull_request:
 
 jobs:
+  # Which parts the change touches, so a change to the website alone doesn't build the app
+  # (and the other way round). The job below is then skipped, which counts as passing.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      relevant: ${{ steps.diff.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: diff
+        env:
+          # A pull request: its base; a push to main: main before it.
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+          PATTERN: '^(web/|\.github/workflows/website\.yml)'
+        run: |
+          if git cat-file -e "$BASE^{commit}" 2>/dev/null; then
+            files="$(git diff --name-only "$BASE" HEAD)"
+          else
+            files="(unknown base: everything)"
+          fi
+          echo "$files"
+          if [ "$files" = "(unknown base: everything)" ] || echo "$files" | grep -qE "$PATTERN"; then
+            echo "relevant=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "relevant=false" >> "$GITHUB_OUTPUT"
+          fi
+
   website-build:
+    needs: changes
+    if: needs.changes.outputs.relevant == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,9 +59,9 @@ jobs:
           npm ci --no-fund --no-audit
           npm run build
 
-  # Cloudflare builds main on its own, but has missed a push; once the website has built here,
-  # a change under web/ also asks it to rebuild through the deploy hook (as releases do). A
-  # rebuild of the same commit is harmless.
+  # Cloudflare builds main on its own, but has missed a push; once the website has built here
+  # (only when web/ changed), it is also asked to rebuild through the deploy hook (as releases
+  # do). A rebuild of the same commit is harmless.
   deploy:
     needs: website-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -40,18 +71,9 @@ jobs:
       group: website-deploy
       cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Rebuild the website if web/ changed
+      - name: Rebuild the website
         env:
           HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK }}
-          BEFORE: ${{ github.event.before }}
         run: |
           if [ -z "$HOOK" ]; then echo "No CLOUDFLARE_DEPLOY_HOOK secret; skipped"; exit 0; fi
-          # A new branch or a force push has no usable "before"; rebuild to be safe.
-          if git cat-file -e "$BEFORE^{commit}" 2>/dev/null && git diff --quiet "$BEFORE" HEAD -- web/; then
-            echo "No change under web/; skipped"
-            exit 0
-          fi
           curl -fsS -X POST "$HOOK" > /dev/null && echo "Website rebuild started"

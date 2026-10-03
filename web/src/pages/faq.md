@@ -26,13 +26,12 @@ Each release is built by GitHub from the tagged source, not on anyone's computer
 
 ### Where can I get CastBay, and can I switch between sources?
 
-From three places:
+From two places:
 
 - **This website or GitHub** ([CastBay.apk](/apk), [releases](https://github.com/weenas/castbay/releases)): signed with CastBay's own key. CastBay checks for new versions and installs them from About.
-- **IzzyOnDroid**, an F-Droid-compatible repository (requested): the same APK as GitHub, so the same signature; updates come through the F-Droid client.
 - **F-Droid** (submitted, under review): F-Droid builds CastBay from its source code itself and signs it with its own key; updates come through the F-Droid client, and CastBay doesn't check for updates there.
 
-Android only installs an update with the same signature as the app already installed, so **the F-Droid build and the others can't replace each other**: to switch between them, uninstall CastBay first (its settings and allowed devices are removed with it), then install from the other source. Switching between the website, GitHub and IzzyOnDroid needs no uninstall.
+Android only installs an update with the same signature as the app already installed, so **the F-Droid build and the others can't replace each other**: to switch between them, uninstall CastBay first (its settings and allowed devices are removed with it), then install from the other source. Switching between the website and GitHub needs no uninstall.
 
 ## Connecting
 

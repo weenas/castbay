@@ -1,6 +1,6 @@
 # App stores
 
-The store listing (descriptions, icon, screenshots, changelogs) is in `fastlane/metadata/android/`; both stores below read it from this repository.
+The store listing (descriptions, icon, screenshots, changelogs) is in `fastlane/metadata/android/`, which F-Droid reads from this repository.
 
 ## F-Droid
 
@@ -16,6 +16,6 @@ What the metadata does:
 
 To submit (once, from a GitLab account): fork https://gitlab.com/fdroid/fdroiddata (the fork must be public, so its group must be public too), add the file as `metadata/com.weenas.castbay.yml`, and open a merge request; F-Droid's CI builds it and reviewers reply in the merge request. Check it first with fdroidserver: `fdroid rewritemeta com.weenas.castbay` (formatting), `fdroid lint com.weenas.castbay`, and `fdroid build -v -l com.weenas.castbay` where a build environment is available.
 
-## IzzyOnDroid
+## IzzyOnDroid (declined)
 
-IzzyOnDroid serves the APK attached to each GitHub release (`CastBay-<version>.apk`), so its users get the same signature as GitHub and the website, and the in-app updater keeps working. To request inclusion, open an issue at https://codeberg.org/IzzyOnDroid/repodata/issues with the repository URL; it reads the listing from `fastlane/metadata/android/`.
+Requested in October 2026 (https://codeberg.org/IzzyOnDroid/repodata/issues/663) and declined: IzzyOnDroid doesn't accept apps developed with substantial LLM assistance, which CastBay is. The maintainer noted that `REQUEST_INSTALL_PACKAGES` (the in-app updater, which bypasses their scans) could also have been a blocker; a build with `castbay.selfUpdate=false` has neither the updater nor that permission. Their courtesy scan of the 1.3.2 APK found no offending libraries or signing blocks.

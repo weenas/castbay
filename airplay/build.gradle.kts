@@ -2,12 +2,11 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.library")
-    id("org.jetbrains.kotlin.android")
 }
 
 android {
     namespace = "com.weenas.castbay.protocol"
-    compileSdk = 35
+    compileSdk = 37
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
@@ -45,11 +44,11 @@ kotlin {
 
 // OpenSSL's libcrypto for each ABI, built from source (third_party/openssl) before the native
 // build links it; quick once built (see tools/build-openssl.sh).
-val buildOpenSsl by tasks.registering(Exec::class) {
+val buildOpenSsl = tasks.register<Exec>("buildOpenSsl") {
     val abis = android.defaultConfig.ndk.abiFilters.toList()
-    val ndkDir = android.ndkDirectory.absolutePath
+    val ndkDir = androidComponents.sdkComponents.ndkDirectory
     workingDir = rootDir
-    environment("ANDROID_NDK_ROOT", ndkDir)
+    doFirst { environment("ANDROID_NDK_ROOT", ndkDir.get().asFile.absolutePath) }
     commandLine(listOf("bash", "tools/build-openssl.sh") + abis)
 }
 tasks.named("preBuild") { dependsOn(buildOpenSsl) }

@@ -122,7 +122,7 @@ fun QuickMenu(
             }
             // Right on the last option (or Left on the first) stays in the menu rather than
             // wandering to the controls behind it.
-            .focusProperties { exit = { FocusRequester.Cancel } }
+            .focusProperties { onExit = { cancelFocusChange() } }
             .focusGroup()
             // A tap on the bar between options isn't a tap on the picture (which closes it).
             .pointerInput(Unit) { detectTapGestures { lastUse++ } }

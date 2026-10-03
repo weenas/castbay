@@ -52,8 +52,8 @@ git clone git@github.com:weenas/castbay.git
 cd castbay
 git submodule update --init   # top level only: OpenSSL's own submodules aren't needed
 
-# Build (requires JDK 17-21, Android SDK 35, NDK 27.0.12077973, CMake 3.22.1, perl and make;
-# JDK 26 breaks AGP 8.7.3's prefab step). The first build also compiles OpenSSL's libcrypto
+# Build (requires JDK 17-21, Android SDK platform 37, NDK 27.0.12077973, CMake 3.22.1, perl
+# and make). The first build also compiles OpenSSL's libcrypto
 # for each ABI (tools/build-openssl.sh, about a minute), then reuses it.
 ./gradlew assembleDebug
 ```

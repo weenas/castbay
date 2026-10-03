@@ -1,0 +1,1 @@
+AirPlay and DLNA receiver for Android TVs, TV boxes, car displays and tablets

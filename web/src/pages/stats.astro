@@ -13,7 +13,16 @@ import Page from '../layouts/Page.astro';
     <div class="stats-card"><span>近 7 天设备</span><strong id="devices7">–</strong></div>
     <div class="stats-card"><span>近 30 天设备</span><strong id="devices30">–</strong></div>
     <div class="stats-card"><span>近 30 天投屏</span><strong id="casts30">–</strong></div>
+    <div class="stats-card"><span>问题报告（保存 90 天）</span><strong id="reports-total">–</strong></div>
   </div>
+
+  <section class="stats-section stats-reports" hidden id="stats-reports">
+    <h2>最近的问题报告</h2>
+    <table>
+      <thead><tr><th>编号</th><th>时间</th><th>版本</th><th>类型</th><th>大小</th></tr></thead>
+      <tbody id="reports-body"></tbody>
+    </table>
+  </section>
 
   <div class="stats-grid" id="stats-grid"></div>
   <p class="note">只包含打开了"发送匿名使用统计"的设备。设备信息按每台设备最近一天计；次数是近 30 天的合计。字段说明见<a href="/zh/privacy#使用统计仅在你打开时">隐私政策</a>。</p>
@@ -95,6 +104,29 @@ import Page from '../layouts/Page.astro';
         .filter(function (r) { return r.key.indexOf('cast.') === 0; })
         .reduce(function (sum, r) { return sum + r.n; }, 0);
       document.getElementById('stats-cards').hidden = false;
+      var reports = d.reports || { total: 0, latest: [] };
+      document.getElementById('reports-total').textContent = reports.total;
+      var body = document.getElementById('reports-body');
+      reports.latest.forEach(function (r) {
+        var tr = document.createElement('tr');
+        var link = document.createElement('a');
+        link.href = '/api/stats/summary/reports/' + r.id;
+        link.target = '_blank';
+        link.rel = 'noopener';
+        link.textContent = r.id;
+        var cells = [link, new Date(r.received).toLocaleString('zh-CN'), r.version,
+          r.kind === 'crash' ? '崩溃' : '手动', Math.max(1, Math.round(r.size / 1024)) + ' KB'];
+        var labels = ['编号', '时间', '版本', '类型', '大小'];
+        cells.forEach(function (c, i) {
+          var td = document.createElement('td');
+          // Named after its column, as site.js does for the site's tables on phones.
+          td.setAttribute('data-label', labels[i]);
+          if (typeof c === 'string') td.textContent = c; else td.appendChild(c);
+          tr.appendChild(td);
+        });
+        body.appendChild(tr);
+      });
+      document.getElementById('stats-reports').hidden = reports.latest.length === 0;
       var grid = document.getElementById('stats-grid');
       SECTIONS.forEach(function (s) {
         var rows = s[2] ? d.counts.filter(function (r) { return s[2](r.key); }) : d[s[0]];

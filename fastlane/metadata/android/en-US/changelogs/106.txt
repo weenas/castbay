@@ -1,0 +1,4 @@
+• About → Open-Source Licenses lists what CastBay is built from, with each license's full text.
+• Encryption now uses OpenSSL 3.5 (long-term support), built from source.
+• If uploading a problem report fails, Diagnostics says why, and the upload is tried once more first.
+• Playback (Media3) and the screens (Jetpack Compose) are updated to their latest versions.

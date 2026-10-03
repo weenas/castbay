@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weenas.castbay.service.ReceiverSettings
 import androidx.compose.ui.res.stringResource
+import com.weenas.castbay.BuildConfig
 import com.weenas.castbay.R
 import com.weenas.castbay.ui.settingValueLabel
 import com.weenas.castbay.ui.AppBackground
@@ -289,9 +290,12 @@ private fun ColumnScope.GeneralPage(
         viewModel.updateSettings { it.copy(language = language) }
         onLanguageChanged()
     }
-    CardDivider()
-    SwitchSetting(stringResource(R.string.setting_check_updates), settings.checkUpdates) { viewModel.setCheckUpdates(it) }
-    Text(stringResource(R.string.setting_check_updates_note), color = Color.Gray, fontSize = 14.sp)
+    // Store builds (F-Droid) are updated by the store, so they don't look for updates themselves.
+    if (BuildConfig.SELF_UPDATE) {
+        CardDivider()
+        SwitchSetting(stringResource(R.string.setting_check_updates), settings.checkUpdates) { viewModel.setCheckUpdates(it) }
+        Text(stringResource(R.string.setting_check_updates_note), color = Color.Gray, fontSize = 14.sp)
+    }
     CardDivider()
     SwitchSetting(stringResource(R.string.setting_error_reports), settings.sendErrorReports) { viewModel.setSendErrorReports(it) }
     Text(stringResource(R.string.setting_error_reports_note), color = Color.Gray, fontSize = 14.sp)

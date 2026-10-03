@@ -111,18 +111,20 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     private val lyricsClient = com.weenas.castbay.service.LyricsClient(appVersion)
 
     private val updateChecker = com.weenas.castbay.service.UpdateChecker(application, appVersion)
-    private val _update = MutableStateFlow(if (_settings.value.checkUpdates) updateChecker.known() else null)
-    /** A newer CastBay on GitHub, found by the daily check (off in Settings: none). */
+    /** Whether CastBay looks for updates itself: not in store builds (F-Droid), which the store updates. */
+    private val checksUpdates get() = BuildConfig.SELF_UPDATE && _settings.value.checkUpdates
+    private val _update = MutableStateFlow(if (checksUpdates) updateChecker.known() else null)
+    /** A newer CastBay on GitHub, found by the daily check (off in Settings, or a store build: none). */
     val update: StateFlow<com.weenas.castbay.service.AppUpdate?> = _update.asStateFlow()
 
     private fun checkForUpdate() {
-        if (!_settings.value.checkUpdates) {
+        if (!checksUpdates) {
             _update.value = null
             return
         }
         kotlin.concurrent.thread(name = "CastBay-update") {
             val found = updateChecker.check()
-            if (_settings.value.checkUpdates) _update.value = found
+            if (checksUpdates) _update.value = found
         }
     }
 

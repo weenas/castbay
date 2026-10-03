@@ -1,0 +1,110 @@
+---
+// The private statistics page: totals of the opt-in usage statistics (worker/index.js,
+// /api/stats/summary), for the developer only. Cloudflare Access asks for a login before
+// both this page and its data; the page has no name, so it isn't indexed or linked.
+import Page from '../layouts/Page.astro';
+---
+<Page lang="zh" title="使用统计 – 映湾 CastBay" description="映湾匿名使用统计（仅开发者可见）。">
+<main class="wrap doc stats">
+  <h1>使用统计</h1>
+  <p class="note" id="stats-status">正在读取…</p>
+
+  <div class="stats-cards" hidden id="stats-cards">
+    <div class="stats-card"><span>近 7 天设备</span><strong id="devices7">–</strong></div>
+    <div class="stats-card"><span>近 30 天设备</span><strong id="devices30">–</strong></div>
+    <div class="stats-card"><span>近 30 天投屏</span><strong id="casts30">–</strong></div>
+  </div>
+
+  <div class="stats-grid" id="stats-grid"></div>
+  <p class="note">只包含打开了"发送匿名使用统计"的设备。设备信息按每台设备最近一天计；次数是近 30 天的合计。字段说明见<a href="/zh/privacy#使用统计仅在你打开时">隐私政策</a>。</p>
+</main>
+<script is:inline>
+(function () {
+  var LABELS = {
+    'cast.airplay.mirror': 'AirPlay 屏幕镜像', 'cast.airplay.music': 'AirPlay 音乐', 'cast.airplay.video': 'AirPlay 视频',
+    'cast.dlna.mirror': 'DLNA 镜像', 'cast.dlna.music': 'DLNA 音乐', 'cast.dlna.video': 'DLNA 视频',
+    'length.under1m': '不到 1 分钟', 'length.1to10m': '1–10 分钟', 'length.over10m': '超过 10 分钟',
+    'fail.receiver': '接收器出错', 'fail.decoder': '视频解码器出错', 'fail.video': '视频播放出错',
+    tv: '电视', car: '车机', other: '其他', touch: '触摸屏', 'no touch': '无触摸屏'
+  };
+  var SECTIONS = [
+    ['perDay', '每天的设备数'],
+    ['casts', '投屏方式', function (k) { return k.indexOf('cast.') === 0; }],
+    ['lengths', '投屏时长', function (k) { return k.indexOf('length.') === 0; }],
+    ['mirror', '镜像分辨率和编码', function (k) { return k.indexOf('mirror.') === 0; }],
+    ['fails', '出错', function (k) { return k.indexOf('fail.') === 0; }],
+    ['failuresByApp', '出错（按版本）'],
+    ['app', '映湾版本'],
+    ['android', 'Android 版本'],
+    ['model', '设备型号'],
+    ['device', '设备类型'],
+    ['screen', '屏幕'],
+    ['touch', '触摸屏'],
+    ['lang', '系统语言'],
+    ['settings', '设置']
+  ];
+  function label(key) {
+    if (LABELS[key]) return LABELS[key];
+    // "1.2.0 · fail.decoder": the version, then the label.
+    var parts = key.split(' · ');
+    if (parts.length === 2) return parts[0] + ' · ' + label(parts[1]);
+    var m = /^mirror\.(\w+)\.(h264|h265)$/.exec(key);
+    if (m) return m[1] + ' ' + (m[2] === 'h265' ? 'H.265' : 'H.264');
+    return key;
+  }
+  function section(title, rows) {
+    var box = document.createElement('section');
+    box.className = 'stats-section';
+    var h = document.createElement('h2');
+    h.textContent = title;
+    box.appendChild(h);
+    if (!rows.length) {
+      var none = document.createElement('p');
+      none.className = 'note';
+      none.textContent = '暂无数据';
+      box.appendChild(none);
+      return box;
+    }
+    var max = Math.max.apply(null, rows.map(function (r) { return r.n; }));
+    rows.forEach(function (r) {
+      var row = document.createElement('div');
+      row.className = 'stats-row';
+      var name = document.createElement('span');
+      name.className = 'stats-name';
+      name.textContent = label(String(r.key));
+      var bar = document.createElement('span');
+      bar.className = 'stats-bar';
+      var fill = document.createElement('span');
+      fill.style.width = Math.max(2, Math.round((r.n / max) * 100)) + '%';
+      bar.appendChild(fill);
+      var n = document.createElement('span');
+      n.className = 'stats-n';
+      n.textContent = r.n;
+      row.appendChild(name); row.appendChild(bar); row.appendChild(n);
+      box.appendChild(row);
+    });
+    return box;
+  }
+  var status = document.getElementById('stats-status');
+  fetch('/api/stats/summary', { credentials: 'same-origin' })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (d) {
+      document.getElementById('devices7').textContent = d.devices7;
+      document.getElementById('devices30').textContent = d.devices30;
+      document.getElementById('casts30').textContent = d.counts
+        .filter(function (r) { return r.key.indexOf('cast.') === 0; })
+        .reduce(function (sum, r) { return sum + r.n; }, 0);
+      document.getElementById('stats-cards').hidden = false;
+      var grid = document.getElementById('stats-grid');
+      SECTIONS.forEach(function (s) {
+        var rows = s[2] ? d.counts.filter(function (r) { return s[2](r.key); }) : d[s[0]];
+        grid.appendChild(section(s[1], rows || []));
+      });
+      status.textContent = '更新于 ' + new Date(d.generated).toLocaleString('zh-CN');
+    })
+    .catch(function (e) {
+      status.textContent = '读取失败（' + e.message + '）。需要先通过 Cloudflare Access 登录。';
+    });
+})();
+</script>
+</Page>

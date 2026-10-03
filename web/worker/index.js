@@ -10,6 +10,10 @@
 // on (one row per installation and day in D1; only whitelisted fields and counters are kept,
 // anything else is refused). POST /api/stats/delete {id}: deletes an installation's rows, sent
 // when statistics are turned off. A daily cron deletes rows older than a year.
+//
+// GET /api/stats/summary: totals for the private /stats page. Cloudflare Access guards both
+// (only the allowed emails get in); this also checks Access's signed token itself, so the
+// totals stay private even if the Access application were removed by mistake.
 
 const MAX_BYTES = 512 * 1024;
 // Crockford's base 32: no I, L, O or U, so an ID read off a TV is not misread.
@@ -23,6 +27,11 @@ export default {
       '/api/stats': receiveStats,
       '/api/stats/delete': deleteStats,
     };
+    if (url.pathname === '/api/stats/summary') {
+      if (request.method !== 'GET') return json({ error: 'method' }, 405, { Allow: 'GET' });
+      if (!(await accessAllowed(request, env))) return json({ error: 'forbidden' }, 403);
+      return summary(env);
+    }
     const route = routes[url.pathname];
     if (!route) return json({ error: 'not found' }, 404);
     if (request.method !== 'POST') return json({ error: 'method' }, 405, { Allow: 'POST' });
@@ -138,4 +147,73 @@ function validStats(b) {
   }
   return { id: b.id, day: b.day, app: b.app, android: b.android, sdk: b.sdk, maker: b.maker, model: b.model,
     screen: b.screen, device: b.device, touch: b.touch, lang: b.lang, counts, settings };
+}
+
+// ---- The private statistics page's totals ----
+
+/** Whether the request carries a valid Cloudflare Access token for the stats application. */
+async function accessAllowed(request, env) {
+  // `wrangler dev --var STATS_LOCAL_TEST:yes` only (never set in wrangler.jsonc): no Access locally.
+  if (env.STATS_LOCAL_TEST === 'yes') return true;
+  const token = request.headers.get('Cf-Access-Jwt-Assertion');
+  if (!token || !env.ACCESS_TEAM || !env.ACCESS_AUD) return false;
+  const [head, body, signature] = token.split('.');
+  if (!head || !body || !signature) return false;
+  try {
+    const header = JSON.parse(base64UrlText(head));
+    const claims = JSON.parse(base64UrlText(body));
+    const issuer = `https://${env.ACCESS_TEAM}.cloudflareaccess.com`;
+    const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
+    if (claims.iss !== issuer || !audiences.includes(env.ACCESS_AUD) || !(claims.exp * 1000 > Date.now())) return false;
+    const certs = await fetch(`${issuer}/cdn-cgi/access/certs`, { cf: { cacheTtl: 3600 } }).then((r) => r.json());
+    const jwk = certs.keys.find((k) => k.kid === header.kid);
+    if (!jwk || header.alg !== 'RS256') return false;
+    const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+    return await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, base64UrlBytes(signature), new TextEncoder().encode(`${head}.${body}`));
+  } catch {
+    return false;
+  }
+}
+
+function base64UrlBytes(text) {
+  const plain = atob(text.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (text.length % 4)) % 4));
+  return Uint8Array.from(plain, (c) => c.charCodeAt(0));
+}
+
+function base64UrlText(text) {
+  return new TextDecoder().decode(base64UrlBytes(text));
+}
+
+/** Totals over the last 30 days (devices counted once each), and devices per day. */
+async function summary(env) {
+  const since = "date('now', '-30 days')";
+  const recent = `SELECT * FROM daily WHERE day >= ${since}`;
+  // Each device's latest day in the window, for what describes the device (model, version…).
+  const latest = `SELECT d.* FROM daily d JOIN (SELECT id, max(day) AS day FROM daily WHERE day >= ${since} GROUP BY id) l
+    ON d.id = l.id AND d.day = l.day`;
+  const by = (column) => `SELECT ${column} AS key, count(*) AS n FROM (${latest}) GROUP BY 1 ORDER BY n DESC LIMIT 30`;
+  const queries = {
+    devices7: `SELECT count(DISTINCT id) AS n FROM daily WHERE day >= date('now', '-7 days')`,
+    devices30: `SELECT count(DISTINCT id) AS n FROM daily WHERE day >= ${since}`,
+    perDay: `SELECT day AS key, count(DISTINCT id) AS n FROM daily WHERE day >= ${since} GROUP BY day ORDER BY day`,
+    app: by('app'),
+    android: by('android'),
+    model: by("maker || ' ' || model"),
+    screen: by('screen'),
+    device: by('device'),
+    touch: by("CASE touch WHEN 1 THEN 'touch' ELSE 'no touch' END"),
+    lang: by('lang'),
+    counts: `SELECT j.key AS key, sum(j.value) AS n FROM (${recent}) r, json_each(r.counts) j GROUP BY 1 ORDER BY n DESC`,
+    failuresByApp: `SELECT r.app || ' · ' || j.key AS key, sum(j.value) AS n FROM (${recent}) r, json_each(r.counts) j
+      WHERE j.key LIKE 'fail.%' GROUP BY 1 ORDER BY n DESC LIMIT 30`,
+    settings: `SELECT j.key || ' = ' || j.value AS key, count(*) AS n FROM (${latest}) r, json_each(r.settings) j GROUP BY 1 ORDER BY j.key, n DESC`,
+  };
+  const names = Object.keys(queries);
+  const results = await env.STATS.batch(names.map((name) => env.STATS.prepare(queries[name])));
+  const out = { generated: new Date().toISOString() };
+  names.forEach((name, i) => {
+    const rows = results[i].results;
+    out[name] = name.startsWith('devices') ? rows[0].n : rows;
+  });
+  return json(out, 200);
 }

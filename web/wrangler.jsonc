@@ -23,5 +23,11 @@
     // Statistics: a week's backlog at most, a few times a day.
     { "name": "STATS_LIMIT", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
   ],
+  // Cloudflare Access (team easonxiang) guards /stats and /api/stats/summary; the Worker also
+  // checks Access's token for this application (its audience tag). Neither is a secret.
+  "vars": {
+    "ACCESS_TEAM": "easonxiang",
+    "ACCESS_AUD": "1fc01f7d43adc063ebdf2e961b214cb253daf692f0f72ca198a8c936f01102fb"
+  },
   "routes": [{ "pattern": "castbay.weenas.com", "custom_domain": true }]
 }

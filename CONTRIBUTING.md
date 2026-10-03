@@ -31,6 +31,6 @@ Before opening a pull request:
 
 The app is in English and Chinese. To add a language, copy `values/strings.xml` to `values-<code>/strings.xml` (for example `values-ja`) and translate it; keep placeholders such as `%1$s` and escape apostrophes (`\'`).
 
-## Licence
+## License
 
 CastBay is GPL-3.0. By contributing, you agree that your contribution is licensed under the same terms.

@@ -104,7 +104,10 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
         Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
         Spacer(modifier = Modifier.height(16.dp))
         // Out of the way: for reporting a problem on a device without adb (a car's).
-        HomeButton(stringResource(R.string.about_diagnostics), muted = true, onClick = { viewModel.navigateToDiagnostics() })
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            HomeButton(stringResource(R.string.about_diagnostics), muted = true, onClick = { viewModel.navigateToDiagnostics() })
+            HomeButton(stringResource(R.string.about_licenses), muted = true, onClick = { viewModel.navigateToLicenses() })
+        }
     }
     val qrCode: @Composable (ImageBitmap) -> Unit = { bitmap ->
         Column(horizontalAlignment = Alignment.CenterHorizontally) {

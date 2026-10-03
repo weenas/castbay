@@ -58,11 +58,38 @@ object Log {
     fun e(tag: String, message: String) = log(AndroidLog.ERROR, tag, message, null)
     fun e(tag: String, message: String, error: Throwable?) = log(AndroidLog.ERROR, tag, message, error)
 
+    /**
+     * Marks [value] (a media title, link or someone's device name) as personal: logs show it
+     * as is, and a problem report the person uploads ([LogReport]) leaves it out.
+     */
+    fun personal(value: Any?): String = "$PERSONAL_START$value$PERSONAL_END"
+
+    const val PERSONAL_START = '⟦'
+    const val PERSONAL_END = '⟧'
+
+    /**
+     * The last lines logged (all builds), for a problem report: some TVs silence app logs in
+     * logd, so logcat alone may have nothing.
+     */
+    @Synchronized
+    fun recent(): List<String> = recent.toList()
+
+    private const val RECENT_LINES = 1500
+    private val recent = ArrayDeque<String>()
+
     private fun log(priority: Int, tag: String, message: String, error: Throwable?): Int {
         val full = if (error == null) message else message + "\n" + stackTrace(error)
         val result = AndroidLog.println(priority, tag, full)
+        remember(priority, tag, full)
         if (file != null) append(priority, tag, full)
         return result
+    }
+
+    @Synchronized
+    private fun remember(priority: Int, tag: String, message: String) {
+        val prefix = "%s %c %s: ".format(Locale.US, timeFormat.format(Date()), "??VDIWEA".getOrElse(priority) { '?' }, tag)
+        message.lines().forEach { recent.addLast(prefix + it) }
+        while (recent.size > RECENT_LINES) recent.removeFirst()
     }
 
     @Synchronized

@@ -171,4 +171,14 @@ These apply at once, and can also be changed from the quick menu while casting.
 
 ## Help and About
 
-Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, the website, privacy policy and source code, and a QR code that opens the website on your phone; when a newer version is out, it shows that version, and the QR code opens the download page instead.
+Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, links to the website, privacy policy and source code (they open in the device's browser; a TV without one shows the link's QR code instead), and a QR code that downloads CastBay, to pass it on. When a newer version is out, About shows it with **Download and install**.
+
+### Diagnostics and problem reports
+
+About → **Diagnostics** shows this device (model, Android version, screen) and the app's recent events: starts and stops, keys, taps, audio focus, and why it last ended. It stays on the device. To report a problem:
+
+1. Press **Upload log**. CastBay collects the device's details, these events and its own recent log, takes out song and video titles, device names, links, PINs and internet addresses, and shows what it will send and how big it is.
+2. Press **Upload**. Nothing is sent before this.
+3. CastBay shows a report ID, such as **CB-7K3F9Q**, and a QR code. Scan it with your phone: it opens the [feedback page](/feedback) with the ID filled in. Give the ID in your problem report.
+
+Reports are kept for 90 days and only the developer can read them; see the [privacy policy](/privacy#problem-reports-only-when-you-send-one). Without a network, photograph the Diagnostics screen instead.

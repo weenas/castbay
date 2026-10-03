@@ -114,7 +114,7 @@ class DlnaHttpServer(
         // Position polling arrives every second; keep it out of the log.
         val userAgent = request.headers["user-agent"].orEmpty()
         if (action.name !in QUIET_ACTIONS) {
-            Log.i(TAG, "$from ($userAgent) → ${service.name}.${action.name} ${action.args.filterKeys { it != "InstanceID" }}")
+            Log.i(TAG, "$from ($userAgent) → ${service.name}.${action.name} ${action.args.filterKeys { it != "InstanceID" }.mapValues { (key, value) -> if (key in PERSONAL_ARGS) Log.personal(value) else value }}")
         }
         return try {
             val out = renderer.handle(service, action, DlnaSender.fromUserAgent(userAgent))
@@ -195,5 +195,7 @@ class DlnaHttpServer(
         const val MAX_LINE_BYTES = 8 * 1024
         const val MAX_BODY_BYTES = 256 * 1024
         val QUIET_ACTIONS = setOf("GetPositionInfo", "GetTransportInfo", "GetVolume", "GetMute", "GetMediaInfo")
+        // What was cast (its link, and title and artist in the metadata): left out of problem reports.
+        val PERSONAL_ARGS = setOf("CurrentURI", "CurrentURIMetaData", "NextURI", "NextURIMetaData")
     }
 }

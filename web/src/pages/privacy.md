@@ -3,16 +3,16 @@ layout: ../layouts/Doc.astro
 lang: en
 page: privacy
 title: 'Privacy Policy – CastBay'
-description: 'CastBay''s privacy policy: no account, no analytics, no ads. Lyrics lookups and the daily update check are optional.'
+description: 'CastBay''s privacy policy: no account, no analytics, no ads; nothing about you is sent unless you choose to. Lyrics lookups, the daily update check and problem reports are optional.'
 heading: 'Privacy Policy'
-intro: 'Effective: September 30, 2026'
+intro: 'Effective: October 3, 2026'
 ---
 
 CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads, analytics or tracking code.
 
-## What we don't collect
+## What we collect
 
-CastBay does not collect, store or upload personal information, and does not send your usage to us or anyone else. We have no server to receive such data.
+Nothing, unless you choose to. CastBay does not collect personal information, and does not send your usage to us or anyone else on its own. The only thing that ever reaches us from the app is a [problem report](#problem-reports-only-when-you-send-one) that you upload yourself, with personal details taken out first.
 
 ## What you cast
 
@@ -30,11 +30,31 @@ Once a day, CastBay asks this website (castbay.weenas.com/latest.json), or GitHu
 
 Only when you choose **Download and install** on the About screen does CastBay download the new version, from this website or GitHub, check that it is exactly the released file (its SHA-256), and open Android's installer, where you confirm the update. Nothing is downloaded or installed on its own.
 
+## Problem reports (only when you send one)
+
+To report a problem from a device you can't connect to a computer (a car display, for example), you can upload a problem report: About → Diagnostics → **Upload log**. Nothing is sent until you press Upload on the screen that says what will be sent; CastBay never uploads a report on its own.
+
+**What a report contains**
+
+- The device: maker, model, Android version and build, screen size and density, whether it has a touch screen, CastBay's version, and how long the device has been on.
+- The Diagnostics events shown on that screen: when CastBay started and stopped, remote and steering-wheel keys, taps, audio focus, and why the app last ended.
+- CastBay's own recent log (at most about 400 KB): what the receiver did, such as connections, the video format and decoder, and errors. Android lets an app read only its own log, not other apps'.
+
+**What is taken out on the device, before sending**
+
+- Song and video titles, artists and albums, and the names of phones and computers that cast (for example "Alex's iPhone").
+- Links (the addresses of what was played), PINs and passwords, email addresses and hardware (MAC) addresses.
+- Internet addresses. Local network addresses (such as 192.168.1.5) are kept, as they help find network problems; they say nothing about where you are.
+
+**Where it goes and for how long**
+
+The report is sent over HTTPS to this website (castbay.weenas.com, hosted by Cloudflare) and kept in its storage for 90 days, then deleted automatically. Only the developer can read it: there is no public link to it. You get a short report ID (such as CB-7K3F9Q) to give in your problem report; nothing else ties the report to you. Your network's address is used only to limit how many reports can be sent in a row and is not stored with the report. To have a report deleted sooner, open an issue on [GitHub](https://github.com/weenas/castbay/issues) with its ID.
+
 ## Settings and data on the TV
 
 Your settings (such as the device name and casting password) stay on the TV and are never uploaded, as does the list of devices that have cast to it (their names and AirPlay device IDs, whether each is allowed, and the pairing keys of devices paired with a PIN). You can remove the devices in Settings; uninstalling CastBay deletes all of it.
 
-The record on About → Diagnostics (recent starts, keys, taps and audio-focus events, and the device's model, Android version and screen size) also stays on the device, at most the latest 120 events, and is never sent anywhere: it is only shown when you open that screen, and can be cleared there.
+The record on About → Diagnostics (recent starts, keys, taps and audio-focus events, and the device's model, Android version and screen size) also stays on the device, at most the latest 120 events: it is only shown when you open that screen, can be cleared there, and leaves the device only in a problem report you upload.
 
 ## Permissions
 
@@ -44,7 +64,7 @@ The record on About → Diagnostics (recent starts, keys, taps and audio-focus e
 
 ## Children's privacy
 
-CastBay collects no personal information from anyone, including children.
+CastBay collects no personal information from anyone, including children. Problem reports have personal details taken out before they are sent.
 
 ## Changes and contact
 

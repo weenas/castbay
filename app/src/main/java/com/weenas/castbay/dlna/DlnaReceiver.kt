@@ -60,7 +60,7 @@ class DlnaReceiver(context: Context) {
         @Volatile private var status = DlnaRenderer.Status(DlnaState.STOPPED)
 
         override fun open(url: String, media: DlnaMedia) {
-            Log.i(TAG, "Media: ${media.title ?: "(no title)"} · $url")
+            Log.i(TAG, "Media: ${Log.personal(media.title ?: "(no title)")} · ${Log.personal(url)}")
             status = DlnaRenderer.Status(DlnaState.STOPPED, volume = status.volume)
         }
         override fun play() { status = status.copy(state = DlnaState.PLAYING) }

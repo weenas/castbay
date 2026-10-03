@@ -37,6 +37,12 @@ android {
 
         // The in-app updater (download and install from About). App-store builds turn it off
         // with -Pcastbay.selfUpdate=false: stores update apps themselves and don't allow it.
+        // Where problem reports go; -Pcastbay.reportsUrl=http://<mac>:8787/api/reports tests a
+        // local `wrangler dev` of the website's Worker.
+        val reportsUrl = project.findProperty("castbay.reportsUrl") as String? ?: "https://castbay.weenas.com/api/reports"
+        // A resource rather than a BuildConfig constant, which Kotlin copies into its callers
+        // (an incremental build then kept an old address).
+        resValue("string", "reports_url", reportsUrl)
         val selfUpdate = (project.findProperty("castbay.selfUpdate") as String?)?.toBoolean() ?: true
         buildConfigField("boolean", "SELF_UPDATE", selfUpdate.toString())
         manifestPlaceholders["selfUpdate"] = selfUpdate.toString()

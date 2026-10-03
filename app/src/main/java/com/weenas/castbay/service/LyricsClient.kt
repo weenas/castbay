@@ -27,11 +27,11 @@ class LyricsClient(private val appVersion: String) {
             lookUp(title, artist, album, durationSec)
         } catch (error: Exception) {
             // Not cached: the site is often slow from some networks, so the next song change retries.
-            Log.w(TAG, "Lyrics lookup failed for \"$title\": ${error.message}")
+            Log.w(TAG, "Lyrics lookup failed for ${Log.personal(title)}: ${error.message}")
             return null
         }
         cache.put(key, Result(lyrics))
-        Log.i(TAG, "Lyrics for \"$title\" / ${artist.orEmpty()}: ${lyrics?.lines?.size?.let { "$it lines" } ?: "none"}")
+        Log.i(TAG, "Lyrics for ${Log.personal(title)} / ${Log.personal(artist.orEmpty())}: ${lyrics?.lines?.size?.let { "$it lines" } ?: "none"}")
         return lyrics
     }
 

@@ -69,7 +69,7 @@ class AirPlayManager private constructor(private val context: Context) {
             senderReportAtMs = android.os.SystemClock.elapsedRealtime()
         },
         onPaired = { device ->
-            Log.i(TAG, "Paired with ${device.name}")
+            Log.i(TAG, "Paired with ${Log.personal(device.name)}")
             pairedDevices.add(device)
         },
         onClient = ::admitSender,
@@ -212,7 +212,7 @@ class AirPlayManager private constructor(private val context: Context) {
         }
 
         private fun start(url: String, media: com.weenas.castbay.dlna.DlnaMedia) {
-            Log.i(TAG, "DLNA ${if (media.isAudio) "music" else "video"}: ${media.title ?: "(no title)"} · $url")
+            Log.i(TAG, "DLNA ${if (media.isAudio) "music" else "video"}: ${Log.personal(media.title ?: "(no title)")} · ${Log.personal(url)}")
             // Like AirPlay video, it replaces whatever is on screen. Playback starts right away:
             // some senders never send Play after SetAVTransportURI.
             videoSource = VideoSource.DLNA
@@ -679,16 +679,16 @@ class AirPlayManager private constructor(private val context: Context) {
         val label = name.trim().ifEmpty { model }
         when {
             known?.allowed == false -> {
-                Log.i(TAG, "Refused blocked AirPlay sender: $label ($model)")
+                Log.i(TAG, "Refused blocked AirPlay sender: ${Log.personal(label)} ($model)")
                 return false
             }
             known == null && activeSettings.access == ReceiverSettings.ACCESS_CONFIRM -> {
-                Log.i(TAG, "New AirPlay sender needs approval: $label ($model)")
+                Log.i(TAG, "New AirPlay sender needs approval: ${Log.personal(label)} ($model)")
                 _deviceRequest.value = DeviceRequest(deviceId, label, model)
                 return false
             }
         }
-        Log.i(TAG, "AirPlay sender: $label ($model)")
+        Log.i(TAG, "AirPlay sender: ${Log.personal(label)} ($model)")
         knownDevices.put(KnownDevice(deviceId, label, model, allowed = true))
         // Admitted: a PIN it was entering, or a request it made, is done with.
         hidePairingPin()
@@ -711,7 +711,7 @@ class AirPlayManager private constructor(private val context: Context) {
     fun answerDeviceRequest(allow: Boolean) {
         val request = _deviceRequest.value ?: return
         knownDevices.put(KnownDevice(request.deviceId, request.name, request.model, allowed = allow))
-        Log.i(TAG, "${if (allow) "Allowed" else "Blocked"} AirPlay sender ${request.name}")
+        Log.i(TAG, "${if (allow) "Allowed" else "Blocked"} AirPlay sender ${Log.personal(request.name)}")
         _deviceRequest.value = if (allow) request.copy(allowed = true) else null
     }
 

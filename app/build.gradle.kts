@@ -31,8 +31,8 @@ android {
         // Changed only for a release. versionName follows semantic versioning: the middle
         // number for new features (1.1.0), the last for fixes only (1.1.1), the first for big
         // changes. versionCode goes up by one with each release.
-        versionCode = 104
-        versionName = "1.1.0"
+        versionCode = 105
+        versionName = "1.2.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // The in-app updater (download and install from About). App-store builds turn it off

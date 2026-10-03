@@ -1,0 +1,1 @@
+• The APK holds only the ARM code CastBay runs on, so unsupported x86 devices refuse it instead of installing an app that can't start.

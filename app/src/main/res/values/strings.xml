@@ -152,8 +152,8 @@
     <string name="error_video_format">This TV can\'t play the video\'s format.</string>
     <string name="error_video_failed">Video playback failed (%1$s).</string>
     <!-- The music screen's "what is casting" badge -->
-    <string name="casting_via">%1$s connected</string>
-    <string name="casting_via_from">%1$s connected · %2$s</string>
+    <string name="casting_via">%1$s</string>
+    <string name="casting_via_from">%1$s · %2$s</string>
     <string name="sender_iqiyi">iQiyi</string>
     <string name="sender_bilibili">Bilibili</string>
     <string name="sender_netease_music">NetEase Cloud Music</string>

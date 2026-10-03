@@ -2,12 +2,63 @@
 // to type on a TV remote) pointing to it: downloads from GitHub are often slow or blocked in
 // China. The release workflow rebuilds the site after each release, so it stays current.
 // If GitHub can't be reached while building, /apk points to GitHub's copy instead.
-// /latest.json tells the app's updater about it: the version, the SHA-256 and where to get it.
+// /latest.json tells the app's updater about it: the version, the SHA-256, where to get it, and
+// the latest versions' release notes (from src/content/releases), which About shows before
+// updating.
 import { createHash } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 
 const REPO = 'weenas/castbay';
 const GITHUB_APK = `https://github.com/${REPO}/releases/latest/download/CastBay.apk`;
+const RELEASES = new URL('../src/content/releases/', import.meta.url);
+// Enough to cover anyone a few updates behind; older notes are on the changelog page.
+const NOTES_VERSIONS = 10;
+
+/** "1.0.9" before "1.0.10". */
+const compareVersions = (a, b) => {
+  const x = a.split('.').map(Number);
+  const y = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) - (y[i] ?? 0);
+  }
+  return 0;
+};
+
+/** A changelog entry's bullet points as plain text, for the TV: no Markdown marks or links. */
+const plainItems = (markdown) =>
+  markdown
+    .split('\n')
+    .filter((line) => line.startsWith('- '))
+    .map((line) =>
+      line
+        .slice(2)
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .trim()
+    );
+
+/** The newest versions' notes, newest first: [{ version, date, en: [...], zh: [...] }]. */
+async function releaseNotes() {
+  const read = async (lang) => {
+    const notes = {};
+    for (const file of await readdir(new URL(`${lang}/`, RELEASES))) {
+      if (!file.endsWith('.md')) continue;
+      const text = await readFile(new URL(`${lang}/${file}`, RELEASES), 'utf8');
+      const [, front = '', body = ''] = text.split(/^---$/m);
+      const version = /version:\s*(\S+)/.exec(front)?.[1];
+      const date = /date:\s*(\S+)/.exec(front)?.[1] ?? '';
+      if (version) notes[version] = { date, items: plainItems(body) };
+    }
+    return notes;
+  };
+  const [en, zh] = await Promise.all([read('en'), read('zh')]);
+  return Object.keys(en)
+    .sort(compareVersions)
+    .reverse()
+    .slice(0, NOTES_VERSIONS)
+    .map((version) => ({ version, date: en[version].date, en: en[version].items, zh: zh[version]?.items ?? en[version].items }));
+}
 
 export default function latestApk() {
   return {
@@ -43,6 +94,11 @@ export default function latestApk() {
             urls: ['https://castbay.weenas.com/CastBay.apk', asset.browser_download_url],
             page: release.html_url,
           };
+          try {
+            latest.notes = await releaseNotes();
+          } catch (error) {
+            logger.warn(`release notes left out of latest.json: ${error}`);
+          }
           logger.info(`CastBay.apk from ${release.tag_name} (${apk.length} bytes, SHA-256 ${sha256})`);
         } catch (error) {
           logger.warn(`latest APK unavailable, /apk points to GitHub: ${error}`);

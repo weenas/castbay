@@ -173,7 +173,7 @@ These apply at once, and can also be changed from the quick menu while casting.
 
 ## Help and About
 
-Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, links to the website, privacy policy and source code (they open in the device's browser; a TV without one shows the link's QR code instead), and a QR code that downloads CastBay, to pass it on. When a newer version is out, About shows it with **Download and install**.
+Help lists how to cast in each way and what to do when something doesn't work, right on the TV. About shows the version, links to the website, privacy policy and source code (they open in the device's browser; a TV without one shows the link's QR code instead), and a QR code that downloads CastBay, to pass it on. When a newer version is out, About shows it with **Download and install**, and **What's New** lists every change since the version you have, in the app's language.
 
 ### Diagnostics and problem reports
 

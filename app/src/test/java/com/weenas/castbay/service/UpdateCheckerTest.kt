@@ -40,4 +40,30 @@ class UpdateCheckerTest {
         assertEquals(update, AppUpdate.fromJson(update!!.toJson()))
         assertNull(AppUpdate.fromJson("not json"))
     }
+
+    @Test
+    fun releaseNotesComeWithTheUpdateAndAreKept() {
+        val json = """{"version":"1.2.0","page":"p","urls":["u"],"sha256":"","notes":[
+            {"version":"1.3.0","date":"2026-11-01","en":["Not out yet"],"zh":["未发布"]},
+            {"version":"1.2.0","date":"2026-10-04","en":["New"],"zh":["新"]},
+            {"version":"1.1.0","date":"2026-10-03","en":["Icon"],"zh":["图标"]},
+            {"version":"1.0.102","date":"2026-10-03","en":["Android 6"],"zh":["安卓 6"]}]}"""
+        val update = AppUpdate.fromJson(json)!!
+        assertEquals(listOf("1.2.0", "1.1.0"), update.notesSince("1.0.102").map { it.version })
+        assertEquals(listOf("新"), update.notes[1].zh)
+        // Kept as the app stores it, notes included.
+        assertEquals(update, AppUpdate.fromJson(update.toJson()))
+    }
+
+    @Test
+    fun anUpdateWithoutNotesHasNone() {
+        val update = AppUpdate.fromJson("""{"version":"1.2.0","page":"p","urls":[],"sha256":""}""")!!
+        assertTrue(update.notesSince("1.1.0").isEmpty())
+    }
+
+    @Test
+    fun aTestBuildComparesAsItsRelease() {
+        assertTrue(UpdateChecker.isNewer("1.2.0", "1.1.0-dev+6228385"))
+        assertFalse(UpdateChecker.isNewer("1.1.0", "1.1.0-dev+6228385"))
+    }
 }

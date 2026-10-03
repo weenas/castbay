@@ -283,6 +283,11 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     fun navigateToHelp() = navigateTo("help")
 
+    /** About → the new versions' release notes; Back returns to About. */
+    fun navigateToChangelog() {
+        _navigateTo.value = "changelog"
+    }
+
     /** About → Diagnostics; Back returns to About. */
     fun navigateToDiagnostics() {
         _navigateTo.value = "diagnostics"

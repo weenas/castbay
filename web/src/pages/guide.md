@@ -16,14 +16,57 @@ intro: 'Everything about using CastBay, from installing it to each setting. For 
 
 ## Install and update
 
-1. Get the latest CastBay.apk from **castbay.weenas.com/apk** (the website's Download APK button), or any version from the [changelog](/changelog). Then put it on the TV in whichever way suits it:
-   - **The TV's browser**: type `castbay.weenas.com/apk` in its address bar; the APK downloads, then open it.
-   - **A USB drive**: copy the APK onto it, plug it into the TV, and open the APK with the TV's file manager (ES File Explorer, for example).
-   - **From your phone**: apps such as Dangbei Assistant or Shafa Butler (当贝助手, 沙发管家) send an APK from the phone to the TV over the home network and install it.
-2. The first time, the TV may ask you to allow installing apps from unknown sources; allow it.
-3. Open CastBay from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on.
+### 1. Get the APK
 
-**Updates**: CastBay looks for a newer version once a day; to look now, press **Check for updates** on About. When a newer version is out, a red dot appears on the home screen's About button. Open About and press **Download and install**: CastBay downloads the new version, checks it, and opens Android's installer, where you confirm. The first time, the TV asks you to allow CastBay to install apps; allow it. Your settings are kept. (Or scan the QR code on About with your phone to download it yourself.)
+The latest version is always at **castbay.weenas.com/apk** (the website's Download APK button); older ones are in the [changelog](/changelog). It is one APK for every device, 32-bit and 64-bit alike. CastBay needs Android 6.0 or later.
+
+### 2. Put it on the device
+
+Use whichever way your device allows; most TVs offer more than one.
+
+- **The TV's browser**: type `castbay.weenas.com/apk` in its address bar. When the download finishes, open it and install.
+- **A USB drive**: copy the APK onto a USB drive, plug it into the TV, and open the APK in the TV's file manager or media center. If the TV's own file manager doesn't show APK files, install a file manager from its app store first (ES File Explorer, File Commander and the like).
+- **From your phone**: apps such as Dangbei Assistant or Shafa Butler (当贝助手, 沙发管家), or the TV maker's own phone app (Xiaomi's TV Assistant, for example), send an APK from the phone to the TV over the home network and install it. Phone and TV must be on the same network.
+- **An app on the TV**: on Android TV and Google TV, install **Downloader** (or a file manager) from the Play Store, then enter `castbay.weenas.com/apk` in it. On Chinese TVs, an app store such as Dangbei Market (当贝市场) can install APKs too.
+- **From a computer (adb)**: turn on the TV's developer options and network debugging (see below), then, with Android's platform tools on the computer:
+
+  ```
+  adb connect <the TV's IP address>
+  adb install CastBay.apk
+  ```
+
+  The TV asks once to allow debugging from this computer: allow it. The TV's network settings show its IP address.
+
+### 3. Allow installing apps
+
+The first time you install an APK, Android asks you to allow installing apps from that source (the browser, the file manager, the app that sent it). Allow it, then go back and install. Where the switch is, if the TV doesn't ask:
+
+| Device | Where to allow installing apps |
+| --- | --- |
+| Xiaomi TV and box | Settings → Account & Security → Allow installing apps from unknown sources (ADB debugging is there too) |
+| TCL TV | Settings → System (or Security) → Unknown sources |
+| Sony, Philips and other Android TVs | Settings → Device Preferences → Security & restrictions → Unknown sources, then turn on the app you install from |
+| Google TV (Chromecast with Google TV, Google TV Streamer, Sony and TCL Google TVs) | Settings → Apps → Security & restrictions → Unknown sources. Developer options: Settings → System → About, press Android TV OS build seven times |
+| Car displays | Depends on the maker: some install from a USB drive or their own app store; others don't allow other apps at all |
+
+Menus differ between models and system versions; if yours isn't there, search the settings for "unknown sources". Developer options usually appear after pressing the build number (or the model) seven times in Settings → About.
+
+CastBay can't be installed on TVs whose system isn't Android: Samsung (Tizen), LG (webOS), Hisense's VIDAA models and Huawei's HarmonyOS screens. Use an Android TV box with them instead.
+
+### 4. Open CastBay
+
+Open it from the TV's apps. It starts receiving right away, and is ready whenever the TV turns on from then on. (On a car display, open it after starting the car: see the [FAQ](/faq).)
+
+### If it won't install
+
+- **"There was a problem parsing the package"**: the device's Android is older than 6.0, or the download is incomplete (download it again).
+- **"App not installed"**: a CastBay signed differently is already there, for example one you built yourself: uninstall it first. Also check the device has free storage.
+- **The installer says installing is blocked**: allow installing apps from that source, as above.
+- **The file manager doesn't list the APK**: install another file manager, or use a different way above.
+
+### Updates
+
+CastBay looks for a newer version once a day; to look now, press **Check for updates** on About. When a newer version is out, a red dot appears on the home screen's About button. Open About and press **Download and install**: CastBay downloads the new version, checks it, and opens Android's installer, where you confirm. The first time, the TV asks you to allow CastBay to install apps; allow it. Your settings are kept. (Or scan the QR code on About with your phone to download it yourself.)
 
 ## The home screen
 

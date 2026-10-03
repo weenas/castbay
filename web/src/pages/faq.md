@@ -18,7 +18,7 @@ Android devices on Android 6.0 or later: TVs, TV boxes, car displays and tablets
 
 ### How do I install the APK on a TV?
 
-Copy the APK to a USB drive, or open it with a file manager on the TV (ES File Explorer, for example). The first time, the TV may ask you to allow installing apps from unknown sources.
+From the TV's browser (`castbay.weenas.com/apk`), a USB drive, your phone, an app on the TV or a computer with adb. The first time, the TV asks you to allow installing apps from that source. The [user guide](/guide#install-and-update) has each way step by step, where the setting is on Xiaomi, TCL, Sony and Google TVs, and what to do if it won't install.
 
 ### Can I trust the APK I download?
 

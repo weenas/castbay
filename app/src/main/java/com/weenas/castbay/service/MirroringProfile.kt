@@ -27,7 +27,7 @@ data class HevcSupport(
             val uhd = decoders.any { info ->
                 runCatching {
                     info.getCapabilitiesForType(MediaFormat.MIMETYPE_VIDEO_HEVC)
-                        .videoCapabilities.areSizeAndRateSupported(3840, 2160, 30.0)
+                        .videoCapabilities?.areSizeAndRateSupported(3840, 2160, 30.0) == true
                 }.getOrDefault(false)
             }
             return HevcSupport(hardware = true, uhd = uhd, decoders = decoders.map { it.name })

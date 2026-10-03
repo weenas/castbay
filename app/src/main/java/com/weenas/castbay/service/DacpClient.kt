@@ -38,7 +38,7 @@ class DacpClient(context: Context) {
     private var pendingAtMs = 0L
 
     /** Called when a sender identifies itself; starts looking for its DACP server. */
-    fun setSender(dacpId: String, activeRemote: String) = synchronized(lock) {
+    fun setSender(dacpId: String, activeRemote: String): Unit = synchronized(lock) {
         if (dacpId == this.dacpId && activeRemote == this.activeRemote) return
         stopDiscoveryLocked()
         this.dacpId = dacpId
@@ -70,7 +70,7 @@ class DacpClient(context: Context) {
      * whole session and every button did nothing. Search afresh, and send [action] if the
      * server turns up within [PENDING_MS].
      */
-    private fun later(action: () -> Unit) = synchronized(lock) {
+    private fun later(action: () -> Unit): Unit = synchronized(lock) {
         if (dacpId == null) return
         pending = action
         pendingAtMs = android.os.SystemClock.elapsedRealtime()
@@ -136,7 +136,7 @@ class DacpClient(context: Context) {
             resolving = true
         }
         nsd.resolveService(info, object : NsdManager.ResolveListener {
-            override fun onServiceResolved(resolved: NsdServiceInfo) = synchronized(lock) {
+            override fun onServiceResolved(resolved: NsdServiceInfo): Unit = synchronized(lock) {
                 resolving = false
                 if (dacpId?.let { isServiceFor(resolved.serviceName, it) } != true) return
                 host = resolved.host

@@ -25,7 +25,7 @@ CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet int
 
 ## Requirements
 
-- An Android device on Android 8.0 (API 26) or later: a TV, TV box, car display or tablet
+- An Android device on Android 6.0 (API 23) or later: a TV, TV box, car display or tablet
 - The sender on the same local network
 
 Tested on TCL (Android 9) and Sony BRAVIA (Android 12) TVs and a BYD car display with iPhones.

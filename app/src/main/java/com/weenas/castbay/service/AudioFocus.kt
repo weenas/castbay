@@ -3,6 +3,7 @@ package com.weenas.castbay.service
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
+import android.os.Build
 import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
@@ -21,32 +22,39 @@ class AudioFocus(context: Context, private val onLost: () -> Unit) {
     private val main = Handler(Looper.getMainLooper())
     @Volatile private var held = false
 
-    private val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-        .setAudioAttributes(
-            AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                .build()
-        )
-        // Navigation prompts and the like: the system lowers CastBay's volume meanwhile.
-        .setWillPauseWhenDucked(false)
-        .setOnAudioFocusChangeListener({ change ->
-            when (change) {
-                AudioManager.AUDIOFOCUS_LOSS -> {
-                    Log.i(TAG, "Audio focus lost to another app")
-                    Diagnostics.record("focus", "Lost to another app")
-                    held = false
-                    onLost()
-                }
-                AudioManager.AUDIOFOCUS_GAIN -> held = true
+    private val listener = AudioManager.OnAudioFocusChangeListener { change ->
+        when (change) {
+            AudioManager.AUDIOFOCUS_LOSS -> {
+                Log.i(TAG, "Audio focus lost to another app")
+                Diagnostics.record("focus", "Lost to another app")
+                held = false
+                onLost()
             }
-        }, main)
-        .build()
+            AudioManager.AUDIOFOCUS_GAIN -> held = true
+        }
+    }
+
+    // Android 8+; before, the same through the older calls (which use the main thread).
+    private val request = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(
+                AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build()
+            )
+            // Navigation prompts and the like: the system lowers CastBay's volume meanwhile.
+            .setWillPauseWhenDucked(false)
+            .setOnAudioFocusChangeListener(listener, main)
+            .build()
+    } else null
 
     /** Takes the focus if CastBay doesn't hold it. Any thread. */
     fun acquire() {
         if (held) return
-        held = audioManager?.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+        val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) audioManager?.requestAudioFocus(request!!)
+            else @Suppress("DEPRECATION") audioManager?.requestAudioFocus(listener, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
+        held = result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
         Log.i(TAG, if (held) "Audio focus gained" else "Audio focus refused")
         Diagnostics.record("focus", if (held) "Gained" else "Refused")
     }
@@ -55,7 +63,8 @@ class AudioFocus(context: Context, private val onLost: () -> Unit) {
     fun release() {
         if (!held) return
         held = false
-        audioManager?.abandonAudioFocusRequest(request)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) audioManager?.abandonAudioFocusRequest(request!!)
+        else @Suppress("DEPRECATION") audioManager?.abandonAudioFocus(listener)
         Log.i(TAG, "Audio focus released")
         Diagnostics.record("focus", "Released")
     }

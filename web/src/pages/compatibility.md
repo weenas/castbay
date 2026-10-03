@@ -14,10 +14,11 @@ intro: 'What CastBay has been tested with so far. Tried it on something not list
 | --- | --- | --- |
 | Sony BRAVIA XR-55X90L (4K) | 12 | ✅ Tested: H.265 mirroring in 4K, everything else |
 | TCL TV | 9 | ✅ Tested |
+| Xiaomi TV 4 (MiTV4, Amlogic, 32-bit) | 6.0.1 | ✅ Tested: mirroring from an iPhone, music; about 0.3 s of decoding latency, more than newer TVs |
 | Google TV Streamer | 14 | ✅ Installed and running; hardware HEVC (4K mirroring on a 4K screen) |
 | BYD car display, DiLink 5.0 (touch screen) | 12 | ✅ Tested: mirroring, music, video, steering-wheel buttons (pause, change tracks); force-stopped when switched off, so open CastBay after starting the car |
 
-CastBay needs an Android device on Android 8.0 or later. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
+CastBay needs an Android device on Android 6.0 or later. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
 
 ## Phones and computers
 

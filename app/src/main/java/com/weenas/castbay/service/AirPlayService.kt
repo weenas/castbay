@@ -37,7 +37,7 @@ class AirPlayService : Service() {
                     .notify(NOTIFICATION_ID, buildNotification(getString(com.weenas.castbay.R.string.notification_discoverable_only)))
                 AirPlayConnectionState.Error -> {
                     running = false
-                    stopForeground(STOP_FOREGROUND_REMOVE)
+                    removeForeground()
                     stopSelf()
                 }
                 else -> Unit
@@ -72,7 +72,7 @@ class AirPlayService : Service() {
         val settings = ReceiverSettingsStore(this).load()
         if (!manager.start(settings)) {
             Diagnostics.record("service", "Receiver failed to start")
-            stopForeground(STOP_FOREGROUND_REMOVE)
+            removeForeground()
             stopSelf(startId)
             return START_NOT_STICKY
         }
@@ -108,6 +108,11 @@ class AirPlayService : Service() {
         }
     }
 
+    private fun removeForeground() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) stopForeground(STOP_FOREGROUND_REMOVE)
+        else @Suppress("DEPRECATION") stopForeground(true)
+    }
+
     private fun buildNotification(message: String): Notification {
         val pendingIntent = PendingIntent.getActivity(
             this, 0,
@@ -115,7 +120,9 @@ class AirPlayService : Service() {
             PendingIntent.FLAG_IMMUTABLE
         )
 
-        return Notification.Builder(this, CHANNEL_ID)
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) Notification.Builder(this, CHANNEL_ID)
+            else @Suppress("DEPRECATION") Notification.Builder(this)
+        return builder
             .setContentTitle(getString(com.weenas.castbay.R.string.app_name))
             .setContentText(message)
             .setSmallIcon(com.weenas.castbay.R.drawable.ic_notification)

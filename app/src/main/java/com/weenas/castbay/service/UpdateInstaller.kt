@@ -74,7 +74,7 @@ class UpdateInstaller(context: Context) {
             connection.readTimeout = TIMEOUT_MS
             connection.instanceFollowRedirects = true
             if (connection.responseCode != HttpURLConnection.HTTP_OK) throw IOException("HTTP ${connection.responseCode}")
-            val total = connection.contentLengthLong.takeIf { it > 0 }
+            val total = connection.getHeaderField("Content-Length")?.toLongOrNull()?.takeIf { it > 0 }
             val digest = MessageDigest.getInstance("SHA-256")
             var done = 0L
             var reported = -1

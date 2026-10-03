@@ -11,7 +11,7 @@ intro: 'Everything about using CastBay, from installing it to each setting. For 
 
 ## What you need
 
-- An Android device on Android 8.0 or later: a TV, a TV box, a car display or a tablet, worked with a remote or a touch screen.
+- An Android device on Android 6.0 or later: a TV, a TV box, a car display or a tablet, worked with a remote or a touch screen.
 - The TV and your phone on the same network, not a guest network. The TV can be wired and the phone on Wi-Fi, as long as both go through the same router.
 
 ## Install and update

@@ -28,7 +28,7 @@ class WakeJobService : JobService() {
         /** Schedules the job once; later calls leave it be. */
         fun schedule(context: Context) {
             val scheduler = context.getSystemService(JobScheduler::class.java) ?: return
-            if (scheduler.getPendingJob(JOB_ID) != null) return
+            if (scheduler.allPendingJobs.any { it.id == JOB_ID }) return
             val job = JobInfo.Builder(JOB_ID, ComponentName(context, WakeJobService::class.java))
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPeriodic(15 * 60 * 1000L)

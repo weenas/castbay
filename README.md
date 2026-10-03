@@ -139,6 +139,10 @@ Cloudflare builds and publishes the site from `web/` whenever `main` changes (`w
 - A problem report by its ID: `cd web && npx wrangler r2 object get castbay-reports/reports/CB-XXXXXX.txt --remote --pipe` (after `npx wrangler login`).
 - Any question the page doesn't answer: `npx wrangler d1 execute castbay-stats --remote --command "SELECT …"`; see `docs/design/usage-stats-and-reports.md`.
 
+## Contributing
+
+Contributions are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md). Questions and ideas go to [Discussions](https://github.com/weenas/castbay/discussions); security issues are reported privately ([SECURITY.md](SECURITY.md)). Everyone is expected to follow the [code of conduct](CODE_OF_CONDUCT.md).
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0.

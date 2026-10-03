@@ -1,0 +1,2 @@
+• Ready for app stores (F-Droid, IzzyOnDroid): store builds leave updates to the store.
+• Building from the source archive works without git.

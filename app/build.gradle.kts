@@ -155,7 +155,7 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     // Android's org.json is only stubbed in JVM unit tests.
-    testImplementation("org.json:json:20240303")
+    testImplementation("org.json:json:20260814")
     // On-device tests of what needs real Android media (AudioTrack timing).
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")

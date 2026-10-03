@@ -107,6 +107,13 @@ android {
     }
 
 
+    // No "Dependency metadata" block in the APK: AGP encrypts the dependency list for Google Play
+    // only, and F-Droid rejects APKs carrying it.
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     buildFeatures {
         compose = true
         buildConfig = true

@@ -16,28 +16,19 @@ Repo: https://github.com/weenas/castbay.git
 Builds:
   - versionName: 1.3.1
     versionCode: 107
-    commit: v1.3.1
+    commit: 14fd4421a29ac7e733b81135b21c40984b85304e
     subdir: app
     submodules: true
     sudo:
       - apt-get update
       - apt-get install -y make perl
+    init: cd .. && rm -rf third_party/libplist/fuzz third_party/openssl/test third_party/openssl/fuzz/corpora
+      third_party/openssl/pyca-cryptography third_party/openssl/krb5 third_party/openssl/gost-engine
+      third_party/openssl/wycheproof third_party/openssl/tlsfuzzer third_party/openssl/python-ecdsa
+      third_party/openssl/tlslite-ng third_party/openssl/oqs-provider third_party/openssl/cloudflare-quiche
+      third_party/openssl/pkcs11-provider
     gradle:
       - yes
-    scandelete:
-      - third_party/libplist/fuzz
-      - third_party/openssl/test
-      - third_party/openssl/pyca-cryptography
-      - third_party/openssl/krb5
-      - third_party/openssl/gost-engine
-      - third_party/openssl/wycheproof
-      - third_party/openssl/tlsfuzzer
-      - third_party/openssl/python-ecdsa
-      - third_party/openssl/tlslite-ng
-      - third_party/openssl/oqs-provider
-      - third_party/openssl/cloudflare-quiche
-      - third_party/openssl/fuzz/corpora
-      - third_party/openssl/pkcs11-provider
     ndk: 27.0.12077973
     gradleprops:
       - castbay.selfUpdate=false

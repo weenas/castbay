@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           # Top level only: OpenSSL's own submodules (test data, other libraries) aren't needed.
           submodules: true
@@ -43,19 +43,19 @@ jobs:
             -czf "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz" \
             --transform "s,^\.,CastBay-$VERSION," .
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # OpenSSL's libcrypto, built from the submodule (tools/build-openssl.sh, which Gradle runs);
       # kept between runs until the submodule or the NDK changes.
       - name: Note the OpenSSL commit
         id: openssl
         run: echo "commit=$(git rev-parse HEAD:third_party/openssl)" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: third_party/openssl-android
           key: openssl-android-${{ steps.openssl.outputs.commit }}-ndk27.0.12077973

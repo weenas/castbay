@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
@@ -42,12 +42,12 @@ jobs:
             -czf "$RUNNER_TEMP/CastBay-$VERSION-source.tar.gz" \
             --transform "s,^\.,CastBay-$VERSION," .
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '21'
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Install the pinned NDK and CMake
         run: |

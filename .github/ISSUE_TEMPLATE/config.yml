@@ -1,8 +1,14 @@
 blank_issues_enabled: true
 contact_links:
+  - name: Questions and ideas / 提问和讨论
+    url: https://github.com/weenas/castbay/discussions
+    about: How do I…? Is this possible? Share how you use CastBay. / 怎么用、能不能做到、使用心得，都可以在这里讨论。
   - name: FAQ / 常见问题
-    url: https://castbay.weenas.com/#faq
+    url: https://castbay.weenas.com/faq
     about: Answers to common questions. / 常见问题的解答。
   - name: User guide / 使用说明
     url: https://castbay.weenas.com/guide
     about: How to use every feature. / 每个功能的用法。
+  - name: Security issue / 安全问题
+    url: https://github.com/weenas/castbay/security/advisories/new
+    about: Report a vulnerability privately, not in a public issue. / 请私下报告安全漏洞，不要发公开的 issue。

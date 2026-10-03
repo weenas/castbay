@@ -288,6 +288,11 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         _navigateTo.value = "changelog"
     }
 
+    /** About → the open-source licences; Back returns to About. */
+    fun navigateToLicenses() {
+        _navigateTo.value = "licenses"
+    }
+
     /** About → Diagnostics; Back returns to About. */
     fun navigateToDiagnostics() {
         _navigateTo.value = "diagnostics"

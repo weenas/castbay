@@ -10,6 +10,8 @@ intro: 'CastBay is open source, and reports from people using it are how it gets
 
 ## Report a problem
 
+<p class="report-id" id="report-id" hidden>Your report ID: <strong></strong>. It is filled in when you open the problem report below.</p>
+
 Open a [problem report](https://github.com/weenas/castbay/issues/new?template=bug_report.yml). It asks for what we need to find the cause:
 
 - **CastBay's version**: on the About screen.
@@ -17,7 +19,7 @@ Open a [problem report](https://github.com/weenas/castbay/issues/new?template=bu
 - **The phone or computer**: model and system version, e.g. iPhone 17, iOS 26.
 - **How you cast, and from which app**: screen mirroring, the AirPlay icon in an app, or an app's cast button (DLNA); e.g. Apple Music, YouTube.
 - **What happened**, what you expected, and the steps that lead to it. A photo or a short video of the TV helps a lot.
-- **Diagnostics** (especially useful on devices you can't debug from a computer, like a car's): after the problem, open CastBay's About → Diagnostics and attach a photo of that screen.
+- **Diagnostics** (especially useful on devices you can't debug from a computer, like a car's): after the problem, open CastBay's About → Diagnostics and press **Upload log**, then give the report ID it shows (scanning its QR code brings you here with the ID filled in). Without a network, attach a photo of that screen instead. What a report contains is in the [privacy policy](/privacy#problem-reports-only-when-you-send-one).
 - **The network**: Wi-Fi or wired, and anything unusual, like a mesh network, a VPN or a proxy.
 
 Before posting, check the [FAQ](/faq) and whether someone has [already reported it](https://github.com/weenas/castbay/issues). Leave out anything private: passwords, your address, phone numbers.

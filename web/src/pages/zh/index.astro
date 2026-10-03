@@ -77,7 +77,7 @@ const [latest] = await releases('zh');
         <article class="card">
           <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m9 12 2 2 4-4"/></svg></div>
           <h3>安心使用</h3>
-          <p>可选择谁能投屏：所有人、在电视上确认的设备、输入电视显示的 PIN 码（和 Apple TV 一样）或密码，还能拒绝任意设备。无需账号，不收集任何数据，代码完全开源。</p>
+          <p>可选择谁能投屏：所有人、在电视上确认的设备、输入电视显示的 PIN 码（和 Apple TV 一样）或密码，还能拒绝任意设备。无需账号，默认不收集任何数据（只有你主动上传问题报告时才会发送），代码完全开源。</p>
         </article>
       </div>
     </div>
@@ -164,7 +164,7 @@ const [latest] = await releases('zh');
         </details>
         <details>
           <summary>映湾会收集我的数据吗？</summary>
-          <p>不会。映湾不需要账号，也没有统计或广告。只有在你打开"显示歌词"时，才会把歌名和歌手发送到 lrclib.net 查询歌词。详见<a href="/zh/privacy">隐私政策</a>。</p>
+          <p>不会，除非你主动选择。映湾不需要账号，也没有统计或广告。只有在你打开"显示歌词"时，才会把歌名和歌手发送到 lrclib.net 查询歌词；只有在你从诊断信息页上传问题报告时，才会发送应用日志，而且歌名、设备名称和网址会先去掉。详见<a href="/zh/privacy">隐私政策</a>。</p>
         </details>
       </div>
       <p class="faq-more"><a href="/zh/faq">查看全部常见问题：安装、连接、投屏、隐私 →</a></p>

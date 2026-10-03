@@ -141,3 +141,16 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 });
+
+// The feedback page, opened from CastBay's QR code after uploading a problem report
+// (feedback?report=CB-7K3F9Q): shows the report's ID and fills it into the problem report form.
+document.addEventListener('DOMContentLoaded', function () {
+  var box = document.getElementById('report-id');
+  var id = new URLSearchParams(location.search).get('report');
+  if (!box || !id || !/^CB-[0-9A-Z]{6}$/.test(id)) return;
+  box.querySelector('strong').textContent = id;
+  box.hidden = false;
+  document.querySelectorAll('a[href*="template=bug_report.yml"]').forEach(function (link) {
+    link.href += '&report=' + encodeURIComponent(id);
+  });
+});

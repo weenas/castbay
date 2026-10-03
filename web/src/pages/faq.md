@@ -88,4 +88,4 @@ Yes. In Settings → Connection → Casting verification, choose Confirm (the TV
 
 ### Does CastBay collect my data?
 
-No. There's no account, analytics or ads. Only when you turn on lyrics does it send the song's title and artist to lrclib.net to look them up. See the [privacy policy](/privacy).
+Not unless you choose to. There's no account, analytics or ads. Two things leave the TV only when you ask for them: with lyrics turned on, the song's title and artist go to lrclib.net to look them up; and when you upload a problem report from About → Diagnostics, the app's recent log goes to this website, with titles, device names, links and internet addresses taken out first. The daily update check sends nothing about you. See the [privacy policy](/privacy).

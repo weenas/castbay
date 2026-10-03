@@ -46,6 +46,12 @@ body:
     attributes:
       label: App / 使用的 App
       placeholder: "Apple Music, YouTube, NetEase Cloud Music…"
+  - type: input
+    id: report
+    attributes:
+      label: Report ID (if you uploaded one) / 报告编号（如果上传过）
+      description: From CastBay's About → Diagnostics → Upload log. / 在映湾的"关于 → 诊断信息 → 上传日志"里获得。
+      placeholder: "CB-7K3F9Q"
   - type: textarea
     id: what
     attributes:

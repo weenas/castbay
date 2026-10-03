@@ -20,7 +20,7 @@ CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet int
 - **Video casting**: apps' AirPlay video (e.g. YouTube, iQiyi) plays straight from the source, with audio track and subtitle choices.
 - **DLNA**: the cast button in apps such as Bilibili, iQiyi, NetEase Cloud Music and QQ Music, from iPhone and Android phones.
 - **Remote or touch screen**: a quick menu while playing (picture fit, playback stats, audio/subtitles, pause and skip for videos), opened with Down on a remote or a tap on a touch screen; media keys (a steering wheel's too) pause and change tracks; Back twice to stop, Home keeps playing. For mirroring, the stats include the phone's own report: frames sent and dropped, round trip, packet loss and bandwidth.
-- **Private**: choose who can cast (anyone, devices allowed on the TV, a PIN shown on the TV the first time as on an Apple TV, or a password), allow or block each device, refuse or allow a second device; no account and no data collection.
+- **Private**: choose who can cast (anyone, devices allowed on the TV, a PIN shown on the TV the first time as on an Apple TV, or a password), allow or block each device, refuse or allow a second device; no account, and nothing is collected unless you upload a problem report (personal details are taken out first).
 - English and Chinese.
 
 ## Requirements

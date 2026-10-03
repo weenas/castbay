@@ -151,6 +151,9 @@ img { max-width: 100%; display: block; }
 .hero p.lead { font-size: clamp(17px, 2.1vw, 20px); color: var(--text-2); max-width: 34em; margin: 0 0 36px; }
 .actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
 .note { color: var(--text-3); font-size: 14px; margin-top: 18px; }
+/* The problem report's ID on the feedback page (site.js shows it when the URL carries one). */
+.report-id { background: var(--card); border: 1px solid var(--accent); border-radius: 12px; padding: 12px 16px; }
+.report-id strong { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 1.15em; }
 .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 34px; }
 .chip {
   font-size: 13px; color: var(--text-2); padding: 6px 12px; border-radius: 999px;

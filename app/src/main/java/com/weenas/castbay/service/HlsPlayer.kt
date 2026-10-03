@@ -155,7 +155,7 @@ class HlsPlayer(
     }
 
     private fun startOnMain(url: String, startPositionSec: Float, onStarted: () -> Unit) {
-        Log.i(TAG, "Playing $url from ${startPositionSec}s")
+        Log.i(TAG, "Playing ${Log.personal(url)} from ${startPositionSec}s")
         // A stop() queued just before this play() has reset the snapshot.
         snapshot = Snapshot(positionSec = startPositionSec.toDouble(), state = AirPlayNative.PLAYBACK_ACTIVE)
         val exo = player ?: ExoPlayer.Builder(appContext)

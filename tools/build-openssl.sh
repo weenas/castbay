@@ -48,7 +48,9 @@ OPTIONS=(no-shared no-module no-dso no-engine no-tests no-apps no-docs no-ui-con
   no-whirlpool no-idea no-camellia no-seed no-aria no-rc2 no-rc4 no-rc5 no-md4 no-mdc2 no-bf no-cast)
 CFLAGS_EXTRA="-ffunction-sections -fdata-sections"
 
-stamp="openssl $(git -C "$SRC" rev-parse HEAD), ndk $(basename "$NDK"), api $API, ${OPTIONS[*]}"
+# Which OpenSSL: its commit, or in a source archive without git, its version file.
+version="$(git -C "$SRC" rev-parse HEAD 2>/dev/null || tr '\n' ' ' < "$SRC/VERSION.dat")"
+stamp="openssl $version, ndk $(basename "$NDK"), api $API, ${OPTIONS[*]}"
 jobs="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)"
 
 abis=("$@")

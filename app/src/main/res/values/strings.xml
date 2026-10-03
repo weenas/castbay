@@ -149,7 +149,7 @@
     <string name="report_send">Upload</string>
     <string name="report_cancel">Cancel</string>
     <string name="report_sending">Uploading…</string>
-    <string name="report_failed">The upload didn\'t go through. Check the network and try again.</string>
+    <string name="report_failed">The upload didn\'t go through (%1$s). Check the network and try again.</string>
     <string name="report_too_many">Too many uploads in a row. Wait a minute and try again.</string>
     <string name="report_retry">Try again</string>
     <string name="report_done">Uploaded. The report ID:</string>

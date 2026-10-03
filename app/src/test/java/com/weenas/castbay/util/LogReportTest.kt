@@ -40,4 +40,12 @@ class LogReportTest {
             LogReport.scrub("*** CLIENT MUST NOW ENTER PIN = \"4821\" AS AIRPLAY PASSWORD")
         )
     }
+
+    @Test
+    fun failuresHaveShortReasons() {
+        assertEquals("timed out", LogReport.reason(java.net.SocketTimeoutException()))
+        assertEquals("HTTP 403", LogReport.reason(LogReport.Refused(403)))
+        assertEquals("too many reports", LogReport.reason(LogReport.TooManyReports()))
+        assertEquals("address not found (DNS)", LogReport.reason(java.net.UnknownHostException("castbay.weenas.com")))
+    }
 }

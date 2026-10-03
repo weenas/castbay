@@ -47,19 +47,21 @@ AirPlay and DLNA video are fetched by the TV itself (as on an Apple TV), so the 
 ## Building from Source
 
 ```bash
-# Clone protocol dependencies with the repository
-git clone --recurse-submodules git@github.com:weenas/castbay.git
+# Clone, then the pinned dependencies: UxPlay, libplist, ALAC and OpenSSL
+git clone git@github.com:weenas/castbay.git
 cd castbay
+git submodule update --init   # top level only: OpenSSL's own submodules aren't needed
 
-# Build (requires JDK 17-21, Android SDK 35, NDK 27.0.12077973, and CMake 3.22.1;
-# JDK 26 breaks AGP 8.7.3's prefab step)
+# Build (requires JDK 17-21, Android SDK 35, NDK 27.0.12077973, CMake 3.22.1, perl and make;
+# JDK 26 breaks AGP 8.7.3's prefab step). The first build also compiles OpenSSL's libcrypto
+# for each ABI (tools/build-openssl.sh, about a minute), then reuses it.
 ./gradlew assembleDebug
 ```
 
 For an existing clone, initialize the pinned dependencies before building:
 
 ```bash
-git submodule update --init --recursive
+git submodule update --init
 ```
 
 ## Testing without a phone
@@ -108,7 +110,7 @@ castbay/
 │   │   └── res/              # Android resources
 │   └── build.gradle.kts
 ├── airplay/                # Android library, JNI bridge, and native protocol build
-├── third_party/            # Pinned UxPlay, libplist and ALAC submodules
+├── third_party/            # Pinned UxPlay, libplist, ALAC and OpenSSL submodules
 ├── web/                    # castbay.weenas.com (Astro), built and published by Cloudflare
 ├── branding/               # Logo and wordmark masters (SVG and PNG)
 └── README.md

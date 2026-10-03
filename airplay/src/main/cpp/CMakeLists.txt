@@ -8,7 +8,18 @@ set(THIRD_PARTY_ROOT ${CMAKE_SOURCE_DIR}/../../../../third_party)
 set(UXPLAY_ROOT ${THIRD_PARTY_ROOT}/UxPlay)
 set(LIBPLIST_ROOT ${THIRD_PARTY_ROOT}/libplist)
 
-find_package(openssl REQUIRED CONFIG)
+# OpenSSL 3's libcrypto, built from the third_party/openssl submodule by tools/build-openssl.sh
+# (Gradle runs it first). OpenSSL 3 is Apache 2.0, compatible with UxPlay's GPL-3.0; the 1.1.1
+# prefab package used before had a licence the GPL doesn't allow linking with.
+set(OPENSSL_ANDROID ${THIRD_PARTY_ROOT}/openssl-android/${ANDROID_ABI})
+if(NOT EXISTS ${OPENSSL_ANDROID}/lib/libcrypto.a)
+    message(FATAL_ERROR "No OpenSSL for ${ANDROID_ABI}: run tools/build-openssl.sh ${ANDROID_ABI}")
+endif()
+add_library(openssl_crypto STATIC IMPORTED)
+set_target_properties(openssl_crypto PROPERTIES
+    IMPORTED_LOCATION ${OPENSSL_ANDROID}/lib/libcrypto.a
+    INTERFACE_INCLUDE_DIRECTORIES ${OPENSSL_ANDROID}/include
+)
 
 set(LIBPLIST_SRC
     ${LIBPLIST_ROOT}/src/plist.c
@@ -78,7 +89,7 @@ target_compile_options(uxplay PRIVATE
     -Wno-deprecated-declarations
     -Wno-pointer-sign
 )
-target_link_libraries(uxplay PUBLIC plist openssl::crypto log)
+target_link_libraries(uxplay PUBLIC plist openssl_crypto log)
 
 # Apple's ALAC reference decoder (Apache-2.0): Android has no ALAC codec, and AirPlay
 # audio streaming (music apps) sends ALAC. Only the decoder half is built.
@@ -104,3 +115,5 @@ add_library(castbay_protocol SHARED
 )
 target_include_directories(castbay_protocol PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(castbay_protocol PRIVATE uxplay alac log android)
+# Drops the parts of the static libraries (libcrypto above all) nothing calls.
+target_link_options(castbay_protocol PRIVATE -Wl,--gc-sections)

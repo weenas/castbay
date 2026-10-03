@@ -21,7 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          submodules: recursive
+          # Top level only: OpenSSL's own submodules (test data, other libraries) aren't needed.
+          submodules: true
 
       - name: Check the tag matches the app version
         run: |
@@ -48,6 +49,16 @@ jobs:
           java-version: '21'
 
       - uses: gradle/actions/setup-gradle@v4
+
+      # OpenSSL's libcrypto, built from the submodule (tools/build-openssl.sh, which Gradle runs);
+      # kept between runs until the submodule or the NDK changes.
+      - name: Note the OpenSSL commit
+        id: openssl
+        run: echo "commit=$(git rev-parse HEAD:third_party/openssl)" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        with:
+          path: third_party/openssl-android
+          key: openssl-android-${{ steps.openssl.outputs.commit }}-ndk27.0.12077973
 
       - name: Install the pinned NDK and CMake
         run: |

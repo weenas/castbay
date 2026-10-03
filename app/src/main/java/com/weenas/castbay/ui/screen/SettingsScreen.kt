@@ -2,9 +2,11 @@ package com.weenas.castbay.ui.screen
 
 import com.weenas.castbay.ui.usingKeys
 import com.weenas.castbay.ui.hasTouchScreen
+import com.weenas.castbay.ui.isNarrowScreen
 import androidx.compose.foundation.background
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -75,19 +77,33 @@ fun SettingsScreen(viewModel: AirPlayViewModel) {
         activity?.recreate()
         Unit
     }
+    val narrow = isNarrowScreen()
     AppBackground {
-        Column(modifier = Modifier.fillMaxSize().padding(horizontal = 48.dp, vertical = 24.dp)) {
+        Column(modifier = Modifier.fillMaxSize().padding(horizontal = if (narrow) 16.dp else 48.dp, vertical = 24.dp)) {
             // The title and the tabs (one focus stop: Left and Right switch pages, Down enters
             // one). No Back button: the remote's Back key leaves, as on other TV apps.
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            val title = @Composable {
                 Text(stringResource(R.string.settings), fontSize = 40.sp, fontWeight = FontWeight.Bold, color = Color.White)
-                Spacer(modifier = Modifier.width(32.dp))
+            }
+            val tabs = @Composable {
                 SegmentedChoice(
                     tab,
                     SettingsTab.entries,
                     display = { stringResource(it.title) },
                     modifier = Modifier.focusRequester(tabsFocus)
                 ) { tab = it }
+            }
+            if (narrow) {
+                // On a phone held upright: the tabs below the title, scrolling sideways.
+                title()
+                Spacer(modifier = Modifier.height(12.dp))
+                Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) { tabs() }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    title()
+                    Spacer(modifier = Modifier.width(32.dp))
+                    tabs()
+                }
             }
             Spacer(modifier = Modifier.height(20.dp))
             // A page fits a 540 dp tall screen; it scrolls in case (e.g. the password field).
@@ -510,9 +526,20 @@ fun SwitchSetting(label: String, checked: Boolean, modifier: Modifier = Modifier
     }
 }
 
-/** One setting: its name on the left, its choices on the right. */
+/**
+ * One setting: its name on the left, its choices on the right; on a narrow screen its choices
+ * go below it (scrolling sideways if they're still too wide), so the name isn't squeezed.
+ */
 @Composable
 private fun SettingLine(label: String, control: @Composable () -> Unit) {
+    if (isNarrowScreen()) {
+        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
+            Text(label, color = Color.White, fontSize = 18.sp)
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())) { control() }
+        }
+        return
+    }
     Row(
         modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically

@@ -151,7 +151,7 @@
     <string name="report_send">上传</string>
     <string name="report_cancel">取消</string>
     <string name="report_sending">正在上传…</string>
-    <string name="report_failed">上传失败，请检查网络后重试。</string>
+    <string name="report_failed">上传失败（%1$s），请检查网络后重试。</string>
     <string name="report_too_many">上传太频繁，请稍等一分钟再试。</string>
     <string name="report_retry">重试</string>
     <string name="report_done">上传成功，报告编号：</string>

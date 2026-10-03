@@ -78,7 +78,9 @@ fun DiagnosticsScreen() {
                     upload = Upload.Sending
                     scope.launch {
                         val result = withContext(Dispatchers.IO) { LogReport.upload(context, text, AppVersion.name(context)) }
-                        upload = result.fold({ Upload.Done(it) }, { Upload.Failed(text, it is LogReport.TooManyReports) })
+                        upload = result.fold({ Upload.Done(it) }, { Upload.Failed(text, it is LogReport.TooManyReports, LogReport.reason(it)) })
+                        // The upload (or why it failed) is now among the events.
+                        events = Diagnostics.events()
                     }
                 }, onCancel = { upload = Upload.Idle })
                 Heading(stringResource(R.string.diagnostics_device))
@@ -101,7 +103,7 @@ private sealed interface Upload {
     class Confirm(val text: String) : Upload
     data object Sending : Upload
     class Done(val id: String) : Upload
-    class Failed(val text: String, val tooMany: Boolean) : Upload
+    class Failed(val text: String, val tooMany: Boolean, val reason: String) : Upload
 }
 
 /**
@@ -128,7 +130,7 @@ private fun UploadPanel(upload: Upload, onUpload: (String) -> Unit, onCancel: ()
             is Upload.Confirm, is Upload.Failed -> {
                 val text = if (upload is Upload.Confirm) upload.text else (upload as Upload.Failed).text
                 if (upload is Upload.Failed) {
-                    PanelText(stringResource(if (upload.tooMany) R.string.report_too_many else R.string.report_failed), color = Color(0xFFFF8A80))
+                    PanelText(if (upload.tooMany) stringResource(R.string.report_too_many) else stringResource(R.string.report_failed, upload.reason), color = Color(0xFFFF8A80))
                     Spacer(modifier = Modifier.height(8.dp))
                 }
                 PanelText(stringResource(R.string.report_confirm, (text.toByteArray().size + 1023) / 1024))

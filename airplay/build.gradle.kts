@@ -11,7 +11,7 @@ android {
     ndkVersion = "27.0.12077973"
 
     defaultConfig {
-        minSdk = 26
+        minSdk = 23
         consumerProguardFiles("consumer-rules.pro")
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")

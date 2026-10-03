@@ -64,6 +64,18 @@ class NetworkMonitor(context: Context) {
         @RequiresApi(Build.VERSION_CODES.S)
         constructor(flags: Int) : super(flags)
 
+        // Before Android 8 only this comes for a network already up, without its
+        // capabilities or addresses: they are asked for here.
+        override fun onAvailable(network: Network) {
+            val caps = connectivity.getNetworkCapabilities(network)
+            val links = connectivity.getLinkProperties(network)
+            synchronized(networks) {
+                val (oldCaps, oldLinks) = networks[network] ?: (null to null)
+                networks[network] = (oldCaps ?: caps) to (oldLinks ?: links)
+            }
+            publish()
+        }
+
         override fun onCapabilitiesChanged(network: Network, caps: NetworkCapabilities) {
             synchronized(networks) { networks[network] = caps to networks[network]?.second }
             publish()

@@ -19,11 +19,11 @@ android {
 
     defaultConfig {
         applicationId = "com.weenas.castbay"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 35
         // Bumped for every build installed on a test TV; the name's last part matches versionCode.
-        versionCode = 101
-        versionName = "1.0.101"
+        versionCode = 102
+        versionName = "1.0.102"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // The in-app updater (download and install from About). App-store builds turn it off

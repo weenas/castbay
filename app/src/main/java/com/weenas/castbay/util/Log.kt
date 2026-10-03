@@ -31,10 +31,14 @@ object Log {
     @Synchronized
     fun init(context: Context) {
         if (!BuildConfig.DEBUG || file != null) return
-        val dir = File(context.getExternalFilesDir(null) ?: context.filesDir, "logs").apply { mkdirs() }
-        val current = File(dir, "castbay.log")
-        if (current.exists()) current.renameTo(File(dir, "castbay.log.1"))
-        output = FileOutputStream(current, true)
+        // Some old TVs (Android 6) can't create the external directory: then internal storage.
+        val dirs = listOfNotNull(context.getExternalFilesDir(null), context.filesDir).map { File(it, "logs") }
+        val current = dirs.firstNotNullOfOrNull { dir ->
+            dir.mkdirs()
+            val log = File(dir, "castbay.log")
+            if (log.exists()) log.renameTo(File(dir, "castbay.log.1"))
+            runCatching { output = FileOutputStream(log, true) }.map { log }.getOrNull()
+        } ?: return
         file = current
         try {
             AirPlayNative.setLogFile(current.absolutePath)

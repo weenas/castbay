@@ -296,6 +296,10 @@ private fun ColumnScope.GeneralPage(
     SwitchSetting(stringResource(R.string.setting_error_reports), settings.sendErrorReports) { viewModel.setSendErrorReports(it) }
     Text(stringResource(R.string.setting_error_reports_note), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
+    val usageStatsOn by viewModel.usageStatsOn.collectAsState()
+    SwitchSetting(stringResource(R.string.setting_usage_stats), usageStatsOn) { viewModel.setUsageStats(it) }
+    Text(stringResource(R.string.setting_usage_stats_note), color = Color.Gray, fontSize = 14.sp)
+    CardDivider()
     // Two presses, so a stray OK doesn't wipe the device name and password.
     var armed by remember { mutableStateOf(false) }
     LaunchedEffect(armed) {

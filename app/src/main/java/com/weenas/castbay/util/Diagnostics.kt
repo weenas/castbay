@@ -37,6 +37,7 @@ object Diagnostics {
         if (appContext != null) return
         appContext = context.applicationContext
         CrashReports.install(context)
+        UsageStats.init(context)
         val uptimeMin = SystemClock.elapsedRealtime() / 60_000
         record("process", "Started (pid ${Process.myPid()}), device up $uptimeMin min, boot #${bootCount() ?: "?"}")
         recordLastExit(context)

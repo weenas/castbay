@@ -3,16 +3,16 @@ layout: ../layouts/Doc.astro
 lang: en
 page: privacy
 title: 'Privacy Policy – CastBay'
-description: 'CastBay''s privacy policy: no account, no analytics, no ads; nothing about you is sent unless you choose to. Lyrics lookups, the daily update check and problem reports are optional.'
+description: 'CastBay''s privacy policy: no account, no ads, no third-party analytics; nothing is sent unless you choose to. Lyrics lookups, the update check, problem reports and anonymous usage statistics are optional.'
 heading: 'Privacy Policy'
 intro: 'Effective: October 3, 2026'
 ---
 
-CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads, analytics or tracking code.
+CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads or third-party analytics or tracking code.
 
 ## What we collect
 
-Nothing, unless you choose to. CastBay does not collect personal information, and does not send your usage to us or anyone else on its own. The only thing that ever reaches us from the app is a [problem report](#problem-reports-only-when-you-send-one) that you upload yourself, with personal details taken out first.
+Nothing, unless you choose to. CastBay does not collect personal information, and does not send your usage to us or anyone else on its own. Only two things can reach us from the app, both off until you choose them: a [problem report](#problem-reports-only-when-you-send-one), with personal details taken out first, and [anonymous usage statistics](#usage-statistics-only-if-you-turn-them-on).
 
 ## What you cast
 
@@ -53,6 +53,25 @@ A problem report is sent in two cases, both your choice:
 **Where it goes and for how long**
 
 The report is sent over HTTPS to this website (castbay.weenas.com, hosted by Cloudflare) and kept in its storage for 90 days, then deleted automatically. Only the developer can read it: there is no public link to it. You get a short report ID (such as CB-7K3F9Q) to give in your problem report; nothing else ties the report to you. Your network's address is used only to limit how many reports can be sent in a row and is not stored with the report. To have a report deleted sooner, open an issue on [GitHub](https://github.com/weenas/castbay/issues) with its ID.
+
+## Usage statistics (only if you turn them on)
+
+**Send Anonymous Usage Statistics** (Settings → General) is off by default; nothing is counted while it is off. When you turn it on, CastBay makes a random installation ID (it says nothing about the device or you) and counts, on the device, what happens each day. Once a day it sends the previous day's summary to this website:
+
+| Sent | Example |
+| --- | --- |
+| The random installation ID and the day | 3f2a…, 2026-10-02 |
+| CastBay's version | 1.2.0 |
+| Android version, and the device's maker and model | 12, Xiaomi MiTV4 |
+| Screen class, kind of device, touch screen or not | 1080p, TV, no |
+| The system's language | zh |
+| Casts that day by protocol and kind | AirPlay mirroring 3, DLNA video 1 |
+| How long casts lasted, in three bands | under 1 minute 2, 1–10 minutes 1, over 10 minutes 1 |
+| Mirroring resolution class and codec | 1080p H.264: 3 |
+| Failures, by kind | receiver 0, video decoder 1, video playback 0 |
+| Settings in use | casting verification: PIN; DLNA on; lyrics off; resolution: Auto |
+
+Never sent: device names (the TV's or a phone's), song or video titles, links, network or hardware addresses, the Wi-Fi name, your location, exact times of casts, passwords or PINs. The website keeps one row per installation and day in its database (Cloudflare D1) and does not store your network's address; rows are deleted after a year. Only the developer can read them, to see which devices and Android versions to support and where CastBay fails. **Turning the switch off** stops counting, forgets the ID and asks the website to delete everything sent under it.
 
 ## Settings and data on the TV
 

@@ -13,6 +13,7 @@
 #   video [URL]                 cast a video URL (default: Apple's HLS sample)
 #   stop                        the sender stops casting
 #   crash                       make the app crash (tests error reports)
+#   stats                       log the usage statistics kept, and send them now
 #   key KEY...                  press remote keys: up down left right ok back home menu
 #                               playpause, or any KEYCODE_* name
 #   shot [FILE]                 screenshot (default: sim-shot.png)
@@ -85,7 +86,7 @@ case "$cmd" in
     [[ -n "${4:-}" ]] && args+=(--es album "$4")
     simulate "${args[@]}"
     ;;
-  pause | resume | stop | crash) simulate "$cmd" ;;
+  pause | resume | stop | crash | stats) simulate "$cmd" ;;
   video)
     if [[ -n "${1:-}" ]]; then simulate video --es url "$1"; else simulate video; fi
     ;;

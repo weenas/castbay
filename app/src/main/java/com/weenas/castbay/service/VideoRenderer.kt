@@ -343,6 +343,7 @@ class VideoRenderer(
             synchronized(lock) {
                 if (codec !== owner) return
                 Log.e(TAG, "Video decoder error (transient=${error.isTransient})", error)
+                com.weenas.castbay.util.UsageStats.failure("decoder")
                 if (!error.isTransient) restartCodecLocked()
             }
         }

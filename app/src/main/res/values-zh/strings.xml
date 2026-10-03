@@ -85,6 +85,8 @@
     <string name="setting_check_updates_note">每天向 castbay.weenas.com（或 GitHub）查询一次最新版本号，不会发送这台电视的任何信息。</string>
     <string name="setting_error_reports">自动发送错误报告</string>
     <string name="setting_error_reports_note">映湾意外退出后，下次启动时自动发送问题报告（错误信息和应用最近的日志，歌名、设备名称和网址会先去掉）。关闭时，每次都会先询问你。</string>
+    <string name="setting_usage_stats">发送匿名使用统计</string>
+    <string name="setting_usage_stats_note">每天一次：各类投屏的次数和时长（按区间）、镜像分辨率和编码、出错次数、设备型号和 Android 版本，以及正在使用的设置。不包含任何名称、歌名、网址或地址。关闭后会删除已发送的数据。</string>
     <string name="crash_ask">映湾上次意外退出了。发送问题报告帮助我们修复吗？</string>
     <string name="crash_send">发送</string>
     <string name="crash_dismiss">忽略</string>

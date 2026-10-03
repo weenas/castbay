@@ -83,6 +83,8 @@
     <string name="setting_check_updates_note">Once a day, asks castbay.weenas.com (or GitHub) for the latest version number; nothing about this TV is sent.</string>
     <string name="setting_error_reports">Send Error Reports</string>
     <string name="setting_error_reports_note">If CastBay stops unexpectedly, send a problem report (the error and the app\'s recent log, with titles, names and links taken out) when it next starts. Off: you are asked each time.</string>
+    <string name="setting_usage_stats">Send Anonymous Usage Statistics</string>
+    <string name="setting_usage_stats_note">Once a day: how many casts of each kind and how long (in bands), mirroring resolution and codec, failures, this device\'s model and Android version, and the settings in use. Never names, titles, links or addresses. Turning it off deletes what was sent.</string>
     <string name="crash_ask">CastBay stopped unexpectedly last time. Send a problem report to help fix it?</string>
     <string name="crash_send">Send</string>
     <string name="crash_dismiss">Dismiss</string>

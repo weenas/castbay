@@ -2,6 +2,7 @@ package com.weenas.castbay.service
 
 import android.content.Context
 import com.weenas.castbay.util.Log
+import com.weenas.castbay.util.UsageStats
 import android.view.Surface
 import androidx.media3.exoplayer.ExoPlayer
 import com.weenas.castbay.protocol.VideoPlaybackListener
@@ -314,7 +315,22 @@ class AirPlayManager private constructor(private val context: Context) {
 
     private var currentState: AirPlayConnectionState = AirPlayConnectionState.Idle
         set(value) {
+            val was = field
             field = value
+            // Usage statistics (counted only if the person turned them on).
+            if (value == AirPlayConnectionState.Streaming && was != AirPlayConnectionState.Streaming) {
+                val stream = currentStreamInfo
+                UsageStats.castStarted(
+                    if (stream.isDlna) "dlna" else "airplay",
+                    when {
+                        stream.isVideoPlayback -> "video"
+                        stream.isAudioOnly -> "music"
+                        else -> "mirror"
+                    }
+                )
+            } else if (was == AirPlayConnectionState.Streaming && value != AirPlayConnectionState.Streaming) {
+                UsageStats.castEnded()
+            }
             // Held while anything is cast; given back once nothing is.
             when (value) {
                 AirPlayConnectionState.Streaming -> audioFocus.acquire()
@@ -487,6 +503,7 @@ class AirPlayManager private constructor(private val context: Context) {
     }
 
     fun onNativeError(error: String) {
+        UsageStats.failure("receiver")
         discoveryAdvertiser.stop()
         videoRenderer.stop()
         audioRenderer.stop()
@@ -878,6 +895,7 @@ class AirPlayManager private constructor(private val context: Context) {
             )
             currentStreamInfo = stream
             currentState = AirPlayConnectionState.Streaming
+            UsageStats.mirroring(stream.videoHeight, isH265)
         }
         videoRenderer.configure(stream.videoWidth, stream.videoHeight, isH265)
         videoRenderer.render(data, presentationTimeUs)

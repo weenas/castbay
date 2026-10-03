@@ -33,6 +33,11 @@ android {
         versionCode = 108
         versionName = "1.3.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Only the ABIs the AirPlay library (airplay/) is built for: other libraries also ship x86
+        // and x86_64 code, and an APK carrying those would install on x86 devices and crash there.
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
 
         // Where problem reports go; -Pcastbay.reportsUrl=http://<mac>:8787/api/reports tests a
         // local `wrangler dev` of the website's Worker.

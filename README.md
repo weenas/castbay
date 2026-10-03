@@ -133,6 +133,12 @@ npm run build      # build into dist/, as Cloudflare does
 
 Cloudflare builds and publishes the site from `web/` whenever `main` changes (`web/wrangler.jsonc`); CI checks that it builds. A new page also goes in `public/sitemap.xml`.
 
+`web/worker/index.js` answers `/api/*`: problem reports (R2 bucket `castbay-reports`) and opt-in usage statistics (D1 database `castbay-stats`). For the maintainer, behind Cloudflare Access (an email login):
+
+- **https://castbay.weenas.com/stats**: the usage statistics' totals (data: `/api/stats/summary`). Also listed in the Access app launcher, https://easonxiang.cloudflareaccess.com.
+- A problem report by its ID: `cd web && npx wrangler r2 object get castbay-reports/reports/CB-XXXXXX.txt --remote --pipe` (after `npx wrangler login`).
+- Any question the page doesn't answer: `npx wrangler d1 execute castbay-stats --remote --command "SELECT …"`; see `docs/design/usage-stats-and-reports.md`.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0.

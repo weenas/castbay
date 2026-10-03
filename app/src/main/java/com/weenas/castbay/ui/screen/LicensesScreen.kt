@@ -34,7 +34,6 @@ private enum class Licence(val title: String, val asset: String) {
     LGPL21("GNU Lesser General Public License v2.1", "lgpl-2.1.txt"),
     APACHE2("Apache License 2.0", "apache-2.0.txt"),
     MIT_LLHTTP("MIT License (llhttp)", "mit-llhttp.txt"),
-    OPENSSL("OpenSSL License and SSLeay License", "openssl.txt"),
 }
 
 /** Code CastBay is built from and ships, with what it does here and its licence. */
@@ -48,7 +47,7 @@ private val COMPONENTS = listOf(
     Component("llhttp", R.string.licenses_llhttp, Licence.MIT_LLHTTP, "github.com/nodejs/llhttp"),
     Component("libplist", R.string.licenses_libplist, Licence.LGPL21, "github.com/libimobiledevice/libplist"),
     Component("Apple Lossless Audio Codec (ALAC)", R.string.licenses_alac, Licence.APACHE2, "github.com/macosforge/alac"),
-    Component("OpenSSL 1.1.1", R.string.licenses_openssl, Licence.OPENSSL, "openssl.org"),
+    Component("OpenSSL 3.5", R.string.licenses_openssl, Licence.APACHE2, "openssl-library.org"),
     Component("AndroidX: Jetpack Compose, Media3 (ExoPlayer), Lifecycle, TV", R.string.licenses_androidx, Licence.APACHE2, "developer.android.com/jetpack"),
     Component("Material Components for Android", R.string.licenses_material, Licence.APACHE2, "github.com/material-components"),
     Component("Kotlin, kotlinx.coroutines", R.string.licenses_kotlin, Licence.APACHE2, "kotlinlang.org"),

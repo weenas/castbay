@@ -7,3 +7,7 @@
 [submodule "third_party/alac"]
 	path = third_party/alac
 	url = https://github.com/macosforge/alac.git
+[submodule "third_party/openssl"]
+	path = third_party/openssl
+	url = https://github.com/openssl/openssl.git
+	shallow = true

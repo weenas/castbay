@@ -52,3 +52,6 @@ debug.keystore
 web/node_modules/
 web/dist/
 web/.astro/
+
+# Built by tools/build-openssl.sh
+third_party/openssl-android/

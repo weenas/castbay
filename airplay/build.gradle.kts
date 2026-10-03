@@ -33,10 +33,6 @@ android {
         }
     }
 
-    buildFeatures {
-        prefab = true
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -47,6 +43,13 @@ kotlin {
     compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
 }
 
-dependencies {
-    implementation("com.android.ndk.thirdparty:openssl:1.1.1q-beta-1")
+// OpenSSL's libcrypto for each ABI, built from source (third_party/openssl) before the native
+// build links it; quick once built (see tools/build-openssl.sh).
+val buildOpenSsl by tasks.registering(Exec::class) {
+    val abis = android.defaultConfig.ndk.abiFilters.toList()
+    val ndkDir = android.ndkDirectory.absolutePath
+    workingDir = rootDir
+    environment("ANDROID_NDK_ROOT", ndkDir)
+    commandLine(listOf("bash", "tools/build-openssl.sh") + abis)
 }
+tasks.named("preBuild") { dependsOn(buildOpenSsl) }

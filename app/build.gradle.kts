@@ -30,8 +30,8 @@ android {
         // Changed only for a release. versionName follows semantic versioning: the middle
         // number for new features (1.1.0), the last for fixes only (1.1.1), the first for big
         // changes. versionCode goes up by one with each release.
-        versionCode = 107
-        versionName = "1.3.1"
+        versionCode = 108
+        versionName = "1.3.2"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Where problem reports go; -Pcastbay.reportsUrl=http://<mac>:8787/api/reports tests a

@@ -1,0 +1,1 @@
+• The APK no longer carries Google Play's encrypted dependency list (needed for F-Droid). Nothing changes in the app.

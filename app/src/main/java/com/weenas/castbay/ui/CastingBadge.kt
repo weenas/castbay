@@ -1,6 +1,8 @@
 package com.weenas.castbay.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.weenas.castbay.R
@@ -29,13 +31,15 @@ import com.weenas.castbay.service.StreamInfo
 /**
  * What is casting, at a glance: the CastBay mark and name with a "connected" dot, then how
  * (AirPlay or DLNA) and from what ("eason的iPhone", or the app for DLNA). With several phones
- * or apps able to cast to several TVs, it tells which one is on this screen.
+ * or apps able to cast to several TVs, it tells which one is on this screen. At most
+ * [maxWidth] wide, the second line: a longer sender name scrolls.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun CastingBadge(stream: StreamInfo, modifier: Modifier = Modifier) {
+fun CastingBadge(stream: StreamInfo, maxWidth: Dp, modifier: Modifier = Modifier) {
     val protocol = if (stream.isDlna) "DLNA" else "AirPlay"
     val sender = if (stream.isDlna) dlnaSenderLabel(stream.sender) else stream.sender
-    Column(modifier = modifier.widthIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.ic_castbay_mark), contentDescription = null, modifier = Modifier.size(36.dp))
             Spacer(modifier = Modifier.size(8.dp))
@@ -43,7 +47,7 @@ fun CastingBadge(stream: StreamInfo, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.size(10.dp))
             Spacer(modifier = Modifier.size(11.dp).clip(CircleShape).background(CONNECTED_GREEN))
         }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.widthIn(max = maxWidth), verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 if (stream.isDlna) MediaIcons.Tv else MediaIcons.AirPlay,
                 contentDescription = null,
@@ -57,7 +61,12 @@ fun CastingBadge(stream: StreamInfo, modifier: Modifier = Modifier) {
                 color = SECONDARY,
                 fontSize = 19.sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                modifier = Modifier.basicMarquee(
+                    iterations = Int.MAX_VALUE,
+                    initialDelayMillis = 2000,
+                    repeatDelayMillis = 2000,
+                    velocity = 40.dp
+                )
             )
         }
     }

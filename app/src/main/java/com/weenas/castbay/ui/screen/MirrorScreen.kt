@@ -212,7 +212,9 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 StreamKind.MIRRORING -> MirroringVideo(viewModel = viewModel, streamInfo = stream, pictureMode = settings.pictureMode, modifier = contentModifier)
             }
             if (kind == StreamKind.AUDIO) {
-                CastingBadge(stream, Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 20.dp))
+                // As wide as the cover below it, so a long phone name scrolls rather than
+                // running into the title beside the cover.
+                CastingBadge(stream, musicCoverSize(), Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 20.dp))
             }
             val senderVolume by viewModel.senderVolume.collectAsState()
             VolumeIndicator(senderVolume, Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 40.dp))
@@ -689,12 +691,7 @@ fun AudioPlayback(
         // the casting badge above it (540 dp tall TVs; 720 dp ones keep 400 dp).
         // At most 30% of the width too: on a 16:9 TV (960 dp wide) the height alone left a cover
         // over a third of the screen and the text squeezed; a wide car display looked right at ~30%.
-        val configuration = LocalConfiguration.current
-        val coverSize = minOf(
-            COVER_SIZE,
-            configuration.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2,
-            configuration.screenWidthDp.dp * COVER_WIDTH_SHARE
-        )
+        val coverSize = musicCoverSize()
         // Short screens (a car's, a phone on its side): everything starts below the casting
         // badge, which the title ran into when centred on the whole height.
         val short = LocalConfiguration.current.screenHeightDp < SHORT_MUSIC_HEIGHT_DP
@@ -905,6 +902,17 @@ private val COVER_SIZE = 400.dp
 private const val COVER_WIDTH_SHARE = 0.3f
 /** Space the cover keeps from the top (and, to stay centred, the bottom) for the casting badge. */
 private val MUSIC_BADGE_CLEARANCE = 100.dp
+
+/** The music screen's cover: at most [COVER_SIZE], clear of the casting badge, and 30% of the width. */
+@Composable
+private fun musicCoverSize(): Dp {
+    val configuration = LocalConfiguration.current
+    return minOf(
+        COVER_SIZE,
+        configuration.screenHeightDp.dp - MUSIC_BADGE_CLEARANCE * 2,
+        configuration.screenWidthDp.dp * COVER_WIDTH_SHARE
+    )
+}
 
 /** Scrolls text that doesn't fit, pausing before each pass; text that fits stays still. */
 @OptIn(ExperimentalFoundationApi::class)

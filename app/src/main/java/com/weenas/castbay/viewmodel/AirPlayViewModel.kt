@@ -14,6 +14,7 @@ import com.weenas.castbay.BuildConfig
 import com.weenas.castbay.util.AppVersion
 import com.weenas.castbay.util.CrashReports
 import com.weenas.castbay.util.Log
+import com.weenas.castbay.util.UsageStats
 import com.weenas.castbay.service.ReceiverSettings
 import com.weenas.castbay.service.ReceiverSettingsStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -217,6 +218,15 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     fun dismissCrashNotice() {
         if (_crashNotice.value == CrashNotice.Ask) CrashReports.clear(getApplication())
         _crashNotice.value = null
+    }
+
+    private val _usageStatsOn = MutableStateFlow(UsageStats.isOn(application))
+    /** Whether anonymous usage statistics are on (Settings → General; off by default). */
+    val usageStatsOn: StateFlow<Boolean> = _usageStatsOn.asStateFlow()
+
+    fun setUsageStats(on: Boolean) {
+        UsageStats.setOn(getApplication(), on)
+        _usageStatsOn.value = on
     }
 
     fun setSendErrorReports(enabled: Boolean) {

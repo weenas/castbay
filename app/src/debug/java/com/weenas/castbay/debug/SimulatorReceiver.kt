@@ -47,6 +47,12 @@ class SimulatorReceiver : BroadcastReceiver() {
             )
             "stop" -> sim.stop()
             // For error reports: an uncaught exception on the main thread, as a real bug would.
+            // Usage statistics: what is kept, then send it now, today's too.
+            "stats" -> {
+                val app = context.applicationContext
+                Log.i(SimulatedSender.TAG, "Statistics: ${com.weenas.castbay.util.UsageStats.describe(app)}")
+                kotlin.concurrent.thread { com.weenas.castbay.util.UsageStats.sendFinishedDays(app, includeToday = true) }
+            }
             "crash" -> android.os.Handler(android.os.Looper.getMainLooper()).post {
                 throw IllegalStateException("Simulated crash (tools/sim crash)")
             }

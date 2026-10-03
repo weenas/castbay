@@ -17,6 +17,9 @@ class WakeJobService : JobService() {
     override fun onStartJob(params: JobParameters): Boolean {
         Diagnostics.init(this)
         ReceiverStarter.start(this, "network job")
+        // About every 15 minutes with a network: a finished day's statistics, if turned on.
+        val context = applicationContext
+        kotlin.concurrent.thread(name = "CastBay-stats") { com.weenas.castbay.util.UsageStats.sendFinishedDays(context) }
         return false
     }
 

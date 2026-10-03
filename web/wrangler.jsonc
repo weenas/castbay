@@ -2,7 +2,9 @@
 // `npx wrangler deploy`, which uploads dist/ as static assets. /guide serves guide.html and
 // /zh/ zh/index.html, by default; an address with no page gets 404.html. Only /api/* runs
 // the Worker (worker/index.js), which keeps reports sent from the app in the R2 bucket
-// castbay-reports (created by hand, with a rule deleting objects after 90 days).
+// castbay-reports (created by hand, with a rule deleting objects after 90 days) and opt-in usage
+// statistics in the D1 database castbay-stats (schema: migrations/, applied by hand with
+// `npx wrangler d1 migrations apply castbay-stats --remote`; a daily cron deletes year-old rows).
 {
   "name": "castbay",
   "main": "worker/index.js",
@@ -13,7 +15,13 @@
     "run_worker_first": ["/api/*"]
   },
   "r2_buckets": [{ "binding": "REPORTS", "bucket_name": "castbay-reports" }],
-  // At most 5 reports a minute from one address.
-  "ratelimits": [{ "name": "UPLOAD_LIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }],
+  "d1_databases": [{ "binding": "STATS", "database_name": "castbay-stats", "database_id": "d2366198-eb53-4ad9-ae52-6bd388d84768" }],
+  "triggers": { "crons": ["17 3 * * *"] },
+  "ratelimits": [
+    // At most 5 reports a minute from one address.
+    { "name": "UPLOAD_LIMIT", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } },
+    // Statistics: a week's backlog at most, a few times a day.
+    { "name": "STATS_LIMIT", "namespace_id": "1002", "simple": { "limit": 20, "period": 60 } }
+  ],
   "routes": [{ "pattern": "castbay.weenas.com", "custom_domain": true }]
 }

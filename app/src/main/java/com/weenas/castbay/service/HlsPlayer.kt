@@ -143,6 +143,7 @@ class HlsPlayer(
 
         override fun onPlayerError(error: PlaybackException) {
             Log.e(TAG, "Playback failed (${error.errorCodeName})", error)
+            com.weenas.castbay.util.UsageStats.failure("video")
             finish(describe(error))
         }
     }

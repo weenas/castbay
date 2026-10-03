@@ -1,6 +1,5 @@
 Categories:
-  - Connectivity
-  - Multimedia
+  - Cast
 License: GPL-3.0-only
 AuthorName: Weenas
 WebSite: https://castbay.weenas.com
@@ -14,26 +13,35 @@ RepoType: git
 Repo: https://github.com/weenas/castbay.git
 
 Builds:
-  - versionName: 1.3.2
-    versionCode: 108
-    commit: b13038f60af44ca018b58dd8fb41b05845ef6002
+  - versionName: 1.3.3
+    versionCode: 109
+    commit: 750678ea6527c8fccca4b3c95e6bbfe443e4231c
     subdir: app
     submodules: true
     sudo:
       - apt-get update
       - apt-get install -y make perl
-    init: cd .. && rm -rf third_party/libplist/fuzz third_party/openssl/test third_party/openssl/fuzz/corpora
-      third_party/openssl/pyca-cryptography third_party/openssl/krb5 third_party/openssl/gost-engine
-      third_party/openssl/wycheproof third_party/openssl/tlsfuzzer third_party/openssl/python-ecdsa
-      third_party/openssl/tlslite-ng third_party/openssl/oqs-provider third_party/openssl/cloudflare-quiche
-      third_party/openssl/pkcs11-provider
     gradle:
       - yes
+    rm:
+      - third_party/libplist/fuzz
+      - third_party/openssl/test
+      - third_party/openssl/fuzz/corpora
+      - third_party/openssl/pyca-cryptography
+      - third_party/openssl/krb5
+      - third_party/openssl/gost-engine
+      - third_party/openssl/wycheproof
+      - third_party/openssl/tlsfuzzer
+      - third_party/openssl/python-ecdsa
+      - third_party/openssl/tlslite-ng
+      - third_party/openssl/oqs-provider
+      - third_party/openssl/cloudflare-quiche
+      - third_party/openssl/pkcs11-provider
     ndk: 27.0.12077973
     gradleprops:
       - castbay.selfUpdate=false
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
-CurrentVersion: 1.3.2
-CurrentVersionCode: 108
+CurrentVersion: 1.3.3
+CurrentVersionCode: 109

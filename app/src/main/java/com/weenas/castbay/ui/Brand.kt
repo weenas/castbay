@@ -30,6 +30,8 @@ fun BrandTitle(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(R.string.app_name),
             fontSize = 48.sp,
+            // Room for a second line on a narrow screen ("CastBay Dev"); the theme's is 24 sp.
+            lineHeight = 54.sp,
             fontWeight = FontWeight.Bold,
             color = Color.White
         )

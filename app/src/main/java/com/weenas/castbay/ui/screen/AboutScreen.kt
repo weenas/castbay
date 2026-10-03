@@ -23,6 +23,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,6 +36,7 @@ import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.BrandSlogan
 import com.weenas.castbay.ui.BrandTitle
 import com.weenas.castbay.ui.QrCode
+import com.weenas.castbay.ui.isNarrowScreen
 import com.weenas.castbay.util.AppVersion
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
@@ -65,70 +67,88 @@ fun AboutScreen(viewModel: AirPlayViewModel) {
         linkForPhone = if (opened) null else url
     }
 
+    // Beside each other on a TV or a car's screen; the QR code goes below on a phone held
+    // upright, where the text would otherwise be squeezed to a letter a line.
+    val narrow = isNarrowScreen()
+    val info: @Composable ColumnScope.() -> Unit = {
+        BrandTitle()
+        Spacer(modifier = Modifier.height(12.dp))
+        BrandSlogan()
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(stringResource(R.string.app_tagline), fontSize = 20.sp, color = Color.White.copy(alpha = 0.7f))
+        Spacer(modifier = Modifier.height(28.dp))
+        AboutLine(stringResource(R.string.info_version), version)
+        if (update == null && BuildConfig.SELF_UPDATE) CheckAction(viewModel)
+        update?.let {
+            Text(
+                stringResource(R.string.about_update, it.version),
+                fontSize = 18.sp,
+                color = UPDATE_COLOR,
+                modifier = Modifier.padding(start = 120.dp, bottom = 4.dp)
+            )
+            if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) UpdateAction(viewModel, it.version)
+        }
+        LinkLine(stringResource(R.string.about_website), WEBSITE_URL) { open(WEBSITE_URL) }
+        LinkLine(stringResource(R.string.about_privacy), PRIVACY_URL) { open(PRIVACY_URL) }
+        LinkLine(stringResource(R.string.about_source), SOURCE_URL) { open(SOURCE_URL) }
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
+        Spacer(modifier = Modifier.height(16.dp))
+        // Out of the way: for reporting a problem on a device without adb (a car's).
+        HomeButton(stringResource(R.string.about_diagnostics), muted = true, onClick = { viewModel.navigateToDiagnostics() })
+    }
+    val qrCode: @Composable (ImageBitmap) -> Unit = { bitmap ->
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = qrUrl,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier
+                    .size(220.dp)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(Color.White)
+                    .padding(10.dp)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                linkForPhone?.let { stringResource(R.string.about_scan_link, it.removePrefix("https://")) }
+                    ?: stringResource(if (update != null) R.string.about_scan_update else R.string.about_scan),
+                fontSize = 15.sp,
+                color = if (update != null && linkForPhone == null) UPDATE_COLOR else Color.White.copy(alpha = 0.7f),
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 260.dp)
+            )
+        }
+    }
+
     AppBackground {
         // Centred on a TV; on a short screen (a car's, a phone on its side) it scrolls rather
         // than cutting off what's below the version.
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-        Row(
-            modifier = Modifier
+            val scrolling = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
                 .heightIn(min = maxHeight)
-                .padding(horizontal = 64.dp, vertical = 40.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                BrandTitle()
-                Spacer(modifier = Modifier.height(12.dp))
-                BrandSlogan()
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(stringResource(R.string.app_tagline), fontSize = 20.sp, color = Color.White.copy(alpha = 0.7f))
-                Spacer(modifier = Modifier.height(28.dp))
-                AboutLine(stringResource(R.string.info_version), version)
-                if (update == null && BuildConfig.SELF_UPDATE) CheckAction(viewModel)
-                update?.let {
-                    Text(
-                        stringResource(R.string.about_update, it.version),
-                        fontSize = 18.sp,
-                        color = UPDATE_COLOR,
-                        modifier = Modifier.padding(start = 120.dp, bottom = 4.dp)
-                    )
-                    if (BuildConfig.SELF_UPDATE && it.apkUrls.isNotEmpty()) UpdateAction(viewModel, it.version)
+            if (narrow) {
+                Column(modifier = scrolling.padding(horizontal = 24.dp, vertical = 32.dp)) {
+                    info()
+                    if (qr != null) {
+                        Spacer(modifier = Modifier.height(32.dp))
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { qrCode(qr) }
+                    }
                 }
-                LinkLine(stringResource(R.string.about_website), WEBSITE_URL) { open(WEBSITE_URL) }
-                LinkLine(stringResource(R.string.about_privacy), PRIVACY_URL) { open(PRIVACY_URL) }
-                LinkLine(stringResource(R.string.about_source), SOURCE_URL) { open(SOURCE_URL) }
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(stringResource(R.string.about_license), fontSize = 15.sp, color = Color.White.copy(alpha = 0.6f))
-                Spacer(modifier = Modifier.height(16.dp))
-                // Out of the way: for reporting a problem on a device without adb (a car's).
-                HomeButton(stringResource(R.string.about_diagnostics), muted = true, onClick = { viewModel.navigateToDiagnostics() })
-            }
-            if (qr != null) {
-                Spacer(modifier = Modifier.width(48.dp))
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Image(
-                        bitmap = qr,
-                        contentDescription = qrUrl,
-                        filterQuality = FilterQuality.None,
-                        modifier = Modifier
-                            .size(220.dp)
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(Color.White)
-                            .padding(10.dp)
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        linkForPhone?.let { stringResource(R.string.about_scan_link, it.removePrefix("https://")) }
-                            ?: stringResource(if (update != null) R.string.about_scan_update else R.string.about_scan),
-                        fontSize = 15.sp,
-                        color = if (update != null && linkForPhone == null) UPDATE_COLOR else Color.White.copy(alpha = 0.7f),
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.widthIn(max = 260.dp)
-                    )
+            } else {
+                Row(
+                    modifier = scrolling.padding(horizontal = 64.dp, vertical = 40.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f), content = info)
+                    if (qr != null) {
+                        Spacer(modifier = Modifier.width(48.dp))
+                        qrCode(qr)
+                    }
                 }
             }
-        }
         }
     }
 }

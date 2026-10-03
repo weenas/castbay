@@ -11,6 +11,8 @@ import androidx.compose.animation.core.snap
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -84,6 +86,16 @@ fun <T> SegmentedChoice(
             slide = true
         }
     }
+    // In a row that scrolls sideways (a narrow screen), a newly picked choice scrolls into
+    // view; not on first showing, which would scroll the page to every control.
+    val requesters = remember(choices) { choices.map { BringIntoViewRequester() } }
+    var shown by remember { mutableStateOf(selected) }
+    LaunchedEffect(selected) {
+        if (selected != shown) {
+            shown = selected
+            requesters.getOrNull(selected)?.bringIntoView()
+        }
+    }
     val motion = if (slide) tween<Dp>(220) else snap()
     val thumbX by animateDpAsState(bounds[selected]?.first ?: 0.dp, motion, label = "thumbX")
     val thumbWidth by animateDpAsState(bounds[selected]?.second ?: 0.dp, motion, label = "thumbWidth")
@@ -126,6 +138,7 @@ fun <T> SegmentedChoice(
                     modifier = Modifier
                         .height(SEGMENT_HEIGHT)
                         .widthIn(min = 88.dp)
+                        .bringIntoViewRequester(requesters[index])
                         .onPlaced { placed ->
                             bounds[index] = with(density) {
                                 placed.positionInParent().x.toDp() to placed.size.width.toDp()

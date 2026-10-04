@@ -6,6 +6,7 @@ import android.net.nsd.NsdServiceInfo
 import android.net.wifi.WifiManager
 import android.os.Handler
 import android.os.Looper
+import com.weenas.castbay.util.Diagnostics
 import com.weenas.castbay.util.Log
 import java.io.IOException
 import java.net.ServerSocket
@@ -58,6 +59,26 @@ data class DiscoveryRecords(
     }
 }
 
+/** Where one DNS-SD service's registration with Android's NsdManager stands. */
+sealed interface Registration {
+    /** Not asked for since the app started, or withdrawn when the receiver stopped. */
+    data object Off : Registration
+    data object Pending : Registration
+    data class Registered(val port: Int) : Registration
+    /** [errorCode] is NsdManager's; null when registering threw instead of calling back. */
+    data class Failed(val errorCode: Int?) : Registration
+}
+
+/** A registration that failed, kept after the advertiser stops so Diagnostics can show it. */
+data class DiscoveryFailure(val serviceType: String, val errorCode: Int?, val atMs: Long)
+
+/** What the network check reads: each service's registration and the latest failure. */
+data class DiscoveryStatus(
+    val airplay: Registration = Registration.Off,
+    val raop: Registration = Registration.Off,
+    val lastFailure: DiscoveryFailure? = null
+)
+
 /** Publishes AirPlay and RAOP DNS-SD records for the active protocol listener. */
 class AirPlayDiscoveryAdvertiser(context: Context) {
     private val appContext = context.applicationContext
@@ -73,6 +94,10 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
     private var onReady: (() -> Unit)? = null
     private var onError: ((String) -> Unit)? = null
 
+    @Volatile private var _status = DiscoveryStatus()
+    /** Read from any thread; updated on the main thread as NsdManager calls back. */
+    val status: DiscoveryStatus get() = _status
+
     /** Uses [protocolPort] when native AirPlay is active, otherwise opens a discovery-only probe. */
     fun start(
         name: String,
@@ -85,6 +110,8 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
         this.onReady = onReady
         this.onError = onError
         val displayName = name.trim().ifBlank { "CastBay" }.take(60)
+        _status = _status.copy(airplay = Registration.Pending, raop = Registration.Pending)
+        var registering: String? = null
         return try {
             val listenerSocket = protocolPort?.let { null } ?: ServerSocket(0)
             socket = listenerSocket
@@ -104,14 +131,19 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
             val deviceId = deviceId()
             val advertisedPort = protocolPort ?: requireNotNull(listenerSocket).localPort
             // Same layout as RPiPlay's dnssd_register_airplay / dnssd_register_raop.
-            register("_airplay._tcp", displayName, advertisedPort,
+            registering = AIRPLAY
+            register(AIRPLAY, displayName, advertisedPort,
                 linkedMapOf("deviceid" to deviceId) + records.airplay)
-            register("_raop._tcp", "${deviceId.replace(":", "")}@$displayName", advertisedPort,
+            registering = RAOP
+            register(RAOP, "${deviceId.replace(":", "")}@$displayName", advertisedPort,
                 records.raop)
             true
         } catch (error: Exception) {
             Log.e(TAG, "Could not advertise AirPlay discovery", error)
             stop()
+            // Failing before either service was registered (the socket, the multicast lock)
+            // leaves AirPlay unadvertised, so it is put down to that.
+            noteFailure(registering ?: AIRPLAY, null)
             false
         }
     }
@@ -127,6 +159,8 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
         }
         registrations.clear()
         registeredTypes.clear()
+        // A failure stays visible; anything else is no longer advertised.
+        _status = _status.copy(airplay = withdrawn(_status.airplay), raop = withdrawn(_status.raop))
         multicastLock?.let { if (it.isHeld) it.release() }
         multicastLock = null
         socket?.close()
@@ -148,6 +182,7 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
                     if (!running) return@post
                     Log.i(TAG, "Registered $type as ${serviceInfo.serviceName} on port $port")
                     registeredTypes.add(type)
+                    update(type, Registration.Registered(port))
                     if (registeredTypes.size == 2) onReady?.invoke()
                 }
             }
@@ -157,6 +192,7 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
                     if (!running) return@post
                     val callback = onError
                     stop()
+                    noteFailure(type, errorCode)
                     callback?.invoke("Local network discovery failed ($type, code $errorCode)")
                 }
             }
@@ -168,6 +204,19 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
         }
         registrations.add(listener)
         nsdManager.registerService(info, NsdManager.PROTOCOL_DNS_SD, listener)
+    }
+
+    private fun update(type: String, registration: Registration) {
+        _status = if (type == AIRPLAY) _status.copy(airplay = registration) else _status.copy(raop = registration)
+    }
+
+    private fun withdrawn(registration: Registration) =
+        if (registration is Registration.Failed) registration else Registration.Off
+
+    private fun noteFailure(type: String, errorCode: Int?) {
+        update(type, Registration.Failed(errorCode))
+        _status = _status.copy(lastFailure = DiscoveryFailure(type, errorCode, System.currentTimeMillis()))
+        Diagnostics.record("discovery", "Registering $type failed" + (errorCode?.let { " (NsdManager code $it)" } ?: ""))
     }
 
     private fun acceptAndCloseConnections(listenerSocket: ServerSocket) {
@@ -193,7 +242,9 @@ class AirPlayDiscoveryAdvertiser(context: Context) {
         .map { it.toInt(16).toByte() }
         .toByteArray()
 
-    private companion object {
-        const val TAG = "AirPlayDiscovery"
+    companion object {
+        private const val TAG = "AirPlayDiscovery"
+        const val AIRPLAY = "_airplay._tcp"
+        const val RAOP = "_raop._tcp"
     }
 }

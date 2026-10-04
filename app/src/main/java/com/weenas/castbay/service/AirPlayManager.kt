@@ -346,6 +346,18 @@ class AirPlayManager private constructor(private val context: Context) {
     /** The AirPlay device ID of that sender: a different one is a takeover. */
     @Volatile private var airPlaySenderId = ""
     private var currentError: String? = null
+    /** The native AirPlay listener's port from the latest start; null when it didn't start. */
+    @Volatile private var listenerPort: Int? = null
+
+    /** What the Diagnostics network check needs; reading it changes nothing. */
+    data class ReceiverSnapshot(
+        val state: AirPlayConnectionState,
+        val error: String?,
+        val listenerPort: Int?,
+        val discovery: DiscoveryStatus
+    )
+
+    fun snapshot() = ReceiverSnapshot(currentState, currentError, listenerPort, discoveryAdvertiser.status)
 
     val isDiscoveryOnly: Boolean
         get() = currentState == AirPlayConnectionState.Registering ||
@@ -372,6 +384,7 @@ class AirPlayManager private constructor(private val context: Context) {
             pairedDevices.load().map { it.publicKey },
             settings.allowTakeover
         )
+        listenerPort = protocolPort.takeIf { it > 0 }
         if (!discoveryAdvertiser.start(
                 settings.advertisedName,
                 protocolPort.takeIf { it > 0 },
@@ -451,6 +464,7 @@ class AirPlayManager private constructor(private val context: Context) {
         mediaSession.update(null)
         currentStreamInfo = StreamInfo()
         currentError = null
+        listenerPort = null
         currentState = AirPlayConnectionState.Idle
     }
 

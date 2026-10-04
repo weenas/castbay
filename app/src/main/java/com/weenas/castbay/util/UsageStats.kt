@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
-import com.weenas.castbay.R
 import com.weenas.castbay.service.ReceiverSettingsStore
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -53,9 +52,9 @@ object UsageStats {
         val id = prefs.getString(KEY_ID, null)
         prefs.edit().clear().apply()
         if (id != null) {
-            val url = statsUrl(context) + "/delete"
+            val app = context.applicationContext
             kotlin.concurrent.thread(name = "CastBay-stats-delete") {
-                runCatching { post(url, JSONObject().put("id", id).toString()) }
+                runCatching { post(app, "/api/stats/delete", JSONObject().put("id", id).toString()) }
                     .onSuccess { Log.i(TAG, "Statistics deleted on the website") }
                     .onFailure { Log.w(TAG, "Deleting statistics failed: ${it.message}") }
             }
@@ -118,7 +117,7 @@ object UsageStats {
                     continue
                 }
                 val body = summary(context, id, day, days.getJSONObject(day))
-                val sent = runCatching { post(statsUrl(context), body.toString()) }
+                val sent = runCatching { post(context, "/api/stats", body.toString()) }
                     .onFailure { Log.w(TAG, "Statistics for $day not sent: ${it.message}") }
                 if (sent.isFailure) break
                 forget(context, day)
@@ -189,10 +188,10 @@ object UsageStats {
         }
     }
 
-    private fun statsUrl(context: Context) = context.getString(R.string.reports_url).replace("/api/reports", "/api/stats")
+    private fun post(context: Context, path: String, body: String) = Servers.call(context, path) { url -> post(url, body) }
 
-    private fun post(url: String, body: String) {
-        val connection = URL(url).openConnection() as HttpURLConnection
+    private fun post(url: URL, body: String) {
+        val connection = url.openConnection() as HttpURLConnection
         try {
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS
@@ -203,7 +202,7 @@ object UsageStats {
             connection.setFixedLengthStreamingMode(bytes.size)
             connection.outputStream.use { it.write(bytes) }
             val code = connection.responseCode
-            if (code !in 200..299) throw java.io.IOException("HTTP $code")
+            if (code !in 200..299) throw Servers.HttpError(code)
         } finally {
             connection.disconnect()
         }

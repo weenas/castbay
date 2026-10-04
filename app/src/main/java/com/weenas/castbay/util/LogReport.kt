@@ -2,7 +2,6 @@ package com.weenas.castbay.util
 
 import android.content.Context
 import android.os.Process
-import com.weenas.castbay.R
 import com.weenas.castbay.protocol.AirPlayNative
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -111,7 +110,11 @@ object LogReport {
     }
 
     private fun send(context: Context, text: String, appVersion: String, crash: Boolean): String {
-        val connection = URL(context.getString(R.string.reports_url)).openConnection() as HttpURLConnection
+        return Servers.call(context, "/api/reports") { url -> send(url, text, appVersion, crash) }
+    }
+
+    private fun send(url: URL, text: String, appVersion: String, crash: Boolean): String {
+        val connection = url.openConnection() as HttpURLConnection
         return try {
             connection.connectTimeout = CONNECT_TIMEOUT_MS
             connection.readTimeout = READ_TIMEOUT_MS
@@ -136,7 +139,7 @@ object LogReport {
     }
 
     /** The website answered, but not with a report ID (sending again wouldn't help). */
-    open class Refused(val code: Int) : java.io.IOException("HTTP $code")
+    open class Refused(code: Int) : Servers.HttpError(code)
 
     /** The website accepts a few reports a minute from one place. */
     class TooManyReports : Refused(429)

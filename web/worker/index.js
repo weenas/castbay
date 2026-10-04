@@ -6,6 +6,10 @@
 // report; there is no way to read reports back from here. The bucket deletes them after 90
 // days (a lifecycle rule). The sender's address is used only by the rate limiter, not kept.
 //
+// Devices that can't reach Cloudflare send the same requests through cast.weenas.com, a relay
+// on the developer's server (RELAY_IPS) that passes them on unchanged and names the device's
+// address in X-CastBay-Client-IP; that header is believed only from the relay's address.
+//
 // POST /api/stats: a day's anonymous usage summary from an app whose owner turned statistics
 // on (one row per installation and day in D1; only whitelisted fields and counters are kept,
 // anything else is refused). POST /api/stats/delete {id}: deletes an installation's rows, sent
@@ -47,6 +51,15 @@ export default {
   },
 };
 
+/** The sender's address, for the rate limits only: the device's, also through the relay. */
+function clientAddress(request, env) {
+  const address = request.headers.get('CF-Connecting-IP') ?? 'unknown';
+  const relays = (env.RELAY_IPS ?? '').split(',').map((ip) => ip.trim()).filter(Boolean);
+  const forwarded = request.headers.get('X-CastBay-Client-IP');
+  if (relays.includes(address) && forwarded && /^[0-9a-fA-F.:]{2,45}$/.test(forwarded)) return forwarded;
+  return address;
+}
+
 async function receiveReport(request, env) {
   const version = request.headers.get('X-CastBay-Version') ?? '';
   // 1.1.0, or a test build's 1.1.0-dev+6228385.
@@ -55,7 +68,7 @@ async function receiveReport(request, env) {
   }
   const kind = request.headers.get('X-CastBay-Report') === 'crash' ? 'crash' : 'manual';
   if (env.UPLOAD_LIMIT) {
-    const { success } = await env.UPLOAD_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') ?? 'unknown' });
+    const { success } = await env.UPLOAD_LIMIT.limit({ key: clientAddress(request, env) });
     if (!success) return json({ error: 'too many' }, 429);
   }
   const length = Number(request.headers.get('Content-Length') ?? 0);
@@ -98,7 +111,7 @@ const MAX_STATS_BYTES = 8 * 1024;
 
 async function receiveStats(request, env) {
   if (env.STATS_LIMIT) {
-    const { success } = await env.STATS_LIMIT.limit({ key: request.headers.get('CF-Connecting-IP') ?? 'unknown' });
+    const { success } = await env.STATS_LIMIT.limit({ key: clientAddress(request, env) });
     if (!success) return json({ error: 'too many' }, 429);
   }
   const body = await readJson(request);

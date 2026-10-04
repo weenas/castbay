@@ -39,12 +39,14 @@ android {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
 
-        // Where problem reports go; -Pcastbay.reportsUrl=http://<mac>:8787/api/reports tests a
-        // local `wrangler dev` of the website's Worker.
-        val reportsUrl = project.findProperty("castbay.reportsUrl") as String? ?: "https://castbay.weenas.com/api/reports"
-        // A resource rather than a BuildConfig constant, which Kotlin copies into its callers
+        // Where the update check, problem reports and statistics go: the website, then the relay
+        // for networks that can't reach Cloudflare (util/Servers.kt). -Pcastbay.serverUrl=
+        // http://<mac>:8787 tests a local `wrangler dev` of the website's Worker, without relay.
+        val serverUrl = project.findProperty("castbay.serverUrl") as String?
+        // Resources rather than BuildConfig constants, which Kotlin copies into their callers
         // (an incremental build then kept an old address).
-        resValue("string", "reports_url", reportsUrl)
+        resValue("string", "server_url", serverUrl ?: "https://castbay.weenas.com")
+        resValue("string", "relay_url", if (serverUrl == null) "https://cast.weenas.com" else "")
         // The in-app updater and the daily update check. Store builds (F-Droid) turn both off
         // with -Pcastbay.selfUpdate=false: the store updates the app, and doesn't allow it to.
         val selfUpdate = (project.findProperty("castbay.selfUpdate") as String?)?.toBoolean() ?: true

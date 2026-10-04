@@ -31,6 +31,9 @@ const [latest] = await releases('zh');
         版本 {latest.data.version} · {formatDate('zh', latest.data.date)} · <a href="/zh/changelog">更新内容</a><br>
         适用于 Android 6.0 及以上的安卓电视、电视盒子、车机和平板
       </p>
+      <p class="channels">
+        其他渠道：<a href="https://github.com/weenas/castbay/releases">GitHub 所有版本</a> · <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay">Obtainium</a> · F-Droid（审核中）· <a href="/zh/faq#在哪里可以下载映湾不同渠道之间能互相升级吗">有什么区别？</a>
+      </p>
       <div class="chips">
         <span class="chip">屏幕镜像</span>
         <span class="chip">音乐与歌词</span>
@@ -171,13 +174,38 @@ const [latest] = await releases('zh');
     </div>
   </section>
 
-  <section class="alt">
-    <div class="wrap oss">
-      <div>
-        <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)">开源，也欢迎参与</h2>
-        <p>映湾以 GPL-3.0 协议开源，基于 UxPlay、libplist、Apple ALAC 解码器和 Media3 ExoPlayer。欢迎在 GitHub 上提交问题和建议。</p>
+  <section class="alt" id="community">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>开源，也欢迎参与</h2>
+        <p>映湾是开源项目，你的反馈和测试会让它在更多电视和车机上好用。</p>
       </div>
-      <a class="btn btn-ghost" href="https://github.com/weenas/castbay">github.com/weenas/castbay</a>
+      <div class="grid community">
+        <a class="card" href="/zh/feedback">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>反馈问题</h3>
+          <p>在 GitHub 上报告问题或提出建议。App 里"关于 → 诊断信息"可以一键上传日志，反馈时附上报告编号即可。</p>
+          <span class="more">怎么反馈 →</span>
+        </a>
+        <a class="card" href="https://github.com/weenas/castbay">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+          <h3>源代码</h3>
+          <p>GPL-3.0 开源，基于 UxPlay、libplist、Apple ALAC 解码器和 Media3 ExoPlayer。代码、构建方法和所有版本都在 GitHub 上。</p>
+          <span class="more">github.com/weenas/castbay →</span>
+        </a>
+        <a class="card" href="/zh/compatibility">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="m9 10.5 2 2 4-4M8 21h8"/></svg></div>
+          <h3>设备兼容性</h3>
+          <p>映湾在你的电视、盒子或车机上能用吗？告诉我们型号和系统版本，帮更多人少走弯路。</p>
+          <span class="more">查看兼容性列表 →</span>
+        </a>
+        <a class="card" href="/zh/changelog.xml">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg></div>
+          <h3>关注更新</h3>
+          <p>用 RSS 订阅更新日志；平板上也可以用 Obtainium 跟踪 GitHub 上的新版本。电视上的映湾会自己检查更新。</p>
+          <span class="more">订阅 RSS →</span>
+        </a>
+      </div>
     </div>
   </section>
 </main>

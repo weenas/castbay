@@ -71,12 +71,19 @@ img { max-width: 100%; display: block; }
 .nav a { color: var(--text-2); font-size: 15px; white-space: nowrap; }
 .nav a:hover { color: var(--text); text-decoration: none; }
 .nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
+.nav-cta {
+  background: var(--accent-strong); color: #fff; border-radius: 999px;
+  padding: 7px 16px; font-size: 14px; font-weight: 600; white-space: nowrap; flex: none;
+}
+.nav-cta:hover { text-decoration: none; box-shadow: 0 6px 20px var(--accent-glow); }
+/* On a phone it would squeeze the wordmark; the hero's own button is just below. */
+@media (max-width: 600px) { .top .nav-cta { display: none; } .top .theme { margin-left: auto; } }
 /* Below this the mark, five links and the two buttons don't fit a line: the links fold into a
    menu under the three-line button, which opens them as a panel below the header. */
 .menu-btn { display: none; }
 @media (max-width: 920px) {
   .nav { display: none; }
-  .theme { margin-left: auto; }
+  .nav-cta { margin-left: auto; }
   .menu-btn {
     display: flex; flex-direction: column; justify-content: center; gap: 5px;
     width: 38px; height: 38px; padding: 0 8px; border: 0; background: none; cursor: pointer; flex: none;
@@ -231,6 +238,17 @@ details p { margin: 0 0 18px; color: var(--text-2); font-size: 15.5px; }
 /* Open source */
 .oss { display: flex; flex-wrap: wrap; gap: 28px; align-items: center; justify-content: space-between; }
 .oss p { color: var(--text-2); max-width: 40em; margin: 8px 0 0; }
+/* The community cards are links as a whole. */
+a.card { display: flex; flex-direction: column; color: inherit; }
+/* Four, or two by two, or one under another: never three and a lone one. */
+.community { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 1100px) { .community { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .community { grid-template-columns: 1fr; } }
+a.card:hover { text-decoration: none; }
+a.card .more { display: inline-block; margin-top: auto; padding-top: 14px; color: var(--accent); font-size: 14.5px; font-weight: 600; }
+/* Under the download buttons: the other ways to get CastBay. */
+.channels { color: var(--text-3); font-size: 14px; margin-top: 14px; }
+.channels a { color: var(--text-2); }
 
 /* Footer */
 footer { border-top: 1px solid var(--line); padding: 36px 0 48px; color: var(--text-3); font-size: 14px; }

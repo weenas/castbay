@@ -1,0 +1,1 @@
+• Fixes 1.4.0 closing on any key press on Android 6 to 11, and What's New closing on Android 6.

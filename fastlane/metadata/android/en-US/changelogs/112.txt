@@ -1,0 +1,1 @@
+• Diagnostics → Run network check: when an iPhone, iPad or Mac can't find CastBay, it checks the receiver, network, AirPlay announcements and port item by item, with what to do next. It never interrupts a cast.

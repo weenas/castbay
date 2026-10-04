@@ -78,7 +78,7 @@ jobs:
             "ndk;27.0.12077973" "cmake;3.22.1" > /dev/null
 
       - name: Build and unit test
-        run: ./gradlew assembleDebug :app:testDebugUnitTest --stacktrace
+        run: ./gradlew assembleDebug :app:testDebugUnitTest :app:lintVitalRelease --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

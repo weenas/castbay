@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.core.os.ConfigurationCompat
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -35,7 +36,8 @@ fun ChangelogScreen(viewModel: AirPlayViewModel) {
     val context = LocalContext.current
     val update by viewModel.update.collectAsState()
     val installed = remember { AppVersion.name(context) }
-    val chinese = LocalConfiguration.current.locales[0].language == "zh"
+    // The compat form: Configuration.locales is Android 7+.
+    val chinese = ConfigurationCompat.getLocales(LocalConfiguration.current)[0]?.language == "zh"
     val current = update ?: return
     val notes = current.notesSince(installed)
 

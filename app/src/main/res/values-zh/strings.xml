@@ -91,7 +91,7 @@
     <string name="changelog_title">映湾 %1$s 更新内容</string>
     <string name="changelog_installed">当前安装的是 %1$s，以下是之后各版本的改动：</string>
     <string name="setting_screen_saver">音乐界面闲置时</string>
-    <string name="setting_screen_saver_note">防烧屏：10 分钟没有按键或点击时，音乐界面逐渐调暗并轻微移动。关屏：2 分钟后画面变黑（电视能显示的最暗状态），音乐继续播放。按任意键、点屏幕或有新的投屏都会恢复；媒体键（切歌、暂停）照常可用。</string>
+    <string name="setting_screen_saver_note">防烧屏：10 分钟没有按键或点击时，音乐界面逐渐调暗并轻微移动。关屏：2 分钟后画面变黑（电视能显示的最暗状态），音乐继续播放。按任意键、点屏幕或有新的投屏都会恢复；媒体键（切歌、暂停）照常可用。显示歌词时不会进入。</string>
     <string name="screen_saver_burn_in">防烧屏</string>
     <string name="screen_saver_music_off">关屏</string>
     <string name="crash_ask">映湾上次意外退出了。发送问题报告帮助我们修复吗？</string>

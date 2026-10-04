@@ -138,6 +138,8 @@ When music plays and nobody touches anything, the music screen does what Setting
 - **Screen off**: after 2 minutes the screen goes black while the music plays on; tablets and car displays also turn their brightness down as far as it goes.
 - **Off**: the screen stays as it is.
 
+While lyrics are showing it neither dims nor goes black: they keep scrolling, so nothing burns in. When a song has no lyrics, it works as above.
+
 Any key on the remote, a touch, or a new cast brings the picture back; that first key or touch only wakes it, without pressing a button. Media keys (play/pause, next, previous, on the remote or the steering wheel) work as usual and don't wake it. On the TV's home screen, with nothing casting, the TV's own screensaver takes over.
 
 ## Settings

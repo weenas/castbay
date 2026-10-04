@@ -8,7 +8,9 @@
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
+#include <deque>
 #include <mutex>
+#include <string>
 
 namespace {
 /* Stop appending past this size rather than filling the TV's storage. */
@@ -16,6 +18,12 @@ constexpr off_t kMaxFileBytes = 20 * 1024 * 1024;
 
 std::mutex g_mutex;
 std::atomic<int> g_fd{-1};
+
+/* The latest lines, for problem reports; each one short enough to keep the whole small. */
+constexpr size_t kRecentLines = 1000;
+constexpr size_t kRecentLineChars = 400;
+std::mutex g_recentMutex;
+std::deque<std::string> g_recent;
 
 char priorityLetter(int priority) {
     switch (priority) {
@@ -76,7 +84,30 @@ extern "C" int castbay_logf(int priority, const char *tag, const char *format, .
     vsnprintf(message, sizeof(message), format, args);
     va_end(args);
     int result = __android_log_write(priority, tag, message);
+    {
+        timespec now{};
+        clock_gettime(CLOCK_REALTIME, &now);
+        tm local{};
+        localtime_r(&now.tv_sec, &local);
+        char line[kRecentLineChars];
+        snprintf(line, sizeof(line), "%02d-%02d %02d:%02d:%02d.%03ld %c %s: %s",
+                 local.tm_mon + 1, local.tm_mday, local.tm_hour, local.tm_min, local.tm_sec,
+                 now.tv_nsec / 1000000, priorityLetter(priority), tag ? tag : "", message);
+        std::lock_guard<std::mutex> lock(g_recentMutex);
+        g_recent.emplace_back(line);
+        if (g_recent.size() > kRecentLines) g_recent.pop_front();
+    }
     int fd = g_fd.load();
     if (fd >= 0) writeLine(fd, priority, tag, message);
     return result;
+}
+
+std::string castbay_recent_log() {
+    std::lock_guard<std::mutex> lock(g_recentMutex);
+    std::string all;
+    for (const auto &line : g_recent) {
+        all += line;
+        all += '\n';
+    }
+    return all;
 }

@@ -116,6 +116,9 @@ object AirPlayNative {
 
     /** Also appends native and protocol logs to [path] (null stops); see file_log.h. */
     fun setLogFile(path: String?) = nativeSetLogFile(path)
+
+    /** The native and protocol code's latest log lines, oldest first (for problem reports). */
+    fun recentLog(): List<String> = String(nativeRecentLog(), Charsets.UTF_8).lines().filter { it.isNotEmpty() }
     fun setAudioSink(sink: AudioSink?) = nativeSetAudioSink(sink)
 
     /** `_airplay._tcp` TXT entries built by the running protocol core (empty when stopped). */
@@ -205,6 +208,7 @@ object AirPlayNative {
     @JvmStatic private external fun nativeRaopTxtRecord(): Array<String>
     @JvmStatic private external fun nativeSetVideoSink(sink: VideoSink?)
     @JvmStatic private external fun nativeSetLogFile(path: String?)
+    @JvmStatic private external fun nativeRecentLog(): ByteArray
     @JvmStatic private external fun nativeSetAudioSink(sink: AudioSink?)
 }
 

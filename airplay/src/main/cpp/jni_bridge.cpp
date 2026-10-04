@@ -755,6 +755,15 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeSetLogFile(JNIEnv *env, jcl
     if (file) env->ReleaseStringUTFChars(path, file);
 }
 
+// Bytes, not a String: sender names may hold characters JNI's modified UTF-8 can't take.
+extern "C" JNIEXPORT jbyteArray JNICALL
+Java_com_weenas_castbay_protocol_AirPlayNative_nativeRecentLog(JNIEnv *env, jclass) {
+    std::string log = castbay_recent_log();
+    jbyteArray bytes = env->NewByteArray(static_cast<jsize>(log.size()));
+    if (bytes) env->SetByteArrayRegion(bytes, 0, static_cast<jsize>(log.size()), reinterpret_cast<const jbyte *>(log.data()));
+    return bytes;
+}
+
 extern "C" JNIEXPORT void JNICALL
 Java_com_weenas_castbay_protocol_AirPlayNative_nativeSetVideoSink(JNIEnv *env, jclass, jobject sink) {
     castbay::setVideoSink(env, sink);

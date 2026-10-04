@@ -19,4 +19,12 @@ void castbay_log_open(const char *path);
 
 #ifdef __cplusplus
 }
+
+#include <string>
+
+/*
+ * The latest lines logged (all builds), oldest first, one per line, for a problem report:
+ * some devices (TCL TVs, BYD car displays) keep no app logs in logd at all. Thread-safe.
+ */
+std::string castbay_recent_log();
 #endif

@@ -1,0 +1,4 @@
+• Music Screen When Idle (Settings → Playback): dims and shifts the music screen against burn-in, or turns it black, while the music plays on; not while lyrics show.
+• Where the website can't be reached, updates, problem reports and statistics go through a relay instead of failing.
+• Updates found on GitHub show What's New too.
+• Problem reports always include CastBay's own log.

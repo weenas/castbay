@@ -139,9 +139,28 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 backArmed = false
             }
         }
+        // Lyrics for the music screen (here, as the screen saver needs to know whether any are showing).
+        val song = stream.nowPlaying
+        // Waits a moment before looking up: the length usually arrives after the title.
+        val lyrics by produceState<LyricsLookup>(LyricsLookup.Pending, kind, settings.showLyrics, song.title, song.artist, song.durationSec.toInt()) {
+            value = LyricsLookup.Pending
+            val title = song.title
+            if (kind != StreamKind.AUDIO || !settings.showLyrics) return@produceState
+            if (title.isNullOrBlank()) {
+                value = LyricsLookup.None
+                return@produceState
+            }
+            delay(LYRICS_LOOKUP_DELAY_MS)
+            val found = withContext(Dispatchers.IO) {
+                viewModel.findLyrics(title, song.artist, song.album, song.durationSec)
+            }
+            value = if (found != null) LyricsLookup.Found(found) else LyricsLookup.None
+        }
         // The music screen's screen saver; the quick menu or another phone casting wakes it.
+        // Scrolling lyrics don't burn in, and someone is probably reading them.
         val saver = key(stream.sender, stream.isDlna) {
-            rememberMusicScreenSaver(kind == StreamKind.AUDIO && !menuOpen, settings.screenSaver, viewModel)
+            val showingLyrics = lyrics is LyricsLookup.Found
+            rememberMusicScreenSaver(kind == StreamKind.AUDIO && !menuOpen && !showingLyrics, settings.screenSaver, viewModel)
         }
         val saverShift = animatedSaverShift(saver)
         Box(
@@ -186,22 +205,6 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             when (kind) {
                 StreamKind.VIDEO -> VideoPlayback(viewModel = viewModel, pictureMode = settings.pictureMode, modifier = contentModifier)
                 StreamKind.AUDIO -> {
-                    val song = stream.nowPlaying
-                    // Waits a moment before looking up: the length usually arrives after the title.
-                    val lyrics by produceState<LyricsLookup>(LyricsLookup.Pending, settings.showLyrics, song.title, song.artist, song.durationSec.toInt()) {
-                        value = LyricsLookup.Pending
-                        val title = song.title
-                        if (!settings.showLyrics) return@produceState
-                        if (title.isNullOrBlank()) {
-                            value = LyricsLookup.None
-                            return@produceState
-                        }
-                        delay(LYRICS_LOOKUP_DELAY_MS)
-                        val found = withContext(Dispatchers.IO) {
-                            viewModel.findLyrics(title, song.artist, song.album, song.durationSec)
-                        }
-                        value = if (found != null) LyricsLookup.Found(found) else LyricsLookup.None
-                    }
                     AudioPlayback(
                         nowPlaying = song,
                         onCommand = viewModel::remoteControl,

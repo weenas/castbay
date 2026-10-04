@@ -89,7 +89,7 @@
     <string name="changelog_title">What\'s new in CastBay %1$s</string>
     <string name="changelog_installed">This TV has %1$s. Every change since then:</string>
     <string name="setting_screen_saver">Music Screen When Idle</string>
-    <string name="setting_screen_saver_note">Against burn-in: after 10 minutes without a key or tap, the music screen dims and shifts a little. Screen off: after 2 minutes it goes black (the dimmest a TV can show) while the music plays on. Any key, tap or new cast wakes it; media keys keep working.</string>
+    <string name="setting_screen_saver_note">Against burn-in: after 10 minutes without a key or tap, the music screen dims and shifts a little. Screen off: after 2 minutes it goes black (the dimmest a TV can show) while the music plays on. Any key, tap or new cast wakes it; media keys keep working. Not while lyrics are showing.</string>
     <string name="screen_saver_burn_in">Against burn-in</string>
     <string name="screen_saver_music_off">Screen off</string>
     <string name="crash_ask">CastBay stopped unexpectedly last time. Send a problem report to help fix it?</string>

@@ -27,7 +27,9 @@
   // checks Access's token for this application (its audience tag). Neither is a secret.
   "vars": {
     "ACCESS_TEAM": "easonxiang",
-    "ACCESS_AUD": "1fc01f7d43adc063ebdf2e961b214cb253daf692f0f72ca198a8c936f01102fb"
+    "ACCESS_AUD": "1fc01f7d43adc063ebdf2e961b214cb253daf692f0f72ca198a8c936f01102fb",
+    // cast.weenas.com, the relay for devices that can't reach Cloudflare (worker/index.js).
+    "RELAY_IPS": "45.195.196.12"
   },
   "routes": [{ "pattern": "castbay.weenas.com", "custom_domain": true }]
 }

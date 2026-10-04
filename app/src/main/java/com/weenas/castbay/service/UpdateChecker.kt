@@ -2,6 +2,7 @@ package com.weenas.castbay.service
 
 import android.content.Context
 import com.weenas.castbay.util.Log
+import com.weenas.castbay.util.Servers
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -62,12 +63,13 @@ data class AppUpdate(
 
 /**
  * Looks for a newer release at most once a day: first on the website (castbay.weenas.com
- * publishes latest.json with each release; it is reachable where GitHub often isn't), then
- * on GitHub. The one request sends nothing about the TV (the server sees an address, as for
+ * publishes latest.json with each release), through its relay where the website can't be
+ * reached, then on GitHub. The one request sends nothing about the TV (the server sees an address, as for
  * any web page). The result is kept, so the home screen can show it at once and without
  * asking again. Blocking; call off the main thread.
  */
 class UpdateChecker(context: Context, private val appVersion: String) {
+    private val appContext = context.applicationContext
     private val preferences = context.applicationContext.getSharedPreferences("updates", Context.MODE_PRIVATE)
 
     /** The last release found, if newer than this app (no request made). */
@@ -106,7 +108,8 @@ class UpdateChecker(context: Context, private val appVersion: String) {
         return latest
     }
 
-    private fun fromWebsite(): AppUpdate? = AppUpdate.fromJson(get(WEBSITE_URL))
+    // The website, or its relay (util/Servers.kt).
+    private fun fromWebsite(): AppUpdate? = AppUpdate.fromJson(Servers.call(appContext, "/latest.json") { get(it.toString()) })
 
     private fun fromGitHub(): AppUpdate? = newest(get(RELEASES_URL))
 
@@ -118,7 +121,7 @@ class UpdateChecker(context: Context, private val appVersion: String) {
             // GitHub's API requires a User-Agent.
             connection.setRequestProperty("User-Agent", "CastBay/$appVersion (https://github.com/weenas/castbay)")
             connection.setRequestProperty("Accept", "application/json")
-            if (connection.responseCode != HttpURLConnection.HTTP_OK) throw java.io.IOException("HTTP ${connection.responseCode}")
+            if (connection.responseCode != HttpURLConnection.HTTP_OK) throw Servers.HttpError(connection.responseCode)
             connection.inputStream.bufferedReader().use { it.readText() }
         } finally {
             connection.disconnect()
@@ -127,7 +130,6 @@ class UpdateChecker(context: Context, private val appVersion: String) {
 
     companion object {
         private const val TAG = "CastBayUpdate"
-        private const val WEBSITE_URL = "https://castbay.weenas.com/latest.json"
         private const val RELEASES_URL = "https://api.github.com/repos/weenas/castbay/releases?per_page=10"
         private const val CHECK_INTERVAL_MS = 24 * 60 * 60 * 1000L
         private const val TIMEOUT_MS = 10_000

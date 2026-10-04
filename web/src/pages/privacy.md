@@ -5,7 +5,7 @@ page: privacy
 title: 'Privacy Policy – CastBay'
 description: 'CastBay''s privacy policy: no account, no ads, no third-party analytics; nothing is sent unless you choose to. Lyrics lookups, the update check, problem reports and anonymous usage statistics are optional.'
 heading: 'Privacy Policy'
-intro: 'Effective: October 3, 2026'
+intro: 'Effective: October 4, 2026'
 ---
 
 CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads or third-party analytics or tracking code.
@@ -26,7 +26,7 @@ Nothing, unless you choose to. CastBay does not collect personal information, an
 
 ## Update check
 
-Once a day, CastBay asks this website (castbay.weenas.com/latest.json), or GitHub (api.github.com) if the website can't be reached, for the number of the latest CastBay version, so it can tell you when a newer one is out. The request contains nothing about you or your TV; the server sees your network's address, as for any web page (the website is hosted by Cloudflare; GitHub's own policy applies to GitHub). You can turn this off in Settings, under General.
+Once a day, CastBay asks this website (castbay.weenas.com/latest.json, or through [the relay](#the-relay-castweenascom) if the website can't be reached), else GitHub (api.github.com), for the number of the latest CastBay version, so it can tell you when a newer one is out. The request contains nothing about you or your TV; the server sees your network's address, as for any web page (the website is hosted by Cloudflare; GitHub's own policy applies to GitHub). You can turn this off in Settings, under General.
 
 Only when you choose **Download and install** on the About screen does CastBay download the new version, from this website or GitHub, check that it is exactly the released file (its SHA-256), and open Android's installer, where you confirm the update. Nothing is downloaded or installed on its own.
 
@@ -72,6 +72,10 @@ The report is sent over HTTPS to this website (castbay.weenas.com, hosted by Clo
 | Settings in use | casting verification: PIN; DLNA on; lyrics off; resolution: Auto |
 
 Never sent: device names (the TV's or a phone's), song or video titles, links, network or hardware addresses, the Wi-Fi name, your location, exact times of casts, passwords or PINs. The website keeps one row per installation and day in its database (Cloudflare D1) and does not store your network's address; rows are deleted after a year. Only the developer can read them, to see which devices and Android versions to support and where CastBay fails. **Turning the switch off** stops counting, forgets the ID and asks the website to delete everything sent under it.
+
+## The relay (cast.weenas.com)
+
+In some networks (often in mainland China) this website, on Cloudflare, can't be reached. CastBay then sends the same three requests (the update check, problem reports and usage statistics) to cast.weenas.com instead: a relay on the developer's server in the United States that passes them on, over HTTPS and unchanged, to this website, and passes the answer back. It stores nothing and keeps no access log; it answers nothing else. It tells this website your network's address only for the upload limits described above, which don't store it either. What is sent and kept is exactly as described above.
 
 ## Settings and data on the TV
 

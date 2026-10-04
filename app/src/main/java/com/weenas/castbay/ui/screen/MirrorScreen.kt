@@ -139,6 +139,11 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 backArmed = false
             }
         }
+        // The music screen's screen saver; the quick menu or another phone casting wakes it.
+        val saver = key(stream.sender, stream.isDlna) {
+            rememberMusicScreenSaver(kind == StreamKind.AUDIO && !menuOpen, settings.screenSaver, viewModel)
+        }
+        val saverShift = animatedSaverShift(saver)
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -206,7 +211,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                         lyrics = (lyrics as? LyricsLookup.Found)?.lyrics,
                         lyricsEnabled = settings.showLyrics,
                         noLyrics = lyrics == LyricsLookup.None,
-                        modifier = contentModifier
+                        modifier = contentModifier.offset { saverShift }
                     )
                 }
                 StreamKind.MIRRORING -> MirroringVideo(viewModel = viewModel, streamInfo = stream, pictureMode = settings.pictureMode, modifier = contentModifier)
@@ -214,7 +219,8 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             if (kind == StreamKind.AUDIO) {
                 // As wide as the cover below it, so a long phone name scrolls rather than
                 // running into the title beside the cover.
-                CastingBadge(stream, musicCoverSize(), Modifier.align(Alignment.TopStart).padding(start = 56.dp, top = 20.dp))
+                CastingBadge(stream, musicCoverSize(), Modifier.align(Alignment.TopStart).offset { saverShift }.padding(start = 56.dp, top = 20.dp))
+                ScreenSaverOverlay(saver)
             }
             val senderVolume by viewModel.senderVolume.collectAsState()
             VolumeIndicator(senderVolume, Modifier.align(Alignment.BottomEnd).padding(end = 48.dp, bottom = 40.dp))

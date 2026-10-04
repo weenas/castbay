@@ -40,7 +40,13 @@ data class ReceiverSettings(
     /** Look for a newer CastBay on GitHub once a day (UpdateChecker). */
     val checkUpdates: Boolean = true,
     /** After CastBay stops unexpectedly, send a problem report at the next start (off: ask). */
-    val sendErrorReports: Boolean = false
+    val sendErrorReports: Boolean = false,
+    /**
+     * The music screen, which stays on for hours: [SCREEN_SAVER_BURN_IN] dims and shifts it a
+     * little when idle (against burn-in), [SCREEN_SAVER_MUSIC_OFF] blacks it out while the music
+     * plays on, [SCREEN_SAVER_OFF] leaves it as it is.
+     */
+    val screenSaver: String = SCREEN_SAVER_BURN_IN
 ) {
     /**
      * The display size advertised to senders, which they size mirroring to. "Auto" is the
@@ -76,7 +82,7 @@ data class ReceiverSettings(
 
     private fun withoutLiveSettings() = copy(
         showStats = false, pictureMode = PICTURE_FIT, showLyrics = false, language = LANGUAGE_SYSTEM, checkUpdates = true,
-        sendErrorReports = false
+        sendErrorReports = false, screenSaver = SCREEN_SAVER_BURN_IN
     )
 
     /** Frames per second senders may mirror at. "Auto" is 60: TVs decode in hardware. */
@@ -105,6 +111,10 @@ data class ReceiverSettings(
         const val PICTURE_FILL = "Fill"
         const val PICTURE_STRETCH = "Stretch"
         val PICTURE_MODES = listOf(PICTURE_FIT, PICTURE_FILL, PICTURE_STRETCH)
+        const val SCREEN_SAVER_OFF = "off"
+        const val SCREEN_SAVER_BURN_IN = "burnin"
+        const val SCREEN_SAVER_MUSIC_OFF = "music_off"
+        val SCREEN_SAVERS = listOf(SCREEN_SAVER_BURN_IN, SCREEN_SAVER_MUSIC_OFF, SCREEN_SAVER_OFF)
         const val CODEC_AUTO = "Auto"
         const val CODEC_H264_ONLY = "H.264 only"
         val VIDEO_CODECS = listOf(CODEC_AUTO, CODEC_H264_ONLY)
@@ -152,7 +162,9 @@ class ReceiverSettingsStore(context: Context) {
         language = preferences.getString("language", null)
             ?.takeIf { it in ReceiverSettings.LANGUAGES } ?: ReceiverSettings.LANGUAGE_SYSTEM,
         checkUpdates = preferences.getBoolean("check_updates", true),
-        sendErrorReports = preferences.getBoolean("send_error_reports", false)
+        sendErrorReports = preferences.getBoolean("send_error_reports", false),
+        screenSaver = preferences.getString("screen_saver", null)
+            ?.takeIf { it in ReceiverSettings.SCREEN_SAVERS } ?: ReceiverSettings.SCREEN_SAVER_BURN_IN
     )
 
     /** Before the access setting: a password switch, and before that a saved password alone. */
@@ -182,6 +194,7 @@ class ReceiverSettingsStore(context: Context) {
             .putString("language", settings.language)
             .putBoolean("check_updates", settings.checkUpdates)
             .putBoolean("send_error_reports", settings.sendErrorReports)
+            .putString("screen_saver", settings.screenSaver)
             .remove("audio_latency")
             .apply()
     }

@@ -3,8 +3,10 @@ package com.weenas.castbay
 import android.content.Context
 import android.os.Bundle
 import android.view.KeyEvent
+import android.view.MotionEvent
 import com.weenas.castbay.util.Diagnostics
 import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
@@ -28,6 +30,12 @@ import com.weenas.castbay.ui.theme.CastBayTheme
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: AirPlayViewModel by viewModels()
+    // A key or touch that woke the screen saver: the rest of it (key up, the touch's moves and
+    // lift) goes nowhere either.
+    private var wakingKey = -1
+    private var wakingTouch = false
+
     // The language chosen in Settings (Settings recreates the activity when it changes).
     override fun attachBaseContext(newBase: Context) = super.attachBaseContext(AppLanguage.wrap(newBase))
 
@@ -37,7 +45,36 @@ class MainActivity : ComponentActivity() {
             Diagnostics.record("key", KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_") +
                 " (${event.keyCode}) from ${event.device?.name ?: "?"}")
         }
+        // Media keys (a steering wheel's too) always work and don't wake the screen saver;
+        // any other key wakes it, and does nothing else.
+        if (!KeyEvent.isMediaSessionKey(event.keyCode)) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                val asleep = viewModel.screenSaverOn
+                viewModel.noteActivity()
+                if (asleep) {
+                    wakingKey = event.keyCode
+                    return true
+                }
+            } else if (event.action == KeyEvent.ACTION_UP && event.keyCode == wakingKey) {
+                wakingKey = -1
+                return true
+            }
+        }
         return super.dispatchKeyEvent(event)
+    }
+
+    /** A touch wakes the screen saver (and does nothing else); any touch counts as activity. */
+    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            val asleep = viewModel.screenSaverOn
+            viewModel.noteActivity()
+            wakingTouch = asleep
+        }
+        if (wakingTouch) {
+            if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) wakingTouch = false
+            return true
+        }
+        return super.dispatchTouchEvent(event)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

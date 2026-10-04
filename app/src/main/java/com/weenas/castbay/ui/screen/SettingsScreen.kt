@@ -265,6 +265,11 @@ private fun ColumnScope.PlaybackPage(settings: ReceiverSettings, viewModel: AirP
     ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
         viewModel.updateSettings { current -> current.copy(pictureMode = it) }
     }
+    CardDivider()
+    ChoiceSetting(stringResource(R.string.setting_screen_saver), settings.screenSaver, ReceiverSettings.SCREEN_SAVERS) {
+        viewModel.updateSettings { current -> current.copy(screenSaver = it) }
+    }
+    Text(stringResource(R.string.setting_screen_saver_note), color = Color.Gray, fontSize = 14.sp)
 }
 
 @Composable

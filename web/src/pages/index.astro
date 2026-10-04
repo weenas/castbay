@@ -29,6 +29,9 @@ const [latest] = await releases('en');
         Version {latest.data.version} · {formatDate('en', latest.data.date)} · <a href="/changelog">What's new</a><br>
         For Android TVs, TV boxes, car displays and tablets on Android 6.0 or later
       </p>
+      <p class="channels">
+        Also on: <a href="https://github.com/weenas/castbay/releases">GitHub releases</a> · <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay">Obtainium</a> · F-Droid (under review) · <a href="/faq#where-can-i-get-castbay-and-can-i-switch-between-sources">What's the difference?</a>
+      </p>
       <div class="chips">
         <span class="chip">Screen mirroring</span>
         <span class="chip">Music &amp; lyrics</span>
@@ -169,13 +172,38 @@ const [latest] = await releases('en');
     </div>
   </section>
 
-  <section class="alt">
-    <div class="wrap oss">
-      <div>
-        <h2 style="margin:0;font-size:clamp(26px,3.2vw,34px)">Open source, and open to you</h2>
-        <p>CastBay is open source under GPL-3.0, built on UxPlay, libplist, Apple's ALAC decoder and Media3 ExoPlayer. Issues and ideas are welcome on GitHub.</p>
+  <section class="alt" id="community">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Open source, and open to you</h2>
+        <p>CastBay is open source: your feedback and testing make it work well on more TVs and cars.</p>
       </div>
-      <a class="btn btn-ghost" href="https://github.com/weenas/castbay">github.com/weenas/castbay</a>
+      <div class="grid community">
+        <a class="card" href="/feedback">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>
+          <h3>Report a problem</h3>
+          <p>Report problems and suggest ideas on GitHub. In the app, About → Diagnostics uploads a log in one step: just give its report ID.</p>
+          <span class="more">How to give feedback →</span>
+        </a>
+        <a class="card" href="https://github.com/weenas/castbay">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg></div>
+          <h3>Source code</h3>
+          <p>Open source under GPL-3.0, built on UxPlay, libplist, Apple's ALAC decoder and Media3 ExoPlayer. The code, how to build it and every release are on GitHub.</p>
+          <span class="more">github.com/weenas/castbay →</span>
+        </a>
+        <a class="card" href="/compatibility">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="m9 10.5 2 2 4-4M8 21h8"/></svg></div>
+          <h3>Device compatibility</h3>
+          <p>Does CastBay work on your TV, box or car? Tell us the model and Android version, and save the next person the guesswork.</p>
+          <span class="more">See the compatibility list →</span>
+        </a>
+        <a class="card" href="/changelog.xml">
+          <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11a9 9 0 0 1 9 9M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg></div>
+          <h3>Follow updates</h3>
+          <p>Subscribe to the changelog by RSS; on a tablet, Obtainium can also follow new releases on GitHub. CastBay on a TV checks for updates itself.</p>
+          <span class="more">Subscribe by RSS →</span>
+        </a>
+      </div>
     </div>
   </section>
 </main>

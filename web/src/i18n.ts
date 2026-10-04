@@ -23,6 +23,7 @@ export const strings = {
     feedback: 'Feedback',
     privacy: 'Privacy',
     releases: 'Releases',
+    download: 'Download',
     trademarks: 'AirPlay, iPhone, iPad and Mac are trademarks of Apple Inc.; Android TV and Google TV are trademarks of Google LLC. CastBay is not affiliated with Apple or Google.',
   },
   zh: {
@@ -43,6 +44,7 @@ export const strings = {
     feedback: '反馈',
     privacy: '隐私政策',
     releases: '版本下载',
+    download: '下载',
     trademarks: 'AirPlay、iPhone、iPad、Mac 是 Apple Inc. 的商标；Android TV、Google TV 是 Google LLC 的商标。映湾（CastBay）与 Apple、Google 均无关联。',
   },
 } as const;

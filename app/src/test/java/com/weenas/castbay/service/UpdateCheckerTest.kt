@@ -33,6 +33,22 @@ class UpdateCheckerTest {
     }
 
     @Test
+    fun gitHubReleasesBringTheirNotes() {
+        val body = "## What's new\\n\\n- Faster **start**, see [the guide](https://x).\\n- `CastBay.apk` only.\\n\\n" +
+            "## 更新内容\\n\\n- 启动更快。\\n\\n## Verification\\n\\n- SHA-256: `ab`\\n\\n## What's Changed\\n* PR by @someone"
+        val json = """[
+            {"tag_name": "v1.3.3", "html_url": "b", "published_at": "2026-10-04T08:00:00Z", "body": "$body"},
+            {"tag_name": "v1.3.2", "html_url": "a", "published_at": "2026-10-03T08:00:00Z", "body": "## Verification\\n\\n- SHA"}
+        ]"""
+        val update = UpdateChecker.newest(json)!!
+        assertEquals(
+            listOf(ReleaseNotes("1.3.3", "2026-10-04", listOf("Faster start, see the guide.", "CastBay.apk only."), listOf("启动更快。"))),
+            update.notes
+        )
+        assertEquals(1, update.notesSince("1.3.0").size)
+    }
+
+    @Test
     fun readsTheWebsitesLatestJsonAndKeepsIt() {
         val json = """{"version": "1.0.86", "sha256": "${"cd".repeat(32)}", "urls": ["site", "github"], "page": "p"}"""
         val update = AppUpdate.fromJson(json)

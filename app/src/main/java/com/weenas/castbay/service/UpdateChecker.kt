@@ -13,7 +13,7 @@ data class ReleaseNotes(val version: String, val date: String, val en: List<Stri
 /**
  * A newer CastBay: its version ("1.0.72"), its release page, and where to download its APK
  * ([apkUrls], tried in order) with the SHA-256 the download must have (null if not known),
- * and the latest versions' release notes, newest first (from the website; empty from GitHub).
+ * and the latest versions' release notes, newest first.
  */
 data class AppUpdate(
     val version: String,
@@ -136,12 +136,15 @@ class UpdateChecker(context: Context, private val appVersion: String) {
 
         /**
          * The highest version among the published (not draft) releases in a GitHub listing,
-         * with its CastBay-<version>.apk and that file's SHA-256 when GitHub lists them.
+         * with its CastBay-<version>.apk and that file's SHA-256 when GitHub lists them, and the
+         * listed releases' notes (for when the website, which has them too, can't be reached).
          */
         internal fun newest(releasesJson: String): AppUpdate? {
             val releases = JSONArray(releasesJson)
-            return (0 until releases.length()).map { releases.getJSONObject(it) }
+            val published = (0 until releases.length()).map { releases.getJSONObject(it) }
                 .filter { !it.optBoolean("draft") }
+            val notes = published.mapNotNull(::gitHubNotes).sortedWith { a, b -> compare(b.version, a.version) }
+            return published
                 .mapNotNull { release ->
                     val version = release.optString("tag_name").removePrefix("v")
                     if (parse(version) == null) return@mapNotNull null
@@ -152,11 +155,44 @@ class UpdateChecker(context: Context, private val appVersion: String) {
                         version = version,
                         url = release.optString("html_url"),
                         apkUrls = listOfNotNull(apk?.optString("browser_download_url")?.takeIf { it.isNotEmpty() }),
-                        sha256 = apk?.optString("digest")?.removePrefix("sha256:")?.takeIf { it.length == 64 }
+                        sha256 = apk?.optString("digest")?.removePrefix("sha256:")?.takeIf { it.length == 64 },
+                        notes = notes
                     )
                 }
                 .maxWithOrNull { a, b -> compare(a.version, b.version) }
         }
+
+        /**
+         * A GitHub release's notes: the bullet points under "## What's new" and "## 更新内容",
+         * which the release workflow copies from the changelog, as plain text (as the website's
+         * latest.json has them); null without either.
+         */
+        private fun gitHubNotes(release: JSONObject): ReleaseNotes? {
+            val version = release.optString("tag_name").removePrefix("v")
+            if (parse(version) == null) return null
+            val en = mutableListOf<String>()
+            val zh = mutableListOf<String>()
+            var section: MutableList<String>? = null
+            for (line in release.optString("body").lines()) {
+                when {
+                    line.startsWith("## ") -> section = when (line.removePrefix("## ").trim()) {
+                        "What's new" -> en
+                        "更新内容" -> zh
+                        else -> null
+                    }
+                    line.startsWith("- ") -> section?.add(plain(line.removePrefix("- ")))
+                }
+            }
+            if (en.isEmpty() && zh.isEmpty()) return null
+            return ReleaseNotes(version, release.optString("published_at").take(10), en, zh)
+        }
+
+        /** Without Markdown's links, bold and code marks, as the website's latest.json. */
+        private fun plain(markdown: String): String = markdown
+            .replace(Regex("""\[([^\]]+)\]\([^)]*\)"""), "$1")
+            .replace(Regex("""\*\*([^*]+)\*\*"""), "$1")
+            .replace(Regex("`([^`]+)`"), "$1")
+            .trim()
 
         /** Whether [candidate] ("1.0.72") is a later version than [current] ("1.0.70"). */
         fun isNewer(candidate: String, current: String): Boolean {

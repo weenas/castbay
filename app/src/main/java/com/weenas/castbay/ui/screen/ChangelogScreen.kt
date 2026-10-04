@@ -46,7 +46,7 @@ fun ChangelogScreen(viewModel: AirPlayViewModel) {
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             item {
-                Text(stringResource(R.string.changelog_title, current.version), fontSize = 36.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(stringResource(R.string.changelog_title, current.version), fontSize = 36.sp, lineHeight = 42.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 Text(
                     stringResource(R.string.changelog_installed, installed),
                     fontSize = 16.sp,

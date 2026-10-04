@@ -25,7 +25,7 @@ Before opening a pull request:
 - Commit messages in English: a short summary line, then why the change is needed.
 - Follow the style of the code around your change: Kotlin with Jetpack Compose, comments that explain why rather than what.
 - Don't change `versionName` / `versionCode`; they change only when a release is made.
-- CI builds the app and the website; a maintainer merges once it passes and the change is reviewed.
+- CI builds the app and the website; a maintainer merges once it passes and the change is reviewed. `main` only takes pull requests, merged by rebase (its history stays linear) after the `build`, `website-build` and GitGuardian checks pass; it is never force-pushed.
 
 ## Translations
 

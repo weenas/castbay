@@ -3,6 +3,7 @@ package com.weenas.castbay.util
 import android.content.Context
 import android.os.Process
 import com.weenas.castbay.R
+import com.weenas.castbay.protocol.AirPlayNative
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -46,21 +47,37 @@ object LogReport {
             appendLine("== Diagnostics events (oldest first) ==")
             Diagnostics.events().asReversed().forEach { appendLine(Diagnostics.format(it)) }
             appendLine()
-            appendLine("== Log ==")
         }
-        // logcat has native and player logs too; some TVs keep none, so then the app's own.
-        val logcat = logcat()
-        val log = if (logcat.size >= 20) logcat else Log.recent()
-        // The newest lines matter most: drop the oldest if it is too long.
-        val budget = MAX_CHARS - head.length
+        // Three logs, as no one of them is enough everywhere: the app's own lines and the
+        // protocol code's (kept in memory: some devices, TCL TVs and BYD car displays among
+        // them, keep no app logs in logcat), then logcat, for the player and the system.
+        val budget = (MAX_CHARS - head.length).coerceAtLeast(0)
+        val app = newest(Log.recent(), budget * 4 / 10)
+        val native = newest(runCatching { AirPlayNative.recentLog() }.getOrDefault(emptyList()), budget * 4 / 10)
+        val system = newest(logcat(), budget - app.length - native.length)
+        return scrub(buildString {
+            append(head)
+            appendLine("== App log ==")
+            appendLine(app.ifEmpty { "(none)" })
+            appendLine()
+            appendLine("== AirPlay protocol log ==")
+            appendLine(native.ifEmpty { "(none)" })
+            appendLine()
+            appendLine("== System log (logcat, this app's process) ==")
+            append(system.ifEmpty { "(none: this device keeps no app logs)" })
+        })
+    }
+
+    /** The newest of [lines] that fit in [budget] characters, oldest first. */
+    private fun newest(lines: List<String>, budget: Int): String {
         val kept = ArrayDeque<String>()
         var size = 0
-        for (line in log.asReversed()) {
+        for (line in lines.asReversed()) {
             if (size + line.length + 1 > budget) break
             kept.addFirst(line)
             size += line.length + 1
         }
-        return scrub(head + kept.joinToString("\n"))
+        return kept.joinToString("\n")
     }
 
     /**

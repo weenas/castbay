@@ -80,6 +80,12 @@ android {
         }
     }
 
+    lint {
+        // Calling an API newer than minSdk crashes on older TVs and cars (1.4.0 did on any key
+        // before Android 12); lintVital, which CI and every release build run, stops on it.
+        fatal += "NewApi"
+    }
+
     buildTypes {
         debug {
             // Installs beside the release app, with the simulated sender (src/debug) for tests.

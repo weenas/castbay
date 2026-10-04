@@ -47,7 +47,7 @@ class MainActivity : ComponentActivity() {
         }
         // Media keys (a steering wheel's too) always work and don't wake the screen saver;
         // any other key wakes it, and does nothing else.
-        if (!KeyEvent.isMediaSessionKey(event.keyCode)) {
+        if (event.keyCode !in MEDIA_KEYS) {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 val asleep = viewModel.screenSaverOn
                 viewModel.noteActivity()
@@ -146,3 +146,14 @@ private fun Screens() {
         DeviceRequestDialog(deviceRequest, onAnswer = viewModel::answerDeviceRequest, onDismiss = viewModel::dismissDeviceRequest)
     }
 }
+
+/**
+ * The keys a media session handles (as KeyEvent.isMediaSessionKey, which is Android 12+: before
+ * that, calling it crashed on any key).
+ */
+private val MEDIA_KEYS = setOf(
+    KeyEvent.KEYCODE_MEDIA_PLAY, KeyEvent.KEYCODE_MEDIA_PAUSE, KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
+    KeyEvent.KEYCODE_MUTE, KeyEvent.KEYCODE_HEADSETHOOK, KeyEvent.KEYCODE_MEDIA_STOP,
+    KeyEvent.KEYCODE_MEDIA_NEXT, KeyEvent.KEYCODE_MEDIA_PREVIOUS, KeyEvent.KEYCODE_MEDIA_REWIND,
+    KeyEvent.KEYCODE_MEDIA_RECORD, KeyEvent.KEYCODE_MEDIA_FAST_FORWARD
+)

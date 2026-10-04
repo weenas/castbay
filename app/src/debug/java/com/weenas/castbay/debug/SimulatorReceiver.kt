@@ -46,13 +46,19 @@ class SimulatorReceiver : BroadcastReceiver() {
                 intent.getStringExtra("url") ?: SimulatedSender.SAMPLE_VIDEO
             )
             "stop" -> sim.stop()
-            // For error reports: an uncaught exception on the main thread, as a real bug would.
             // Usage statistics: what is kept, then send it now, today's too.
             "stats" -> {
                 val app = context.applicationContext
                 Log.i(SimulatedSender.TAG, "Statistics: ${com.weenas.castbay.util.UsageStats.describe(app)}")
                 kotlin.concurrent.thread { com.weenas.castbay.util.UsageStats.sendFinishedDays(app, includeToday = true) }
             }
+            // The music screen saver after SECONDS rather than minutes (no value: back to normal).
+            "saver" -> {
+                val seconds = intent.getIntExtra("seconds", 0)
+                com.weenas.castbay.ui.screen.ScreenSaverTiming.testDelayMs = if (seconds > 0) seconds * 1000L else null
+                Log.i(SimulatedSender.TAG, "Screen saver delay: ${if (seconds > 0) "${seconds}s" else "normal"}")
+            }
+            // For error reports: an uncaught exception on the main thread, as a real bug would.
             "crash" -> android.os.Handler(android.os.Looper.getMainLooper()).post {
                 throw IllegalStateException("Simulated crash (tools/sim crash)")
             }

@@ -17,6 +17,9 @@ fun settingValueLabel(value: String): String = when (value) {
     ReceiverSettings.PICTURE_FIT -> stringResource(R.string.picture_fit)
     ReceiverSettings.PICTURE_FILL -> stringResource(R.string.picture_fill)
     ReceiverSettings.PICTURE_STRETCH -> stringResource(R.string.picture_stretch)
+    ReceiverSettings.SCREEN_SAVER_BURN_IN -> stringResource(R.string.screen_saver_burn_in)
+    ReceiverSettings.SCREEN_SAVER_MUSIC_OFF -> stringResource(R.string.screen_saver_music_off)
+    ReceiverSettings.SCREEN_SAVER_OFF -> stringResource(R.string.off)
     else -> value.removeSuffix(" FPS").toIntOrNull()?.let { stringResource(R.string.frame_rate_fps, it) } ?: value
 }
 

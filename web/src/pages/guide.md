@@ -132,6 +132,14 @@ Press Down or Menu while playing, or tap a touch screen. It closes by itself aft
 
 The blurred album cover fills the background; in front are the cover, title, artist, album and progress, with the playback buttons below. With lyrics on, they scroll along with the song on the right, or it says there are none. The top left shows which device is casting.
 
+When music plays and nobody touches anything, the music screen does what Settings → "Music Screen When Idle" says (against burn-in by default):
+
+- **Against burn-in**: after 10 minutes without a key or touch the picture dims, and moves a few pixels every minute, so an OLED TV doesn't keep the same picture in one place for hours.
+- **Screen off**: after 2 minutes the screen goes black while the music plays on; tablets and car displays also turn their brightness down as far as it goes.
+- **Off**: the screen stays as it is.
+
+Any key on the remote, a touch, or a new cast brings the picture back; that first key or touch only wakes it, without pressing a button. Media keys (play/pause, next, previous, on the remote or the steering wheel) work as usual and don't wake it. On the TV's home screen, with nothing casting, the TV's own screensaver takes over.
+
 ## Settings
 
 Choose Settings on the home screen, and move between the four tabs at the top with Left and Right. Text fields, such as the device name, open the keyboard only when you press OK.
@@ -162,6 +170,7 @@ These apply at once, and can also be changed from the quick menu while casting.
 - **Show playback stats**.
 - **Show lyrics for music**: looks the song's title and artist up on lrclib.net; off by default.
 - **Picture**: Fit, Fill or Stretch.
+- **Music Screen When Idle**: Against burn-in (the default), Screen off or Off; see [The music screen](#the-music-screen). Not in the quick menu.
 
 ### General
 

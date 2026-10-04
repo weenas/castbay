@@ -186,6 +186,20 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         checkForUpdate()
     }
 
+    private val _lastActivity = MutableStateFlow(android.os.SystemClock.elapsedRealtime())
+    /** When the person last pressed a key or touched the screen (elapsedRealtime), for the screen saver. */
+    val lastActivity: StateFlow<Long> = _lastActivity.asStateFlow()
+
+    /**
+     * Whether the music screen saver is dimming or blacking out the screen: the next key or
+     * touch then only wakes it (MainActivity), so it can't pause or close anything by accident.
+     */
+    @Volatile var screenSaverOn = false
+
+    fun noteActivity() {
+        _lastActivity.value = android.os.SystemClock.elapsedRealtime()
+    }
+
     /** The home screen's note about a crash in the last run: asking, sending, sent or failed. */
     sealed interface CrashNotice {
         data object Ask : CrashNotice

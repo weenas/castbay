@@ -14,6 +14,7 @@
 #   stop                        the sender stops casting
 #   crash                       make the app crash (tests error reports)
 #   stats                       log the usage statistics kept, and send them now
+#   saver [SECONDS]             music screen saver after SECONDS (no value: normal delays)
 #   key KEY...                  press remote keys: up down left right ok back home menu
 #                               playpause, or any KEYCODE_* name
 #   shot [FILE]                 screenshot (default: sim-shot.png)
@@ -87,6 +88,9 @@ case "$cmd" in
     simulate "${args[@]}"
     ;;
   pause | resume | stop | crash | stats) simulate "$cmd" ;;
+  saver)
+    if [[ -n "${1:-}" ]]; then simulate saver --ei seconds "$1"; else simulate saver; fi
+    ;;
   video)
     if [[ -n "${1:-}" ]]; then simulate video --es url "$1"; else simulate video; fi
     ;;

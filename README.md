@@ -5,6 +5,14 @@
   </picture>
 </p>
 
+<p align="center">
+  <a href="https://github.com/weenas/castbay/actions/workflows/android.yml"><img src="https://github.com/weenas/castbay/actions/workflows/android.yml/badge.svg" alt="Build"></a>
+  <a href="https://github.com/weenas/castbay/releases/latest"><img src="https://img.shields.io/github/v/release/weenas/castbay" alt="Latest release"></a>
+  <a href="https://github.com/weenas/castbay/releases"><img src="https://img.shields.io/github/downloads/weenas/castbay/total" alt="Downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/weenas/castbay" alt="License: GPL-3.0"></a>
+  <a href="https://castbay.weenas.com/compatibility"><img src="https://img.shields.io/badge/Android-6.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 6.0+"></a>
+</p>
+
 # 映湾 CastBay: AirPlay and DLNA Receiver for Android TVs, Car Displays and Tablets
 
 **Cast it, it's there. Kick back with CastBay.** · 一投即达，自在映湾

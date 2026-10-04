@@ -11,6 +11,8 @@
   <a href="https://github.com/weenas/castbay/releases"><img src="https://img.shields.io/github/downloads/weenas/castbay/total" alt="Downloads"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/weenas/castbay" alt="License: GPL-3.0"></a>
   <a href="https://castbay.weenas.com/compatibility"><img src="https://img.shields.io/badge/Android-6.0%2B-3DDC84?logo=android&amp;logoColor=white" alt="Android 6.0+"></a>
+  <a href="https://github.com/weenas/castbay/commits/main"><img src="https://img.shields.io/github/last-commit/weenas/castbay" alt="Last commit"></a>
+  <a href="https://scorecard.dev/viewer/?uri=github.com/weenas/castbay"><img src="https://api.scorecard.dev/projects/github.com/weenas/castbay/badge" alt="OpenSSF Scorecard"></a>
 </p>
 
 # 映湾 CastBay: AirPlay and DLNA Receiver for Android TVs, Car Displays and Tablets
@@ -18,6 +20,11 @@
 **Cast it, it's there. Kick back with CastBay.** · 一投即达，自在映湾
 
 **Website: [castbay.weenas.com](https://castbay.weenas.com)** · [User guide](https://castbay.weenas.com/guide) · [How it works](https://castbay.weenas.com/tech) · **Download: [CastBay.apk](https://github.com/weenas/castbay/releases/latest/download/CastBay.apk)** ([all releases](https://github.com/weenas/castbay/releases)) · [Privacy policy](https://castbay.weenas.com/privacy)
+
+<p align="center">
+  <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" alt="Get it on GitHub" height="60"></a>
+  <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60"></a>
+</p>
 
 CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). Free, open source, no ads.
 

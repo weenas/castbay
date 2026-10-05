@@ -13,41 +13,72 @@ import java.util.Locale
 import android.util.Log as AndroidLog
 
 /**
- * Drop-in for [android.util.Log] that, in debug builds, also appends to
- * `<external files dir>/logs/castbay.log` together with native and protocol logs.
+ * Drop-in for [android.util.Log] that also appends to `logs/castbay.log`, the native and
+ * protocol code to `logs/protocol.log` beside it. Each starts afresh past a size, keeping the
+ * one before as ".old", so the newest lines are always on disk; a new process keeps the
+ * previous one's as ".1" ([previousRun]), which is how a problem report shows what happened
+ * before a crash that took the process, and its memory, with it.
  *
- * Some TVs (e.g. TCL) silence app logs in logd, so logcat shows nothing. Fetch the file with
- * `adb pull /sdcard/Android/data/com.weenas.castbay/files/logs/castbay.log`.
+ * Release builds keep them small, in internal storage, where only CastBay reads them (they leave
+ * the device only in a problem report, scrubbed like the rest). Debug builds keep more, on
+ * external storage when they can: some TVs (e.g. TCL) silence app logs in logd, so fetch them with
+ * `adb pull /sdcard/Android/data/com.weenas.castbay.debug/files/logs/`.
  */
 object Log {
-    /** Stop appending past this size rather than filling the TV's storage (as native does). */
-    private const val MAX_FILE_BYTES = 20L * 1024 * 1024
+    private const val APP_FILE = "castbay.log"
+    private const val PROTOCOL_FILE = "protocol.log"
+    private val maxFileBytes = if (BuildConfig.DEBUG) 10L * 1024 * 1024 else 128L * 1024
 
     @Volatile private var file: File? = null
     private var output: FileOutputStream? = null
     private val timeFormat = SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US)
 
-    /** Starts the log file (debug builds only); the previous run's file is kept as ".1". */
+    /** Starts the log files, once per process, keeping the previous process's as ".1". */
     @Synchronized
     fun init(context: Context) {
-        if (!BuildConfig.DEBUG || file != null) return
+        if (file != null) return
         // Some old TVs (Android 6) can't create the external directory: then internal storage.
-        val dirs = listOfNotNull(context.getExternalFilesDir(null), context.filesDir).map { File(it, "logs") }
-        val current = dirs.firstNotNullOfOrNull { dir ->
+        val roots = if (BuildConfig.DEBUG) listOfNotNull(context.getExternalFilesDir(null), context.filesDir) else listOf(context.filesDir)
+        val current = roots.map { File(it, "logs") }.firstNotNullOfOrNull { dir ->
             dir.mkdirs()
-            val log = File(dir, "castbay.log")
-            if (log.exists()) log.renameTo(File(dir, "castbay.log.1"))
+            keepAsPrevious(dir, APP_FILE)
+            keepAsPrevious(dir, PROTOCOL_FILE)
+            val log = File(dir, APP_FILE)
             runCatching { output = FileOutputStream(log, true) }.map { log }.getOrNull()
         } ?: return
         file = current
         try {
-            AirPlayNative.setLogFile(current.absolutePath)
+            AirPlayNative.setLogFile(File(current.parentFile, PROTOCOL_FILE).absolutePath, maxFileBytes)
         } catch (error: UnsatisfiedLinkError) {
             // No native library: Kotlin logs still reach the file.
         }
-        androidx.media3.common.util.Log.setLogger(Media3Logger)
-        i("CastBay", "Logging to ${current.absolutePath}")
+        if (BuildConfig.DEBUG) androidx.media3.common.util.Log.setLogger(Media3Logger)
+        i("CastBay", "Logging to ${current.parentFile?.absolutePath}")
     }
+
+    private fun keepAsPrevious(dir: File, name: String) {
+        for (suffix in listOf("", ".old")) {
+            val previous = File(dir, "$name.1$suffix")
+            previous.delete()
+            File(dir, name + suffix).renameTo(previous)
+        }
+    }
+
+    /**
+     * The previous process's last lines, its own and the protocol code's merged in time order,
+     * oldest first: empty if there are none.
+     */
+    fun previousRun(maxLines: Int): List<String> {
+        val dir = file?.parentFile ?: return emptyList()
+        fun read(name: String) = listOf("$name.1.old", "$name.1").flatMap { part ->
+            runCatching { File(dir, part).takeIf { it.exists() }?.readLines() }.getOrNull().orEmpty()
+        }.takeLast(maxLines)
+        return mergeByTime(read(APP_FILE), read(PROTOCOL_FILE), maxLines)
+    }
+
+    /** Two logs' lines ("MM-dd HH:mm:ss.SSS …") in time order, the last [maxLines]; each keeps its own order. */
+    internal fun mergeByTime(first: List<String>, second: List<String>, maxLines: Int): List<String> =
+        (first + second).sortedBy { it.take(18) }.takeLast(maxLines)
 
     fun d(tag: String, message: String) = log(AndroidLog.DEBUG, tag, message, null)
     fun d(tag: String, message: String, error: Throwable?) = log(AndroidLog.DEBUG, tag, message, error)
@@ -95,19 +126,28 @@ object Log {
     @Synchronized
     private fun append(priority: Int, tag: String, message: String) {
         val target = file ?: return
-        val stream = output ?: return
-        if (target.length() > MAX_FILE_BYTES) return
+        val stream = startAfreshIfFull(target) ?: return
         val letter = "??VDIWEA".getOrElse(priority) { '?' }
         val prefix = "%s %5d %5d %c %s: ".format(
             Locale.US, timeFormat.format(Date()), android.os.Process.myPid(), android.os.Process.myTid(), letter, tag
         )
         val text = message.lines().joinToString("") { prefix + it + "\n" }
         try {
-            // One append-mode write per entry keeps lines whole next to the native writer.
             stream.write(text.toByteArray())
         } catch (error: Exception) {
             AndroidLog.w("CastBay", "Log file write failed", error)
         }
+    }
+
+    /** Past [maxFileBytes], moves the file to ".old" and starts a new one. */
+    private fun startAfreshIfFull(target: File): FileOutputStream? {
+        if (target.length() <= maxFileBytes) return output
+        runCatching { output?.close() }
+        val old = File(target.path + ".old")
+        old.delete()
+        target.renameTo(old)
+        output = runCatching { FileOutputStream(target, true) }.getOrNull()
+        return output
     }
 
     private fun stackTrace(error: Throwable): String =

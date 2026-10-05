@@ -5,7 +5,7 @@ page: privacy
 title: 'Privacy Policy – CastBay'
 description: 'CastBay''s privacy policy: no account, no ads, no third-party analytics; nothing is sent unless you choose to. Lyrics lookups, the update check, problem reports and anonymous usage statistics are optional.'
 heading: 'Privacy Policy'
-intro: 'Effective: October 4, 2026'
+intro: 'Effective: October 5, 2026'
 ---
 
 CastBay is an open-source casting receiver app for Android TVs, car displays and tablets. It needs no account and contains no ads or third-party analytics or tracking code.
@@ -43,6 +43,7 @@ A problem report is sent in two cases, both your choice:
 - The Diagnostics events shown on that screen: when CastBay started and stopped, remote and steering-wheel keys, taps, audio focus, and why the app last ended.
 - CastBay's own recent log (at most about 400 KB): what the receiver did, such as connections, the video format and decoder, and errors. Android lets an app read only its own log, not other apps'.
 - For a report after a crash: the error and where in CastBay's code it happened (the stack trace), and CastBay's log lines just before it.
+- If CastBay's previous run ended while it was receiving, without CastBay stopping it (a crash, or Android closing it): that run's last log lines, of the same kind.
 
 **What is taken out on the device, before sending**
 
@@ -82,6 +83,8 @@ In some networks (often in mainland China) this website, on Cloudflare, can't be
 Your settings (such as the device name and casting password) stay on the TV and are never uploaded, as does the list of devices that have cast to it (their names and AirPlay device IDs, whether each is allowed, and the pairing keys of devices paired with a PIN). You can remove the devices in Settings; uninstalling CastBay deletes all of it.
 
 The record on About → Diagnostics (recent starts, keys, taps and audio-focus events, and the device's model, Android version and screen size) also stays on the device, at most the latest 120 events: it is only shown when you open that screen, can be cleared there, and leaves the device only in a problem report you upload.
+
+CastBay also keeps its recent log in its own storage on the device, the current run's and the previous one's, a few hundred KB at most, so that a problem report can show what happened before a crash. No other app can read it; it leaves the device only in a problem report you send, with personal details taken out as above, and uninstalling CastBay deletes it.
 
 ## Permissions
 

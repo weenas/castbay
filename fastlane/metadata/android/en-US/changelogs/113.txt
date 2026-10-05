@@ -1,0 +1,2 @@
+• Fixes CastBay closing when an iPhone starts casting on Android 6.
+• Problem reports include the last log of a previous run that ended unexpectedly, so one report shows what went wrong.

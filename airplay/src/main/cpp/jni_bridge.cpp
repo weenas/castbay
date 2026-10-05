@@ -768,9 +768,9 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeRaopTxtRecord(JNIEnv *env, 
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_weenas_castbay_protocol_AirPlayNative_nativeSetLogFile(JNIEnv *env, jclass, jstring path) {
+Java_com_weenas_castbay_protocol_AirPlayNative_nativeSetLogFile(JNIEnv *env, jclass, jstring path, jlong maxBytes) {
     const char *file = path ? env->GetStringUTFChars(path, nullptr) : nullptr;
-    castbay_log_open(file);
+    castbay_log_open(file, static_cast<long>(maxBytes));
     if (file) env->ReleaseStringUTFChars(path, file);
 }
 

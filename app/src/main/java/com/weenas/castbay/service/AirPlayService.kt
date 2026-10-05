@@ -52,6 +52,7 @@ class AirPlayService : Service() {
         super.onCreate()
         Diagnostics.init(this)
         Diagnostics.record("service", "Created")
+        Diagnostics.receiverRunning(true)
         // Brings the receiver back once the device has a network again, e.g. a car waking up.
         com.weenas.castbay.receiver.WakeJobService.schedule(this)
         createNotificationChannel()
@@ -101,6 +102,7 @@ class AirPlayService : Service() {
 
     override fun onDestroy() {
         Diagnostics.record("service", "Destroyed" + if (running) " while running" else "")
+        Diagnostics.receiverRunning(false)
         if (running) manager.stop()
         manager.unregisterStateCallback(stateCallback)
         super.onDestroy()

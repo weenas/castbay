@@ -13,11 +13,11 @@
 #include <string>
 
 namespace {
-/* Stop appending past this size rather than filling the TV's storage. */
-constexpr off_t kMaxFileBytes = 20 * 1024 * 1024;
-
 std::mutex g_mutex;
 std::atomic<int> g_fd{-1};
+/* Under g_mutex: the file's path, for starting it afresh. */
+std::string g_path;
+std::atomic<long> g_max_bytes{20 * 1024 * 1024};
 
 /* The latest lines, for problem reports; each one short enough to keep the whole small. */
 constexpr size_t kRecentLines = 1000;
@@ -37,9 +37,23 @@ char priorityLetter(int priority) {
     }
 }
 
+/* Moves the full file to ".old" and starts a new one under the same descriptor. */
+void startAfresh(int fd) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    struct stat st{};
+    // Another thread may have just done it.
+    if (g_path.empty() || fstat(fd, &st) != 0 || st.st_size <= g_max_bytes.load()) return;
+    std::string old = g_path + ".old";
+    if (rename(g_path.c_str(), old.c_str()) != 0) return;
+    int fresh = open(g_path.c_str(), O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0644);
+    if (fresh < 0) return;
+    dup2(fresh, fd);
+    close(fresh);
+}
+
 void writeLine(int fd, int priority, const char *tag, const char *message) {
     struct stat st{};
-    if (fstat(fd, &st) == 0 && st.st_size > kMaxFileBytes) return;
+    if (fstat(fd, &st) == 0 && st.st_size > g_max_bytes.load()) startAfresh(fd);
     timespec now{};
     clock_gettime(CLOCK_REALTIME, &now);
     tm local{};
@@ -54,19 +68,22 @@ void writeLine(int fd, int priority, const char *tag, const char *message) {
         length = sizeof(line) - 1;
         line[length - 1] = '\n';
     }
-    // One O_APPEND write per line keeps lines whole alongside the Kotlin writer.
+    // One O_APPEND write per line keeps each line whole.
     (void) !write(fd, line, static_cast<size_t>(length));
 }
 }  // namespace
 
-extern "C" void castbay_log_open(const char *path) {
+extern "C" void castbay_log_open(const char *path, long max_bytes) {
     std::lock_guard<std::mutex> lock(g_mutex);
     int current = g_fd.load();
     if (!path || !*path) {
         // Not closed: another thread may be mid-write. One descriptor is left open.
         g_fd = -1;
+        g_path.clear();
         return;
     }
+    if (max_bytes > 0) g_max_bytes = max_bytes;
+    g_path = path;
     int fd = open(path, O_WRONLY | O_CREAT | O_APPEND | O_CLOEXEC, 0644);
     if (fd < 0) return;
     if (current >= 0 && dup2(fd, current) >= 0) {

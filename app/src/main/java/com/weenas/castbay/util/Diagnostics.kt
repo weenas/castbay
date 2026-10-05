@@ -36,12 +36,50 @@ object Diagnostics {
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
+        Log.init(context)
         CrashReports.install(context)
         UsageStats.init(context)
         val uptimeMin = SystemClock.elapsedRealtime() / 60_000
         record("process", "Started (pid ${Process.myPid()}), device up $uptimeMin min, boot #${bootCount() ?: "?"}")
         recordLastExit(context)
+        recordUnfinishedRun(context)
     }
+
+    /**
+     * Whether the previous process ended while its receiver ran, in this boot, without
+     * CastBay stopping it: a crash, or Android ending it. Android 6 to 10 say no more than
+     * that (Android 11+ say why, [recordLastExit]); a problem report then adds that run's
+     * last log lines ([Log.previousRun]).
+     */
+    @Volatile var previousRunUnfinished = false
+        private set
+
+    private fun runMarker(context: Context) = java.io.File(context.filesDir, "receiver-running")
+
+    private fun recordUnfinishedRun(context: Context) {
+        val marker = runMarker(context)
+        val bootOfRun = runCatching { marker.takeIf { it.exists() }?.readText()?.trim() }.getOrNull() ?: return
+        marker.delete()
+        // Switched off or restarted: the receiver didn't fail.
+        if (bootOfRun != bootId()) return
+        previousRunUnfinished = true
+        record("process", "The previous run ended while receiving, without CastBay stopping it: a crash, or Android ended it")
+    }
+
+    /** The receiver is running (service created) or stopped on purpose (destroyed). */
+    fun receiverRunning(running: Boolean) {
+        val context = appContext ?: return
+        val marker = runMarker(context)
+        if (running) runCatching { marker.writeText(bootId()) } else marker.delete()
+    }
+
+    /**
+     * This boot's ID, from the kernel; where it can't be read, when it began (to the minute:
+     * the clock may be set after starting).
+     */
+    private fun bootId(): String =
+        runCatching { java.io.File("/proc/sys/kernel/random/boot_id").readText().trim() }.getOrNull()?.takeIf { it.isNotEmpty() }
+            ?: ((System.currentTimeMillis() - SystemClock.elapsedRealtime()) / 600_000).toString()
 
     /**
      * Why the previous process ended (Android 11+): killed by the system, stopped by the

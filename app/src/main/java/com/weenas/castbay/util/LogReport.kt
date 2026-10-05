@@ -23,6 +23,7 @@ object LogReport {
     // The website takes up to 512 KB.
     private const val MAX_CHARS = 400_000
     private const val LOGCAT_LINES = 3000
+    private const val PREVIOUS_LINES = 2000
     private const val CONNECT_TIMEOUT_MS = 20_000
     // Some networks upload slowly; the answer comes once the whole report is in.
     private const val READ_TIMEOUT_MS = 60_000
@@ -50,12 +51,20 @@ object LogReport {
         // Three logs, as no one of them is enough everywhere: the app's own lines and the
         // protocol code's (kept in memory: some devices, TCL TVs and BYD car displays among
         // them, keep no app logs in logcat), then logcat, for the player and the system.
-        val budget = (MAX_CHARS - head.length).coerceAtLeast(0)
+        val total = (MAX_CHARS - head.length).coerceAtLeast(0)
+        // What led up to an unfinished previous run, when there was one: in memory it was lost.
+        val previous = if (Diagnostics.previousRunUnfinished) newest(Log.previousRun(PREVIOUS_LINES), total / 4) else ""
+        val budget = total - previous.length
         val app = newest(Log.recent(), budget * 4 / 10)
         val native = newest(runCatching { AirPlayNative.recentLog() }.getOrDefault(emptyList()), budget * 4 / 10)
         val system = newest(logcat(), budget - app.length - native.length)
         return scrub(buildString {
             append(head)
+            if (previous.isNotEmpty()) {
+                appendLine("== The previous run, which ended without CastBay stopping it (its last lines) ==")
+                appendLine(previous)
+                appendLine()
+            }
             appendLine("== App log ==")
             appendLine(app.ifEmpty { "(none)" })
             appendLine()

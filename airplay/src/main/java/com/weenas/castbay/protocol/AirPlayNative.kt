@@ -115,7 +115,8 @@ object AirPlayNative {
     fun setVideoSink(sink: VideoSink?) = nativeSetVideoSink(sink)
 
     /** Also appends native and protocol logs to [path] (null stops); see file_log.h. */
-    fun setLogFile(path: String?) = nativeSetLogFile(path)
+    /** Native and protocol logs go to [path] too; past [maxBytes] it starts afresh, keeping "[path].old". */
+    fun setLogFile(path: String?, maxBytes: Long) = nativeSetLogFile(path, maxBytes)
 
     /** The native and protocol code's latest log lines, oldest first (for problem reports). */
     fun recentLog(): List<String> = String(nativeRecentLog(), Charsets.UTF_8).lines().filter { it.isNotEmpty() }
@@ -210,7 +211,7 @@ object AirPlayNative {
     @JvmStatic private external fun nativeAirPlayTxtRecord(): Array<String>
     @JvmStatic private external fun nativeRaopTxtRecord(): Array<String>
     @JvmStatic private external fun nativeSetVideoSink(sink: VideoSink?)
-    @JvmStatic private external fun nativeSetLogFile(path: String?)
+    @JvmStatic private external fun nativeSetLogFile(path: String?, maxBytes: Long)
     @JvmStatic private external fun nativeRecentLog(): ByteArray
     @JvmStatic private external fun nativeTestThreadExit()
     @JvmStatic private external fun nativeSetAudioSink(sink: AudioSink?)

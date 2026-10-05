@@ -119,6 +119,9 @@ object AirPlayNative {
 
     /** The native and protocol code's latest log lines, oldest first (for problem reports). */
     fun recentLog(): List<String> = String(nativeRecentLog(), Charsets.UTF_8).lines().filter { it.isNotEmpty() }
+
+    /** For tests (tools/sim jnithread): a native thread attaches to Java and exits, as UxPlay's do. */
+    fun testThreadExit() = nativeTestThreadExit()
     fun setAudioSink(sink: AudioSink?) = nativeSetAudioSink(sink)
 
     /** `_airplay._tcp` TXT entries built by the running protocol core (empty when stopped). */
@@ -209,6 +212,7 @@ object AirPlayNative {
     @JvmStatic private external fun nativeSetVideoSink(sink: VideoSink?)
     @JvmStatic private external fun nativeSetLogFile(path: String?)
     @JvmStatic private external fun nativeRecentLog(): ByteArray
+    @JvmStatic private external fun nativeTestThreadExit()
     @JvmStatic private external fun nativeSetAudioSink(sink: AudioSink?)
 }
 

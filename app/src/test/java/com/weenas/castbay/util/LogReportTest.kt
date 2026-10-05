@@ -48,4 +48,21 @@ class LogReportTest {
         assertEquals("too many reports", LogReport.reason(LogReport.TooManyReports()))
         assertEquals("address not found (DNS)", LogReport.reason(java.net.UnknownHostException("castbay.weenas.com")))
     }
+
+    @Test
+    fun keepsOnlyThisProcessesLogcatLines() {
+        val lines = listOf(
+            "--------- beginning of main",
+            "10-04 15:21:53.785  6213  6256 I CastBay: mine",
+            "10-04 15:21:53.790  2705  3117 D MDnsDS  : someone else's",
+            "10-04 15:21:54.000  6213  6213 W AirPlay: mine too",
+            "Unrecognized Option -",
+            "Usage: logcat [options] [filterspecs]",
+        )
+        assertEquals(
+            listOf("10-04 15:21:53.785  6213  6256 I CastBay: mine", "10-04 15:21:54.000  6213  6213 W AirPlay: mine too"),
+            LogReport.processLines(lines, 6213)
+        )
+        assertEquals(emptyList<String>(), LogReport.processLines(listOf("Unrecognized Option -", "Usage: logcat"), 6213))
+    }
 }

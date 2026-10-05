@@ -146,13 +146,29 @@ object LogReport {
 
     /** This process's lines in logcat, oldest first; empty if logcat can't be read. */
     private fun logcat(): List<String> = runCatching {
-        val process = ProcessBuilder(
-            "logcat", "-d", "-v", "threadtime", "-t", LOGCAT_LINES.toString(), "--pid", Process.myPid().toString()
-        ).redirectErrorStream(true).start()
+        val pid = Process.myPid()
+        // logcat's --pid is Android 7+: Android 6's printed its usage instead. There, every
+        // process's recent lines are read and this one's kept.
+        val byPid = android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N
+        val command = mutableListOf("logcat", "-d", "-v", "threadtime", "-t", (if (byPid) LOGCAT_LINES else LOGCAT_LINES * 5).toString())
+        if (byPid) command += listOf("--pid", pid.toString())
+        val process = ProcessBuilder(command).redirectErrorStream(true).start()
         val lines = process.inputStream.bufferedReader().use { it.readLines() }
         process.destroy()
-        lines
+        processLines(lines, pid)
     }.getOrDefault(emptyList())
+
+    /**
+     * The lines of [pid] in threadtime format ("10-04 15:21:53.785  6213  6256 I Tag: …"); anything
+     * else, such as logcat's usage or another process's lines, is left out.
+     */
+    internal fun processLines(lines: List<String>, pid: Int): List<String> {
+        val own = pid.toString()
+        return lines.filter { line ->
+            val fields = line.trim().split(Regex("\\s+"), limit = 4)
+            fields.size == 4 && fields[0].length == 5 && fields[0][2] == '-' && fields[2] == own
+        }
+    }
 
     // UxPlay logs the PIN a sender must enter, and the like.
     private val secret = Regex("""(?i)\b(pin|password|passwd)(\s*[=:]\s*)"[^"]*"""")

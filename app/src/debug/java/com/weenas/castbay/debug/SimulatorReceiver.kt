@@ -58,6 +58,11 @@ class SimulatorReceiver : BroadcastReceiver() {
                 com.weenas.castbay.ui.screen.ScreenSaverTiming.testDelayMs = if (seconds > 0) seconds * 1000L else null
                 Log.i(SimulatedSender.TAG, "Screen saver delay: ${if (seconds > 0) "${seconds}s" else "normal"}")
             }
+            // A native thread that attached to Java exits (Android 6 aborted on that).
+            "jnithread" -> {
+                com.weenas.castbay.protocol.AirPlayNative.testThreadExit()
+                Log.i(SimulatedSender.TAG, "Native thread test passed")
+            }
             // For error reports: an uncaught exception on the main thread, as a real bug would.
             "crash" -> android.os.Handler(android.os.Looper.getMainLooper()).post {
                 throw IllegalStateException("Simulated crash (tools/sim crash)")

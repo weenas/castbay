@@ -13,6 +13,7 @@
 #   video [URL]                 cast a video URL (default: Apple's HLS sample)
 #   stop                        the sender stops casting
 #   crash                       make the app crash (tests error reports)
+#   jnithread                   a Java-attached native thread exits (crashed Android 6)
 #   stats                       log the usage statistics kept, and send them now
 #   saver [SECONDS]             music screen saver after SECONDS (no value: normal delays)
 #   key KEY...                  press remote keys: up down left right ok back home menu
@@ -87,7 +88,7 @@ case "$cmd" in
     [[ -n "${4:-}" ]] && args+=(--es album "$4")
     simulate "${args[@]}"
     ;;
-  pause | resume | stop | crash | stats) simulate "$cmd" ;;
+  pause | resume | stop | crash | stats | jnithread) simulate "$cmd" ;;
   saver)
     if [[ -n "${1:-}" ]]; then simulate saver --ei seconds "$1"; else simulate saver; fi
     ;;

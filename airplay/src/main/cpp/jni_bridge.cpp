@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <cstring>
 #include <mutex>
+#include <pthread.h>
 #include <string>
 #include <thread>
 #include <vector>
@@ -73,13 +74,31 @@ std::atomic<float> g_volume_db{0.0f};
 /* Whether H.265 mirroring was offered (feature bit 42); see nativeStart. */
 std::atomic<bool> g_h265_enabled{false};
 
+/*
+ * UxPlay's threads attach to Java the first time they call back (currentEnv) and end without
+ * detaching. Android 6 aborts the whole process when such a thread ends ("Native thread exited
+ * without calling DetachCurrentThread": casting from an iPhone crashed a Xiaomi TV); later
+ * versions let it go. This key's destructor, which runs as the thread ends, detaches it.
+ */
+pthread_key_t g_detach_key;
+pthread_once_t g_detach_key_once = PTHREAD_ONCE_INIT;
+
+void detachOnExit(void *) {
+    JavaVM *vm = castbay::jvm();
+    JNIEnv *env = nullptr;
+    if (vm && vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_OK) vm->DetachCurrentThread();
+}
+
 JNIEnv *currentEnv() {
     JavaVM *vm = castbay::jvm();
     if (!vm) return nullptr;
     JNIEnv *env = nullptr;
     if (vm->GetEnv(reinterpret_cast<void **>(&env), JNI_VERSION_1_6) == JNI_OK) return env;
-    if (vm->AttachCurrentThread(&env, nullptr) == JNI_OK) return env;
-    return nullptr;
+    if (vm->AttachCurrentThread(&env, nullptr) != JNI_OK) return nullptr;
+    pthread_once(&g_detach_key_once, [] { pthread_key_create(&g_detach_key, detachOnExit); });
+    // Any non-null value, so that the destructor runs.
+    pthread_setspecific(g_detach_key, vm);
+    return env;
 }
 
 void audioProcess(void *, raop_ntp_t *, audio_decode_struct *data) {
@@ -756,6 +775,13 @@ Java_com_weenas_castbay_protocol_AirPlayNative_nativeSetLogFile(JNIEnv *env, jcl
 }
 
 // Bytes, not a String: sender names may hold characters JNI's modified UTF-8 can't take.
+extern "C" JNIEXPORT void JNICALL
+Java_com_weenas_castbay_protocol_AirPlayNative_nativeTestThreadExit(JNIEnv *, jclass) {
+    // A thread that calls into Java the way UxPlay's do, then ends: Android 6 aborted here.
+    std::thread([] { currentEnv(); }).join();
+    LOGI("A Java-attached native thread exited cleanly");
+}
+
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_weenas_castbay_protocol_AirPlayNative_nativeRecentLog(JNIEnv *env, jclass) {
     std::string log = castbay_recent_log();

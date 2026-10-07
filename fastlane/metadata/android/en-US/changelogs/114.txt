@@ -1,0 +1,2 @@
+• Problem reports say why music stutters: the network holding it up, or the device not keeping up.
+• Reports no longer fill up with one repeated warning when the phone can't be reached.

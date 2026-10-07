@@ -10,6 +10,7 @@
 #   music [SECONDS] [TITLE] [ARTIST] [ALBUM]
 #                               play a generated tune with title, artist, album and cover
 #   pause | resume              pause or resume that music, as the phone would
+#   stall [MS]                  hold that music up for MS (3000), as a stalling network does
 #   video [URL]                 cast a video URL (default: Apple's HLS sample)
 #   stop                        the sender stops casting
 #   crash                       make the app crash (tests error reports)
@@ -89,6 +90,9 @@ case "$cmd" in
     simulate "${args[@]}"
     ;;
   pause | resume | stop | crash | stats | jnithread) simulate "$cmd" ;;
+  stall)
+    simulate stall --ei ms "${1:-3000}"
+    ;;
   saver)
     if [[ -n "${1:-}" ]]; then simulate saver --ei seconds "$1"; else simulate saver; fi
     ;;

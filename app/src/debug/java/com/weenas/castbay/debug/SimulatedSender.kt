@@ -68,6 +68,8 @@ class SimulatedSender private constructor(context: Context) {
 
     fun pauseMusic() = (session as? MusicSession)?.setPaused(true) ?: Log.w(TAG, "No music playing")
     fun resumeMusic() = (session as? MusicSession)?.setPaused(false) ?: Log.w(TAG, "No music playing")
+    /** The network holds the music up for [ms], then delivers what was held, late. */
+    fun stallMusic(ms: Long) = (session as? MusicSession)?.stall(ms) ?: Log.w(TAG, "No music playing")
 
     /** The sender stops casting (as a phone that disconnects). */
     fun stop() {
@@ -240,6 +242,8 @@ class SimulatedSender private constructor(context: Context) {
         private val album: String
     ) : Session(sender) {
         @Volatile private var paused = false
+        /** Nothing is sent until then (elapsedRealtime), as when the network holds packets up. */
+        @Volatile private var stalledUntilMs = 0L
         /** Samples sent so far: the position in the tune. */
         @Volatile private var position = 0L
         private val lock = Object()
@@ -251,6 +255,11 @@ class SimulatedSender private constructor(context: Context) {
             bridge.audioInfo.onProgress(0.0, seconds.toDouble())
             heartbeats()
             thread(name = "sim-music") { play() }
+        }
+
+        fun stall(ms: Long) {
+            Log.i(TAG, "Music held up for $ms ms")
+            stalledUntilMs = SystemClock.elapsedRealtime() + ms
         }
 
         fun setPaused(value: Boolean) {
@@ -278,6 +287,8 @@ class SimulatedSender private constructor(context: Context) {
                 val runPlaysAtUs = System.currentTimeMillis() * 1000 + LEAD_US
                 var sent = 0L
                 while (running && !paused && position < total) {
+                    val heldMs = stalledUntilMs - SystemClock.elapsedRealtime()
+                    if (heldMs > 0) sleepMs(heldMs)
                     val frame = tune(position, FRAME_SAMPLES)
                     val playAtUs = runPlaysAtUs + sent * 1_000_000 / RATE
                     send { bridge.onPcmData(frame, playAtUs, frame.size / 2) }

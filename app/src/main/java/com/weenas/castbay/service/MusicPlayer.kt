@@ -4,6 +4,7 @@ import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTimestamp
 import android.media.AudioTrack
+import com.weenas.castbay.util.Diagnostics
 import com.weenas.castbay.util.Log
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.TimeUnit
@@ -82,20 +83,34 @@ class MusicPlayer(private val volume: () -> Float) {
     private fun writeLoop() {
         var seen = generation.get()
         var session: Session? = null
+        // When music stopped arriving with no flush from the sender (a pause flushes): if it
+        // comes back, the network held it up.
+        var stalledSinceMs = 0L
         while (true) {
             val current = generation.get()
             if (current != seen) {
                 seen = current
                 session?.close()
                 session = null
+                stalledSinceMs = 0
             }
             val frame = queue.poll(POLL_MS, TimeUnit.MILLISECONDS)
             if (frame == null) {
                 if (session != null && !session.idle()) {
                     session.close()
                     session = null
+                    stalledSinceMs = android.os.SystemClock.elapsedRealtime() - IDLE_CLOSE_MS
                 }
                 continue
+            }
+            if (session == null && stalledSinceMs != 0L) {
+                val stalledMs = android.os.SystemClock.elapsedRealtime() - stalledSinceMs
+                stalledSinceMs = 0
+                if (stalledMs < STALL_MAX_MS) {
+                    val text = "Music stopped arriving for ${stalledMs / 1000.0} s, then came back (held up on the network)"
+                    Log.w(TAG, text)
+                    Diagnostics.record("music", text)
+                }
             }
             val active = session ?: Session(seen).also { session = it }
             if (!active.play(frame)) {
@@ -115,10 +130,14 @@ class MusicPlayer(private val volume: () -> Float) {
         private var idleSinceMs = 0L
         private var trimmedUs = 0L
         private var paddedUs = 0L
+        private val stutter = Stutter()
 
         /** Writes [frame] on time; false when the player was flushed meanwhile. */
         fun play(frame: Frame): Boolean {
+            // Music came back after a wait: that wait was a gap in it.
+            if (idleSinceMs != 0L) stutter.gapEnded()
             idleSinceMs = 0
+            stutter.reportEvery(STUTTER_REPORT_MS)
             var pcm = frame.pcm
             val dueUs = frame.dueUs
             if (!timed) {
@@ -137,6 +156,8 @@ class MusicPlayer(private val volume: () -> Float) {
                     if (waitUs > 0) {
                         if (!writeSilence(waitUs)) return false
                     } else {
+                        // Already due: music held up on the way, now too late to hear.
+                        stutter.skippedUs += minOf(-waitUs, durationUs(pcm))
                         pcm = trim(pcm, -waitUs) ?: return true
                     }
                     Log.i(TAG, "Music timed: first frame ${(-waitUs) / 1000} ms late, heard ${(dueUs - nowUs()) / 1000} ms after arriving")
@@ -149,11 +170,15 @@ class MusicPlayer(private val volume: () -> Float) {
                     syncErrorUs = lateUs
                     pcm = when {
                         lateUs > HARD_US -> {
-                            trimmedUs += lateUs
+                            // What is actually dropped: at most this frame.
+                            val skippedUs = minOf(lateUs, durationUs(pcm))
+                            trimmedUs += skippedUs
+                            stutter.skippedUs += skippedUs
                             trim(pcm, lateUs) ?: return true
                         }
                         lateUs < -HARD_US -> {
                             paddedUs -= lateUs
+                            stutter.paddedUs -= lateUs
                             if (!writeSilence(-lateUs)) return false
                             pcm
                         }
@@ -172,10 +197,12 @@ class MusicPlayer(private val volume: () -> Float) {
             val now = android.os.SystemClock.elapsedRealtime()
             if (idleSinceMs == 0L) idleSinceMs = now
             if (now - idleSinceMs > IDLE_CLOSE_MS) return false
+            if (timed) stutter.waitingUs += POLL_MS * 1000
             return !timed || writeSilence(POLL_MS * 1000)
         }
 
         fun close() {
+            stutter.report()
             if (track === out) track = null
             if (trimmedUs > 0 || paddedUs > 0) {
                 Log.i(TAG, "Music resynced: ${trimmedUs / 1000} ms skipped, ${paddedUs / 1000} ms of silence added")
@@ -223,6 +250,59 @@ class MusicPlayer(private val volume: () -> Float) {
         }
 
         private fun framesFor(us: Long) = us * SAMPLE_RATE / 1_000_000
+
+        private fun durationUs(pcm: ByteArray) = pcm.size / BYTES_PER_FRAME * 1_000_000L / SAMPLE_RATE
+
+        /**
+         * What made the music stutter, logged and noted in Diagnostics every so often when there
+         * was any, so a problem report tells a network that drops music (gaps, late music
+         * skipped) from a device too slow to play it (the track running dry).
+         */
+        private inner class Stutter {
+            /** Silence while nothing arrived; a gap once music comes back (else it was a pause). */
+            var waitingUs = 0L
+            private var gaps = 0
+            private var gapUs = 0L
+            var skippedUs = 0L
+            var paddedUs = 0L
+            private var since = android.os.SystemClock.elapsedRealtime()
+            private var underruns = underrunCount()
+
+            fun gapEnded() {
+                if (waitingUs >= HARD_US) {
+                    gaps++
+                    gapUs += waitingUs
+                }
+                waitingUs = 0
+            }
+
+            fun reportEvery(intervalMs: Long) {
+                if (android.os.SystemClock.elapsedRealtime() - since >= intervalMs) report()
+            }
+
+            fun report() {
+                val now = android.os.SystemClock.elapsedRealtime()
+                val count = underrunCount()
+                val newUnderruns = count - underruns
+                if (gapUs + skippedUs + paddedUs >= STUTTER_MIN_US || newUnderruns > 0) {
+                    val text = "Music stuttered in ${(now - since) / 1000} s: $gaps gaps (${gapUs / 1000} ms with nothing arriving), " +
+                        "${skippedUs / 1000} ms arrived late and skipped, ${paddedUs / 1000} ms of silence added, " +
+                        "$newUnderruns underruns (the track ran dry)"
+                    Log.w(TAG, text)
+                    Diagnostics.record("music", text)
+                }
+                gaps = 0
+                gapUs = 0
+                skippedUs = 0
+                paddedUs = 0
+                underruns = count
+                since = now
+            }
+
+            // Android 7+ count them; before, only the network side shows.
+            private fun underrunCount(): Int =
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) runCatching { out.underrunCount }.getOrDefault(0) else 0
+        }
     }
 
     private fun createTrack(): AudioTrack {
@@ -270,5 +350,11 @@ class MusicPlayer(private val volume: () -> Float) {
         private const val SOFT_US = 2_000L
         /** No music for this long (the sender paused): the track is closed. */
         private const val IDLE_CLOSE_MS = 1000L
+        /** Stutter is reported at most this often while it goes on, and when the track closes. */
+        private const val STUTTER_REPORT_MS = 30_000L
+        /** Music coming back after longer than this was more likely a new start than a stall. */
+        private const val STALL_MAX_MS = 60_000L
+        /** Less than this in a report's time isn't worth one. */
+        private const val STUTTER_MIN_US = 100_000L
     }
 }

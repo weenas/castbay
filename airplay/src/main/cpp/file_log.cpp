@@ -9,8 +9,10 @@
 #include <cstdarg>
 #include <cstdio>
 #include <deque>
+#include <map>
 #include <mutex>
 #include <string>
+#include <vector>
 
 namespace {
 std::mutex g_mutex;
@@ -94,12 +96,32 @@ extern "C" void castbay_log_open(const char *path, long max_bytes) {
     }
 }
 
-extern "C" int castbay_logf(int priority, const char *tag, const char *format, ...) {
-    char message[3072];
-    va_list args;
-    va_start(args, format);
-    vsnprintf(message, sizeof(message), format, args);
-    va_end(args);
+namespace {
+/*
+ * The same line again within kRepeatWindowSec is counted rather than logged. With the sender
+ * out of reach, UxPlay logged "raop_rtp resend failed" some fifty times a second, which pushed
+ * everything else out of the recent lines: a problem report about stuttering music then held
+ * 20 seconds. Once the window is over, one line says how many there were.
+ */
+constexpr long kRepeatWindowSec = 10;
+constexpr size_t kMaxRepeatKeys = 64;
+struct Repeat {
+    long since;
+    int count;
+    int priority;
+    std::string tag;
+    std::string message;
+};
+std::mutex g_repeatMutex;
+std::map<std::string, Repeat> g_repeats;
+
+long monotonicSec() {
+    timespec now{};
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return now.tv_sec;
+}
+
+int emit(int priority, const char *tag, const char *message) {
     int result = __android_log_write(priority, tag, message);
     {
         timespec now{};
@@ -119,7 +141,56 @@ extern "C" int castbay_logf(int priority, const char *tag, const char *format, .
     return result;
 }
 
+/* The counts of lines whose window is over (all of them with [all]), taken out of the table. */
+std::vector<Repeat> takeRepeats(long now, bool all) {
+    std::vector<Repeat> due;
+    std::lock_guard<std::mutex> lock(g_repeatMutex);
+    for (auto it = g_repeats.begin(); it != g_repeats.end();) {
+        if (all || now - it->second.since >= kRepeatWindowSec) {
+            if (it->second.count > 0) due.push_back(it->second);
+            it = g_repeats.erase(it);
+        } else {
+            ++it;
+        }
+    }
+    return due;
+}
+
+void emitRepeats(const std::vector<Repeat> &due, long now) {
+    for (const auto &repeat : due) {
+        char line[512];
+        snprintf(line, sizeof(line), "(%d more of \"%.300s\" in %ld s)", repeat.count, repeat.message.c_str(),
+                 now - repeat.since);
+        emit(repeat.priority, repeat.tag.c_str(), line);
+    }
+}
+}  // namespace
+
+extern "C" int castbay_logf(int priority, const char *tag, const char *format, ...) {
+    char message[3072];
+    va_list args;
+    va_start(args, format);
+    vsnprintf(message, sizeof(message), format, args);
+    va_end(args);
+    long now = monotonicSec();
+    emitRepeats(takeRepeats(now, false), now);
+    std::string key = std::string(tag ? tag : "") + '\x1f' + message;
+    {
+        std::lock_guard<std::mutex> lock(g_repeatMutex);
+        auto found = g_repeats.find(key);
+        if (found != g_repeats.end()) {
+            found->second.count++;
+            return 0;
+        }
+        if (g_repeats.size() < kMaxRepeatKeys) g_repeats[key] = Repeat{now, 0, priority, tag ? tag : "", message};
+    }
+    return emit(priority, tag, message);
+}
+
 std::string castbay_recent_log() {
+    // Counts still being kept go in now, so a report shows them.
+    long now = monotonicSec();
+    emitRepeats(takeRepeats(now, true), now);
     std::lock_guard<std::mutex> lock(g_recentMutex);
     std::string all;
     for (const auto &line : g_recent) {

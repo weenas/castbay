@@ -40,6 +40,7 @@ class SimulatorReceiver : BroadcastReceiver() {
                 album = intent.getStringExtra("album") ?: "Test Signals"
             )
             "pause" -> sim.pauseMusic()
+            "stall" -> sim.stallMusic(intent.getIntExtra("ms", 3000).toLong())
             "resume" -> sim.resumeMusic()
             "video" -> sim.video(
                 sender,

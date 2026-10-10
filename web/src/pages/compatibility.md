@@ -8,6 +8,18 @@ heading: 'Compatibility'
 intro: 'What CastBay has been tested with so far. Tried it on something not listed, or found something that doesn''t work? <a href="/feedback">Tell us</a>.'
 ---
 
+## Supported casting features
+
+CastBay supports **AirPlay screen mirroring, music and video casting from compatible apps, and DLNA/UPnP media playback**. Support is described by the features tested below, not a blanket “AirPlay 2” claim. Full AirPlay 2 support, including multi-room synchronized audio, is not claimed.
+
+| Feature | Scope |
+| --- | --- |
+| AirPlay screen mirroring | Tested with iPhone and Mac; iPad is not yet confirmed |
+| AirPlay music | Tested with iPhone apps listed below; the Mac Music app is not supported |
+| AirPlay video casting | Tested with compatible apps listed below; support varies by app and content |
+| DLNA/UPnP media playback | Receives media from compatible apps; not Android screen mirroring |
+| AirPlay 2 multi-room synchronized audio | Not supported |
+
 ## TVs and car displays
 
 | Device | Android | Status |
@@ -46,5 +58,5 @@ CastBay needs an Android device on Android 6.0 or later. Other brands of TVs, TV
 
 ## Not supported
 
-- **Google Cast (Chromecast)**: only Google-certified devices can receive it.
+- **Google Cast (Chromecast)**: CastBay currently does not support Google Cast media casting or screen mirroring. Use AirPlay or DLNA instead.
 - **Miracast and Android's own screen mirroring**: they need system access an app doesn't get.

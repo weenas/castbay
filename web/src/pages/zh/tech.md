@@ -62,7 +62,7 @@ AirPlay 音乐是无损的（Apple 的 ALAC 格式）。安卓系统没有 ALAC 
 
 ## 哪些不支持，为什么
 
-- **Google Cast（Chromecast）**：只有经过 Google 认证的设备才能接收。
+- **Google Cast（Chromecast）**：目前不支持 Google Cast／Chromecast 投送及镜像，请使用 AirPlay 或 DLNA。
 - **Miracast 和安卓自带的"屏幕镜像""无线投屏"**：需要电视系统级的权限，普通 App 拿不到。安卓手机请使用 App 自带的投屏按钮（DLNA）。
 - **Mac 上的"音乐"App**：它用一种开源 AirPlay 实现无法处理的 FairPlay 加密来保护音频。Mac 的屏幕镜像可以正常使用。
 

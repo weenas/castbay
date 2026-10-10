@@ -8,6 +8,18 @@ heading: '兼容性'
 intro: '映湾目前已测试过的设备和 App。在列表之外的设备上用过，或者发现哪里不能用？欢迎<a href="/zh/feedback">告诉我们</a>。'
 ---
 
+## 支持的投屏功能
+
+映湾支持 **AirPlay 屏幕镜像、兼容 App 的音乐和视频投送，以及 DLNA/UPnP 媒体播放**。支持范围以下方已验证的具体功能为准，不笼统宣称“支持 AirPlay 2”，也不代表具备包括多房间同步音频在内的完整 AirPlay 2 能力。
+
+| 功能 | 支持范围 |
+| --- | --- |
+| AirPlay 屏幕镜像 | 已验证 iPhone 和 Mac；iPad 尚未确认 |
+| AirPlay 音乐投送 | 已验证下方列出的 iPhone App；不支持 Mac 的“音乐”App |
+| AirPlay 视频投送 | 已验证下方列出的兼容 App；支持情况取决于 App 和内容 |
+| DLNA/UPnP 媒体播放 | 接收兼容 App 的媒体投送，不等同于安卓屏幕镜像 |
+| AirPlay 2 多房间同步音频 | 不支持 |
+
 ## 电视和车机
 
 | 设备 | Android 版本 | 状态 |
@@ -46,5 +58,5 @@ intro: '映湾目前已测试过的设备和 App。在列表之外的设备上�
 
 ## 不支持的投屏方式
 
-- **Google Cast（Chromecast）**：只有经过 Google 认证的设备才能接收。
+- **Google Cast（Chromecast）**：目前不支持 Google Cast／Chromecast 投送及镜像，请使用 AirPlay 或 DLNA。
 - **Miracast 和安卓自带的屏幕镜像**：需要电视系统级的权限，普通 App 拿不到。

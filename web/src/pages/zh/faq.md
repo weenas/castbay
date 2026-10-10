@@ -41,11 +41,11 @@ Android 6.0 及以上的安卓设备：电视、电视盒子、车机和平板�
 
 ### 为什么安卓手机上的 YouTube 找不到映湾？
 
-安卓版 YouTube 只支持 Google Cast 投屏，而 Google Cast 只有经过 Google 认证的设备才能接收。可以直接用电视上的 YouTube App，或者用 iPhone、iPad 投送（它们的 YouTube 使用 AirPlay）。带 DLNA 投屏按钮的 App（哔哩哔哩、爱奇艺、网易云音乐等）在安卓手机上可以正常使用。
+安卓版 YouTube 的这一投屏方式使用 Google Cast，映湾目前不支持接收。可以直接用电视上的 YouTube App，或者用 iPhone、iPad 投送（它们的 YouTube 使用 AirPlay）。带 DLNA 投屏按钮的 App（哔哩哔哩、爱奇艺、网易云音乐等）在安卓手机上可以正常使用。
 
 ### 支持 Google Cast（Chromecast）或 Miracast 吗？
 
-不支持。Google Cast 只能由 Google 认证的设备接收，Miracast 需要电视系统级的权限，普通 App 无法实现。映湾支持的是 AirPlay 和 DLNA。
+目前不支持 Google Cast／Chromecast 投送及镜像，也不支持 Miracast。请使用 AirPlay 或 DLNA；具体已验证的功能和设备见[兼容性](/zh/compatibility)。
 
 ### 能从 Mac 投音乐吗？
 

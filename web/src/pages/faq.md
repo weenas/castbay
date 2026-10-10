@@ -41,11 +41,11 @@ Make sure the TV and phone are on the same Wi-Fi and CastBay is open, waiting fo
 
 ### Why can't YouTube on my Android phone find CastBay?
 
-YouTube for Android only casts with Google Cast, which only Google-certified devices can receive. Use the YouTube app on the TV itself, or cast from an iPhone or iPad, whose YouTube app uses AirPlay. Apps with a DLNA cast button (Bilibili, iQiyi, NetEase Cloud Music and others) work from Android phones.
+YouTube for Android uses Google Cast for this casting workflow, which CastBay currently does not support. Use the YouTube app on the TV itself, or cast from an iPhone or iPad, whose YouTube app uses AirPlay. Apps with a DLNA cast button (Bilibili, iQiyi, NetEase Cloud Music and others) work from Android phones.
 
 ### Does it support Google Cast (Chromecast) or Miracast?
 
-No. Only Google-certified devices can receive Google Cast, and Miracast needs system-level access an app doesn't get. CastBay supports AirPlay and DLNA.
+CastBay currently does not support Google Cast (Chromecast) media casting or screen mirroring, or Miracast. Use AirPlay or DLNA instead. See [Compatibility](/compatibility) for the specific features and devices tested.
 
 ### Can I send music from a Mac?
 

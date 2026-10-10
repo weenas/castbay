@@ -62,7 +62,7 @@ Whichever you choose, every device that has cast is listed there, and any of the
 
 ## What isn't supported, and why
 
-- **Google Cast (Chromecast)**: only Google-certified devices can receive it.
+- **Google Cast (Chromecast)**: CastBay currently does not support Google Cast media casting or screen mirroring. Use AirPlay or DLNA instead.
 - **Miracast and Android's built-in screen mirroring**: they need access to the TV's system that an app doesn't get. From Android phones, use an app's cast button (DLNA).
 - **The Mac's Music app**: it protects its stream with a kind of FairPlay encryption that the open-source AirPlay implementation can't handle. Screen mirroring from a Mac works.
 

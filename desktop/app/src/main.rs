@@ -203,6 +203,7 @@ fn start_cast(args: StartArgs, app: AppHandle, state: State<'_, Casting>, settin
     *state.code.lock().unwrap() = Some(code_tx);
     let ask = Box::new(move |_expected: &str| code_rx.recv_timeout(Duration::from_secs(180)).ok().flatten());
     let emitter = app.clone();
+    castbay_capture::set_cursor(settings.show_cursor);
     let minimize = settings.minimize_on_cast;
     let on_status = Arc::new(move |status: Status| {
         match &status {

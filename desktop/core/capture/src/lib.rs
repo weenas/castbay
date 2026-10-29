@@ -97,6 +97,16 @@ pub fn set_data_dir(dir: &std::path::Path) {
     let _ = dir;
 }
 
+/// Whether the mouse pointer is drawn in what is captured (the default); read when a capture
+/// starts, so a change reaches the next start or switch. Windows only: on Linux the system's own
+/// screen share decides.
+pub fn set_cursor(shown: bool) {
+    CURSOR.store(shown, std::sync::atomic::Ordering::SeqCst);
+}
+
+#[cfg_attr(not(windows), allow(dead_code))]
+static CURSOR: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(true);
+
 /// Names of the monitors, for a picker (empty where the system does its own picking).
 pub fn monitors() -> Result<Vec<String>, Error> {
     #[cfg(windows)]

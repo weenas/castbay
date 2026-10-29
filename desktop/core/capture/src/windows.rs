@@ -91,7 +91,7 @@ pub fn run(
         ($item:expr) => {{
             let settings = Settings::new(
                 $item,
-                CursorCaptureSettings::WithCursor,
+                if crate::CURSOR.load(Ordering::SeqCst) { CursorCaptureSettings::WithCursor } else { CursorCaptureSettings::WithoutCursor },
                 DrawBorderSettings::WithoutBorder,
                 SecondaryWindowSettings::Default,
                 MinimumUpdateIntervalSettings::Default,

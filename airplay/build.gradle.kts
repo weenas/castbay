@@ -4,6 +4,11 @@ plugins {
     id("com.android.library")
 }
 
+// Local compatibility build: native protocol libraries are unchanged copies from the
+// verified official 1.8.7 APK. Kotlin/Java UI and video decoding are rebuilt from source.
+val useOfficialNativeLibs = providers.gradleProperty("useOfficialNativeLibs")
+    .map(String::toBoolean).orElse(false)
+
 android {
     namespace = "com.weenas.castbay.protocol"
     compileSdk = 37
@@ -15,7 +20,7 @@ android {
         ndk {
             abiFilters += listOf("armeabi-v7a", "arm64-v8a")
         }
-        externalNativeBuild {
+        if (!useOfficialNativeLibs.get()) externalNativeBuild {
             cmake {
                 arguments += listOf(
                     "-DANDROID_STL=c++_shared",
@@ -26,7 +31,7 @@ android {
         }
     }
 
-    externalNativeBuild {
+    if (!useOfficialNativeLibs.get()) externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
         }
@@ -51,4 +56,4 @@ val buildOpenSsl = tasks.register<Exec>("buildOpenSsl") {
     doFirst { environment("ANDROID_NDK_ROOT", ndkDir.get().asFile.absolutePath) }
     commandLine(listOf("bash", "tools/build-openssl.sh") + abis)
 }
-tasks.named("preBuild") { dependsOn(buildOpenSsl) }
+if (!useOfficialNativeLibs.get()) tasks.named("preBuild") { dependsOn(buildOpenSsl) }

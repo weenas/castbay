@@ -1,8 +1,10 @@
 package com.weenas.castbay.ui.screen
 
 import com.weenas.castbay.ui.usingKeys
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.content.Context
+import android.graphics.SurfaceTexture
+import android.view.Surface
+import android.view.TextureView
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -1221,30 +1223,64 @@ fun StatsOverlay(viewModel: AirPlayViewModel, modifier: Modifier = Modifier) {
             .background(Color(0xB3000000))
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        StatsLine(current.source, "", bold = true)
+        StatsLine(statsSourceLabel(current.source), "", bold = true)
         current.video?.let { video ->
             StatsLine(
-                "Video",
+                stringResource(R.string.stats_video),
                 listOf(
                     video.codec, StatsFormat.resolution(video.width, video.height),
                     StatsFormat.fps(video.fps), StatsFormat.bitrate(video.bitrateBps)
                 ).joinToString(" · ")
             )
             StatsLine("", listOfNotNull(
-                video.decoder, video.decodeLatencyMs?.let { "decode $it ms" }, "dropped ${video.droppedFrames}"
+                video.decoder?.let { stringResource(R.string.stats_decoder, it) },
+                video.decodeLatencyMs?.let { stringResource(R.string.stats_decode, it.toString()) },
+                stringResource(R.string.stats_dropped, video.droppedFrames.toString())
             ).joinToString(" · "))
         }
         current.audio?.let { audio ->
             StatsLine(
-                "Audio",
+                stringResource(R.string.stats_audio),
                 listOf(audio.codec, StatsFormat.audioFormat(audio), StatsFormat.bitrate(audio.bitrateBps))
                     .joinToString(" · ")
             )
-            audio.decoder?.let { StatsLine("", it) }
+            audio.decoder?.let { StatsLine("", stringResource(R.string.stats_decoder, it)) }
         }
-        current.extra.forEach { (label, value) -> StatsLine(label, value) }
+        current.extra.forEach { (label, value) -> StatsLine(statsExtraLabel(label), statsExtraValue(value)) }
     }
 }
+
+/** Localize display labels only; the receiver's protocol names and statistics stay unchanged. */
+@Composable
+private fun statsSourceLabel(source: String): String = when (source) {
+    "Screen mirroring" -> stringResource(R.string.stats_source_mirroring)
+    "AirPlay video" -> stringResource(R.string.stats_source_airplay_video)
+    "AirPlay audio" -> stringResource(R.string.stats_source_airplay_audio)
+    "DLNA video" -> stringResource(R.string.stats_source_dlna_video)
+    "DLNA audio" -> stringResource(R.string.stats_source_dlna_audio)
+    "Desktop", "Desktop casting", "CastBay Desktop" -> stringResource(R.string.stats_source_desktop)
+    else -> source
+}
+
+@Composable
+private fun statsExtraLabel(label: String): String = when (label) {
+    "Sender" -> stringResource(R.string.stats_sender)
+    "Network" -> stringResource(R.string.stats_network)
+    "Buffer" -> stringResource(R.string.stats_buffer)
+    "Volume" -> stringResource(R.string.stats_volume)
+    else -> label
+}
+
+@Composable
+private fun statsExtraValue(value: String): String = value.split(" · ").map { part ->
+    when {
+        part.startsWith("screen ") -> stringResource(R.string.stats_screen_frames, part.removePrefix("screen "))
+        part.startsWith("dropped ") -> stringResource(R.string.stats_dropped, part.removePrefix("dropped "))
+        part.startsWith("loss ") -> stringResource(R.string.stats_loss, part.removePrefix("loss "))
+        part == "muted" -> stringResource(R.string.stats_muted)
+        else -> part
+    }
+}.joinToString(" · ")
 
 @Composable
 private fun StatsLine(label: String, value: String, bold: Boolean = false) {
@@ -1284,25 +1320,85 @@ fun MirroringVideo(
         val (width, height) = PictureLayout.size(
             pictureMode, maxWidth.value, maxHeight.value, streamInfo.frameWidth, streamInfo.frameHeight
         )
-        val videoModifier = Modifier.requiredSize(width.dp, height.dp)
-        AndroidView(
-            factory = { context ->
-                SurfaceView(context).apply {
-                    holder.addCallback(object : SurfaceHolder.Callback {
-                        override fun surfaceCreated(holder: SurfaceHolder) {
-                            viewModel.setVideoSurface(holder.surface)
+        // Clip to this picture's valid layout bounds, not just the full-screen container.
+        // Some legacy producers expose stride padding beyond the right edge after rotation.
+        // This preserves all picture pixels; it only prevents drawing outside the view.
+        val videoModifier = Modifier.requiredSize(width.dp, height.dp).clipToBounds()
+        val activeSurface = remember { java.util.concurrent.atomic.AtomicReference<Surface?>(null) }
+        // A fresh consumer on portrait/landscape transitions avoids retaining the previous
+        // buffer's crop/stride at the right edge on Panasonic's legacy decoder.
+        // The decoder itself stays alive; it does not have to wait for another key frame.
+        key(streamInfo.frameHeight > streamInfo.frameWidth) {
+            AndroidView(
+                factory = { context ->
+                    MirroringTextureView(context,
+                        attachSurface = { output ->
+                            activeSurface.set(output)
+                            viewModel.setVideoSurface(output)
+                        },
+                        detachSurface = { output ->
+                            // A delayed destroy from the old view must not detach its replacement.
+                            if (activeSurface.compareAndSet(output, null)) viewModel.setVideoSurface(null)
                         }
+                    )
+                },
+                onRelease = { it.releaseVideoSurface() },
+                modifier = videoModifier
+            )
+        }
+    }
+}
 
-                        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
+/**
+ * Keep hardware decoding, but compose its output as a texture rather than a TV overlay.
+ * Panasonic's legacy overlay can retain a stale crop when an AirPlay stream changes size.
+ * TextureView consumes the producer's crop/transform together with the UI's current bounds.
+ */
+private class MirroringTextureView(
+    context: Context,
+    private val attachSurface: (Surface) -> Unit,
+    private val detachSurface: (Surface) -> Unit
+) : TextureView(context), TextureView.SurfaceTextureListener {
+    private var videoSurface: Surface? = null
+    private var diagnosticFrames = 0
 
-                        override fun surfaceDestroyed(holder: SurfaceHolder) {
-                            viewModel.setVideoSurface(null)
-                        }
-                    })
-                }
-            },
-            modifier = videoModifier
-        )
+    init {
+        surfaceTextureListener = this
+        isOpaque = true
+    }
+
+    override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
+        diagnosticFrames = 0
+        videoSurface = Surface(texture).also(attachSurface)
+        Log.i("CastBayTexture", "Hardware decoder texture available: ${width}x${height}")
+    }
+
+    override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) {
+        Log.i("CastBayTexture", "Texture display resized: ${width}x${height}")
+    }
+
+    override fun onSurfaceTextureUpdated(texture: SurfaceTexture) {
+        if (diagnosticFrames >= 3) return
+        diagnosticFrames++
+        val matrix = FloatArray(16)
+        texture.getTransformMatrix(matrix)
+        // Read-only, limited to the first three frames of each Surface. The producer's
+        // transform contains its buffer crop; do not print image data or sender details.
+        val transform = matrix.joinToString(",") { java.lang.String.format(java.util.Locale.US, "%.6f", it) }
+        Log.i("CastBayTexture", "Texture frame $diagnosticFrames: view=${width}x${height}, transform=[$transform]")
+    }
+
+    override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean {
+        releaseVideoSurface()
+        return true
+    }
+
+    fun releaseVideoSurface() {
+        val output = videoSurface ?: return
+        // Move the codec to its placeholder before releasing the app-owned Surface.
+        detachSurface(output)
+        output.release()
+        videoSurface = null
     }
 }
 

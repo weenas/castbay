@@ -53,6 +53,8 @@ class VideoRenderer(
     private val freeInputs = ArrayDeque<Int>()
     private var droppedFrames = 0L
     private var renderedFrames = 0L
+    /** Bounded diagnostics for whether rotation sends CSD separately or together with IDR. */
+    private var accessUnitDiagnosticCount = 0
 
     // For the stats overlay.
     private val inputRate = RateMeter()
@@ -77,6 +79,7 @@ class VideoRenderer(
                 // Swap outputs without tearing down the decoder, so no new IDR frame is needed.
                 try {
                     decoder.setOutputSurface(output)
+                    decoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
                     if (output === value) releasePlaceholderLocked()
                     return
                 } catch (error: Exception) {
@@ -112,6 +115,12 @@ class VideoRenderer(
         inputRate.record(accessUnit.size)
         synchronized(lock) {
             val nal = scanNals(accessUnit)
+            if (accessUnitDiagnosticCount < 12 && (nal.hasParameterSets || nal.hasRandomAccess)) {
+                accessUnitDiagnosticCount++
+                Log.i(TAG, "Access unit $accessUnitDiagnosticCount: mime=$mimeType, bytes=${accessUnit.size}, " +
+                    "parameterSets=${nal.hasParameterSets}, slices=${nal.hasSlice}, " +
+                    "randomAccess=${nal.hasRandomAccess}, decoderStarted=${codec != null}, rendered=$renderedFrames")
+            }
 
             if (nal.hasParameterSets && !nal.hasSlice) {
                 codecConfig = accessUnit
@@ -180,6 +189,7 @@ class VideoRenderer(
             decodeLatencyMs = null
             inputRate.reset()
             droppedFrames = 0
+            accessUnitDiagnosticCount = 0
         }
     }
 
@@ -232,6 +242,7 @@ class VideoRenderer(
             renderedFrames = 0
             codecConfig?.let { pendingFrames.addFirst(Frame(it, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG)) }
             decoder.start()
+            decoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
             decoderName = decoder.name
         } catch (error: Exception) {
             Log.e(TAG, "Unable to start $mimeType decoder", error)
@@ -257,7 +268,9 @@ class VideoRenderer(
                     .isFeatureSupported(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency)
             }.getOrDefault(false)
             Log.i(TAG, "${decoder.name} low-latency mode ${if (supported) "supported" else "not advertised"}")
-            format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
+            // Some TV decoders reject this key instead of ignoring it when unsupported.
+            // Panasonic OMX.MS.AVC.Decoder fails configure() with ERROR_UNSUPPORTED.
+            if (supported) format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
         }
         return format
     }
@@ -319,6 +332,12 @@ class VideoRenderer(
         }
 
         override fun onOutputFormatChanged(mc: MediaCodec, format: MediaFormat) {
+            synchronized(lock) {
+                if (codec !== owner) return
+                // Android requires reapplying scaling after output buffers/format change.
+                // iPhone rotation changes the cropped picture size within one session.
+                mc.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
+            }
             Log.i(TAG, "Decoder output format: $format")
             // The buffer is padded (e.g. 1920x1088 for a 448x972 portrait stream); the crop
             // rect is the part the sender actually drew.

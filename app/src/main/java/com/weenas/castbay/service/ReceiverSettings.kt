@@ -37,7 +37,7 @@ data class ReceiverSettings(
     val pictureMode: String = PICTURE_FIT,
     /** Look up and show synced lyrics for AirPlay music (sends the song's title to lrclib.net). */
     val showLyrics: Boolean = false,
-    /** The app's language: [LANGUAGE_SYSTEM] (the TV's), [LANGUAGE_ZH] or [LANGUAGE_EN]. */
+    /** The app's language: system, Simplified Chinese, Traditional Chinese, or English. */
     val language: String = LANGUAGE_SYSTEM,
     /** Look for a newer CastBay on GitHub once a day (UpdateChecker). */
     val checkUpdates: Boolean = true,
@@ -101,8 +101,9 @@ data class ReceiverSettings(
     companion object {
         const val LANGUAGE_SYSTEM = "system"
         const val LANGUAGE_ZH = "zh"
+        const val LANGUAGE_ZH_TW = "zh-TW"
         const val LANGUAGE_EN = "en"
-        val LANGUAGES = listOf(LANGUAGE_SYSTEM, LANGUAGE_ZH, LANGUAGE_EN)
+        val LANGUAGES = listOf(LANGUAGE_SYSTEM, LANGUAGE_ZH_TW, LANGUAGE_ZH, LANGUAGE_EN)
         const val RESOLUTION_AUTO = "Auto"
         const val FRAME_RATE_AUTO = "Auto"
         val RESOLUTIONS = listOf(RESOLUTION_AUTO, "720p", "1080p")
@@ -143,7 +144,7 @@ class ReceiverSettingsStore(context: Context) {
     private val tvName = DeviceName.tvName(context.applicationContext)
 
     fun load() = ReceiverSettings(
-        deviceName = preferences.getString("device_name", DeviceName.BRAND).orEmpty().ifBlank { DeviceName.BRAND },
+        deviceName = loadDeviceName(),
         appendTvName = preferences.getBoolean("append_tv_name", true),
         tvName = tvName,
         // Values from older versions (e.g. "4K") fall back to Auto.
@@ -172,6 +173,20 @@ class ReceiverSettingsStore(context: Context) {
         screenSaver = preferences.getString("screen_saver", null)
             ?.takeIf { it in ReceiverSettings.SCREEN_SAVERS } ?: ReceiverSettings.SCREEN_SAVER_BURN_IN
     )
+
+    /** Only this fork's private preferences are touched; custom receiver names are preserved. */
+    private fun loadDeviceName(): String {
+        val migrationKey = "panasonic_receiver_name_migrated_v1"
+        val migrationDone = preferences.getBoolean(migrationKey, false)
+        val name = DeviceName.migratedReceiverName(preferences.getString("device_name", null), migrationDone)
+        if (!migrationDone) {
+            preferences.edit()
+                .putString("device_name", name)
+                .putBoolean(migrationKey, true)
+                .apply()
+        }
+        return name
+    }
 
     /** Before the access setting: a password switch, and before that a saved password alone. */
     private fun legacyAccess(): String {
@@ -214,10 +229,17 @@ class ReceiverSettingsStore(context: Context) {
  * needs nothing done.
  */
 object AppLanguage {
+    /** Keep the existing "zh" preference Simplified; Traditional Chinese has its own stored value. */
+    fun localeFor(language: String): java.util.Locale? = when (language) {
+        ReceiverSettings.LANGUAGE_SYSTEM -> null
+        ReceiverSettings.LANGUAGE_ZH -> java.util.Locale.SIMPLIFIED_CHINESE
+        ReceiverSettings.LANGUAGE_ZH_TW -> java.util.Locale.TRADITIONAL_CHINESE
+        else -> java.util.Locale.ENGLISH
+    }
+
     fun wrap(base: Context): Context {
         val language = ReceiverSettingsStore(base).load().language
-        if (language == ReceiverSettings.LANGUAGE_SYSTEM) return base
-        val locale = if (language == ReceiverSettings.LANGUAGE_ZH) java.util.Locale.SIMPLIFIED_CHINESE else java.util.Locale.ENGLISH
+        val locale = localeFor(language) ?: return base
         val config = android.content.res.Configuration(base.resources.configuration)
         config.setLocale(locale)
         return base.createConfigurationContext(config)

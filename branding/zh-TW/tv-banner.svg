@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180" role="img" aria-label="CASTBAY 映灣 Android TV 橫幅">
+  <defs><linearGradient id="background" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="320" y2="180"><stop stop-color="#8A6FE0"/><stop offset="1" stop-color="#4B3791"/></linearGradient></defs>
+  <rect width="320" height="180" fill="url(#background)"/>
+  <g transform="translate(13 46) scale(.86)" fill="none" stroke="white" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M17 28C42-3 86-3 111 28" stroke-width="11"/>
+    <path d="M32 44C48 23 80 23 96 44" stroke-width="11"/>
+    <path d="M49 57C56 47 72 47 79 57" stroke-width="10"/>
+    <path d="M18 60c13 11 28 18 46 18s33-7 46-18" stroke-width="11"/>
+    <path d="M18 60v22c0 8 6 14 14 14h64c8 0 14-6 14-14V60" stroke-width="11"/>
+  </g>
+  <g transform="translate(125 0) scale(.93 1)"><text x="0" y="89" fill="white" font-family="Arial Black" font-size="35" font-weight="900">CASTBAY</text></g>
+  <text x="170" y="123" fill="white" font-family="Microsoft JhengHei" font-size="30" font-weight="700">映</text>
+  <text x="222" y="123" fill="white" font-family="Microsoft JhengHei" font-size="30" font-weight="700">灣</text>
+</svg>

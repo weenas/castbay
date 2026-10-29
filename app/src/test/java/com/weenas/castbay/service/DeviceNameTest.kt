@@ -5,6 +5,31 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DeviceNameTest {
+    @Test
+    fun renamesTheFormerDefaultOnFirstMigration() {
+        assertEquals("映灣", DeviceName.migratedReceiverName("CastBay", false, "映灣"))
+    }
+
+    @Test
+    fun missingOrBlankReceiverNamesUseTheNewDefault() {
+        for (name in listOf(null, "", "  \t")) {
+            assertEquals("映灣", DeviceName.migratedReceiverName(name, false, "映灣"))
+            assertEquals("映灣", DeviceName.migratedReceiverName(name, true, "映灣"))
+        }
+    }
+
+    @Test
+    fun customReceiverNamesArePreservedExactly() {
+        for (name in listOf("客廳電視", "My CastBay", "CastBay 4K", " CastBay ")) {
+            assertEquals(name, DeviceName.migratedReceiverName(name, false, "映灣"))
+        }
+    }
+
+    @Test
+    fun aLaterUserChoiceOfCastBayIsNotRenamedAgain() {
+        assertEquals("CastBay", DeviceName.migratedReceiverName("CastBay", true, "映灣"))
+    }
+
     private fun tvName(system: String?, bluetooth: String? = null, model: String? = null) =
         DeviceName.tvName(system, bluetooth, model, listOf(model))
 

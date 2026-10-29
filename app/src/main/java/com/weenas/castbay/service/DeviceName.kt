@@ -10,7 +10,13 @@ import android.provider.Settings
  */
 object DeviceName {
     /** Debug builds (installed beside the release app) are listed apart from it. */
-    val BRAND = if (com.weenas.castbay.BuildConfig.DEBUG) "CastBay Dev" else "CastBay"
+    val BRAND = if (com.weenas.castbay.BuildConfig.DEBUG) "映灣 Dev" else "映灣"
+
+    /** Rename the fork's former default once; a later user choice of CastBay stays theirs. */
+    internal fun migratedReceiverName(storedName: String?, migrationDone: Boolean, defaultName: String = BRAND): String {
+        val name = storedName?.takeUnless { it.isBlank() } ?: defaultName
+        return if (!migrationDone && name == "CastBay") defaultName else name
+    }
 
     /** mDNS names are at most 63 bytes; a little under, as the advertiser allows. */
     private const val MAX_BYTES = 60

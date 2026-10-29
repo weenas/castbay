@@ -319,4 +319,24 @@
     <string name="setting_confirm_note">The first time a device casts, it must be allowed on the TV, then cast again.</string>
     <string name="help_access_title">Who can cast</string>
     <string name="help_access">Choose in Settings → Connection → Casting verification:\n• Confirm: the first time a device casts, the TV asks whether to allow it; once allowed, cast again from the device.\n• PIN: the first time a device casts, enter the 4-digit PIN the TV shows.\n• Password: every device enters the password set in Settings.\nApps’ cast button (DLNA) can’t enter a PIN or password: with any of these, the TV asks the first time a phone casts from an app.\nUnder “Devices that have cast”, you can block a device, or remove them all.</string>
+
+    <!-- Playback statistics: labels are translated at the UI boundary. -->
+    <string name="stats_source_mirroring">Screen mirroring</string>
+    <string name="stats_source_airplay_video">AirPlay video</string>
+    <string name="stats_source_airplay_audio">AirPlay audio</string>
+    <string name="stats_source_dlna_video">DLNA video</string>
+    <string name="stats_source_dlna_audio">DLNA audio</string>
+    <string name="stats_source_desktop">Desktop casting</string>
+    <string name="stats_video">Video</string>
+    <string name="stats_audio">Audio</string>
+    <string name="stats_decoder">decoder %1$s</string>
+    <string name="stats_decode">decode %1$s ms</string>
+    <string name="stats_dropped">dropped %1$s</string>
+    <string name="stats_screen_frames">screen %1$s</string>
+    <string name="stats_loss">loss %1$s</string>
+    <string name="stats_sender">Sender</string>
+    <string name="stats_network">Network</string>
+    <string name="stats_buffer">Buffer</string>
+    <string name="stats_volume">Volume</string>
+    <string name="stats_muted">muted</string>
 </resources>

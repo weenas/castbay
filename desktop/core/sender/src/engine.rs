@@ -142,6 +142,8 @@ struct State {
     encoder: Option<Enc>,
     /// Which encoder it is: amf, nvenc, x264 (empty before one opened).
     encoder_name: &'static str,
+    /// When the encoder was last reopened to get a key frame ([`key_by_reopening`]).
+    last_key_reopen: Option<Instant>,
     nv12: Vec<u8>,
     have_picture: bool,
     last: Instant,
@@ -209,9 +211,21 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
 }
 
 /// Pushes the current picture into the encoder and sends what came out.
+/// Whether a key frame is made by opening the encoder again (its first picture is a key frame).
+/// FFmpeg's AMD encoder (h264_amf) has no way to force one and makes only the first; a receiver that
+/// lost the thread (it was not showing, or the picture was dropped) would wait for ever. At most
+/// every 400 ms, so a receiver asking again at once does not make the encoder restart for each ask.
+fn key_by_reopening(encoder: &str, since_last: Option<Duration>) -> bool {
+    encoder == "amf" && since_last.map_or(true, |d| d >= Duration::from_millis(400))
+}
+
 fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {
     if st.lost.is_some() {
         return;
+    }
+    if st.encoder.is_some() && (link.wants_key_frame() || st.want_key) && key_by_reopening(st.encoder_name, st.last_key_reopen.map(|t| t.elapsed())) {
+        st.encoder = None;
+        st.last_key_reopen = Some(Instant::now());
     }
     if st.encoder.is_none() {
         let config = Config { bitrate_bps: st.rate.current(), ..config.clone() };
@@ -363,6 +377,7 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let state = Arc::new(Mutex::new(State {
         encoder: None,
         encoder_name: "",
+        last_key_reopen: None,
         nv12: vec![0; (width * height * 3 / 2) as usize],
         have_picture: false,
         last: Instant::now(),
@@ -657,5 +672,20 @@ fn report(state: &Arc<Mutex<State>>, started: Instant, stop: &Arc<AtomicBool>, o
     match &st.failed {
         Some(reason) => Err(reason.clone()),
         None => Ok(report),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn only_the_amd_encoder_makes_key_frames_by_reopening_and_not_in_a_hurry() {
+        assert!(key_by_reopening("amf", None));
+        assert!(key_by_reopening("amf", Some(Duration::from_millis(400))));
+        assert!(!key_by_reopening("amf", Some(Duration::from_millis(100))));
+        for other in ["nvenc", "x264", "", "qsv"] {
+            assert!(!key_by_reopening(other, None), "{other}");
+        }
     }
 }

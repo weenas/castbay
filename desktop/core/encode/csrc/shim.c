@@ -61,6 +61,8 @@ CbEnc *cb_enc_open(const char *name, int width, int height, int fps, int bitrate
         av_dict_set(&o, "usage", "ultralowlatency", 0);
         av_dict_set(&o, "quality", "speed", 0);
         av_dict_set(&o, "rc", "cbr", 0);
+        /* FFmpeg's h264_amf (n7.1) knows no forced_idr and forces no key frame: the sender reopens the
+           encoder to get one (engine.rs, key_by_reopening). Kept for an FFmpeg that has it. */
         av_dict_set(&o, "forced_idr", "1", 0);
         av_dict_set(&o, "header_spacing", "1", 0);
         av_dict_set(&o, "async_depth", "1", 0);

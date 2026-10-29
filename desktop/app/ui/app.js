@@ -186,9 +186,12 @@ function goBack() {
 // ---------------------------------------------------------------- home
 function pairText(r) {
   const parts = [];
+  const known = paired.some((p) => p.id === r.id);
   if (r.pair === "open") parts.push(t("pair_open"));
   else if (r.pair === "ask") parts.push(t("pair_ask"));
-  else parts.push(paired.some((p) => p.id === r.id) ? t("paired") : t("pair_pin"));
+  else parts.push(known ? t("paired") : t("pair_pin"));
+  // Paired before, whatever the receiver asks for now.
+  if (known && r.pair !== "pin") parts.push(t("paired"));
   if (r.password) parts.push(t("needs_password"));
   return parts.join(" · ");
 }

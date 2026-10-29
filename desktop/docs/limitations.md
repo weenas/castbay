@@ -53,6 +53,10 @@ update it when something changes.
   second so the stream stays alive.
 - **No package signing or repository**: the `.deb` is a plain download, not an apt source.
 
+## The AMD encoder
+
+- **Key frames come from restarting the encoder.** FFmpeg's AMD encoder (h264_amf) cannot be told to make a key frame; it makes the first and, in the low-latency mode used here, no more. A receiver that needs one (it was not showing the picture, it dropped some) would wait for ever, so the sender opens the encoder again, at most every 0.4 s, which makes the first picture of the new one a key frame (a hitch of a few frames). NVIDIA's encoder and x264 force key frames.
+
 ## Done differently from what one might expect
 
 - **MSI, not NSIS.** Windows Defender quarantined the NSIS uninstaller of the unsigned build

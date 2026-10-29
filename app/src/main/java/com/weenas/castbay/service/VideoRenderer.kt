@@ -124,6 +124,7 @@ class VideoRenderer(
             // start and on format changes. feedLocked() is a no-op until the decoder exists.
             if (awaitingKeyFrame && !nal.hasRandomAccess) {
                 droppedFrames++
+                noteWaiting(accessUnit, nal)
                 return false
             }
 
@@ -140,6 +141,7 @@ class VideoRenderer(
                 }
             }
 
+            if (awaitingKeyFrame) Log.i(TAG, "Key frame accepted after ${droppedFrames} dropped frames (${accessUnit.size} bytes, NAL types ${nalTypes(accessUnit)})")
             awaitingKeyFrame = false
             if (arrivals.size >= MAX_PENDING_FRAMES) arrivals.clear()
             arrivals[presentationTimeUs] = SystemClock.elapsedRealtimeNanos()
@@ -147,6 +149,32 @@ class VideoRenderer(
             enqueueLocked(Frame(accessUnit, presentationTimeUs, flags))
             return true
         }
+    }
+
+    private var lastWaitingLogMs = 0L
+
+    /** While frames are dropped for want of a key frame: once every few seconds, what the dropped frame looks like. */
+    private fun noteWaiting(accessUnit: ByteArray, nal: NalSummary) {
+        val now = SystemClock.elapsedRealtime()
+        if (now - lastWaitingLogMs < 3000) return
+        lastWaitingLogMs = now
+        Log.i(TAG, "Waiting for a key frame: $droppedFrames dropped so far, last ${accessUnit.size} bytes, NAL types ${nalTypes(accessUnit)}, " +
+            "codec ${if (codec != null) "running" else "not started"}, surface ${if (surface?.isValid == true) "valid" else "none"}")
+    }
+
+    /** The NAL unit types in an access unit, as text ("7 8 5"), for the log. */
+    private fun nalTypes(data: ByteArray): String {
+        val types = ArrayList<Int>()
+        val h265 = mimeType == MediaFormat.MIMETYPE_VIDEO_HEVC
+        var i = 0
+        while (i + 3 < data.size && types.size < 12) {
+            if (data[i] == 0.toByte() && data[i + 1] == 0.toByte() && data[i + 2] == 1.toByte()) {
+                val header = data[i + 3].toInt() and 0xFF
+                types.add(if (h265) (header ushr 1) and 0x3F else header and 0x1F)
+                i += 3
+            } else i++
+        }
+        return types.joinToString(" ")
     }
 
     /** What is being decoded, for the stats overlay; null when no stream is active. */

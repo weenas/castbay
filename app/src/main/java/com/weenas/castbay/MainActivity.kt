@@ -30,6 +30,11 @@ import com.weenas.castbay.ui.theme.CastBayTheme
 import com.weenas.castbay.viewmodel.AirPlayViewModel
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        /** An intent extra: the activity is started by a cast and turns the screen on. */
+        const val EXTRA_WAKE = "wake"
+    }
+
     private val viewModel: AirPlayViewModel by viewModels()
     // A key or touch that woke the screen saver: the rest of it (key up, the touch's moves and
     // lift) goes nowhere either.
@@ -84,13 +89,33 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         com.weenas.castbay.service.ScreenLauncher.visible = false
+        // Only the start for a cast turns the screen on, not every later return to the app.
+        allowWakeUp(false)
         super.onStop()
+    }
+
+    /** Started by a cast ([com.weenas.castbay.service.ScreenLauncher]): the screen is turned on, and a screen saver over it ends. */
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra(EXTRA_WAKE, false)) allowWakeUp(true)
+    }
+
+    private fun allowWakeUp(on: Boolean) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O_MR1) {
+            setTurnScreenOn(on)
+            setShowWhenLocked(on)
+        } else {
+            val flags = android.view.WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON or android.view.WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+            if (on) window.addFlags(flags) else window.clearFlags(flags)
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // The manifest theme only paints the launch screen; the app itself has a plain background.
         setTheme(R.style.Theme_CastBay)
         super.onCreate(savedInstanceState)
+        if (intent?.getBooleanExtra(EXTRA_WAKE, false) == true) allowWakeUp(true)
         Diagnostics.init(this)
         Diagnostics.record("app", "Opened")
         setContent {

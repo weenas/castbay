@@ -1,0 +1,1 @@
+• CastBay Desktop can show this TV's model and CastBay's version in its list of receivers.

@@ -12,7 +12,7 @@ const TEXT = {
     w_2: "如果 Windows 防火墙弹窗询问，请允许在专用网络上访问，否则找不到接收端。",
     w_3: "在下面选择接收端并开始投屏。第一次连接时接收端会显示 6 位配对码，在这里输入即可。",
     receivers: "接收端", what: "投什么", screen: "整个屏幕", window: "某个窗口",
-    empty_title: "没有找到接收端", empty_body: "在电视或平板上打开映湾，开启“电脑投屏”；两者需在同一网络，Windows 防火墙要允许本程序访问专用网络。",
+    scanning: "正在查找接收端…", refreshing: "正在刷新…", empty_title: "没有找到接收端", empty_body: "在电视或平板上打开映湾，开启“电脑投屏”；两者需在同一网络，Windows 防火墙要允许本程序访问专用网络。",
     password: "接收端密码", start: "开始投屏", stop: "停止投屏", change: "更改",
     system_picker: "开始投屏时，系统会询问要共享哪个屏幕或窗口。", with_audio: "带声音", no_audio: "不带声音", no_windows: "没有可投的窗口", no_screens: "没有可投的屏幕", screen_n: "屏幕 {0}",
     pair_open: "无需配对", pair_ask: "需要在接收端确认", pair_pin: "首次需要配对码", paired: "已配对", needs_password: "需要密码",
@@ -48,7 +48,7 @@ const TEXT = {
     w_2: "If Windows asks about the firewall, allow access on private networks. Otherwise receivers cannot be found.",
     w_3: "Pick the receiver below and start. The first time, the receiver shows a 6-digit code: type it here.",
     receivers: "Receivers", what: "What to cast", screen: "A screen", window: "A window",
-    empty_title: "No receiver found", empty_body: "Open CastBay on the TV or tablet and turn on Desktop casting. Both must be on the same network, and the Windows firewall must allow this app on private networks.",
+    scanning: "Looking for receivers…", refreshing: "Refreshing…", empty_title: "No receiver found", empty_body: "Open CastBay on the TV or tablet and turn on Desktop casting. Both must be on the same network, and the Windows firewall must allow this app on private networks.",
     password: "Receiver password", start: "Start casting", stop: "Stop casting", change: "Change",
     system_picker: "When you start, the system asks which screen or window to share.", with_audio: "with sound", no_audio: "no sound", no_windows: "No window to cast", no_screens: "No screen to cast", screen_n: "Screen {0}",
     pair_open: "No pairing needed", pair_ask: "Asks for approval on the receiver", pair_pin: "Needs a code the first time", paired: "Paired", needs_password: "Needs a password",
@@ -207,13 +207,21 @@ function renderReceivers() {
       el("div", { class: "grow" }, el("div", { class: "name", text: r.name }), el("div", { class: "meta", text: [r.ip, r.model, r.app_version && `v${r.app_version}`].filter(Boolean).join(" · ") }), el("div", { class: "meta", text: pairText(r) })),
       el("span", { class: "end" }, on ? icon("check") : r.password ? icon("lock") : null)));
   }
-  $("empty").hidden = receivers.length > 0;
+  // While looking: say so, instead of an empty list or the "none found" card.
+  $("scanning").hidden = !scanning;
+  $("scanning-text").textContent = t(receivers.length ? "refreshing" : "scanning");
+  $("refresh").classList.toggle("spinning", scanning);
+  $("empty").hidden = receivers.length > 0 || scanning;
   $("password-row").hidden = !selected?.password;
   renderSummary();
 }
 
-async function refreshReceivers() {
+let scanning = false;
+// `quiet`: the regular look in the background, which only shows itself while there is nothing in the list.
+async function refreshReceivers(quiet = false) {
   $("refresh").disabled = true;
+  scanning = quiet !== true || receivers.length === 0;
+  renderReceivers();
   try {
     [receivers, paired] = await Promise.all([invoke("discover"), invoke("list_paired")]);
     selected = receivers.find((r) => r.id === selected?.id) ?? receivers.find((r) => r.id === settings.last_receiver) ?? null;
@@ -222,6 +230,8 @@ async function refreshReceivers() {
     showError(String(e));
   } finally {
     $("refresh").disabled = false;
+    scanning = false;
+    renderReceivers();
   }
 }
 
@@ -521,8 +531,8 @@ function wire() {
   $("open-settings").addEventListener("click", () => { renderSettings(); showView("settings"); });
   $("back").addEventListener("click", goBack);
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && (view === "settings" || view === "paired" || view === "diagnostics")) goBack(); });
-  $("refresh").addEventListener("click", refreshReceivers);
-  $("empty-retry").addEventListener("click", refreshReceivers);
+  $("refresh").addEventListener("click", () => refreshReceivers());
+  $("empty-retry").addEventListener("click", () => refreshReceivers());
   $("welcome-ok").addEventListener("click", () => { $("welcome").hidden = true; save({ welcome_done: true }); });
   $("forget").addEventListener("click", async () => { if (failedReceiverId) { await invoke("forget_receiver", { id: failedReceiverId }); showError(""); refreshReceivers(); } });
   $("update-open").addEventListener("click", installUpdate);
@@ -605,7 +615,7 @@ async function init() {
   fillSources();
   $("welcome").hidden = !!settings.welcome_done;
   await Promise.all([refreshSources(), refreshReceivers()]);
-  setInterval(() => { if (!casting && view === "home") refreshReceivers(); }, 15000);
+  setInterval(() => { if (!casting && view === "home") refreshReceivers(true); }, 15000);
   invoke("autostart_get").then((on) => $("autostart").setAttribute("aria-checked", String(on))).catch(() => {});
   window.__TAURI__.app.getVersion().then((v) => { $("version").textContent = v; }).catch(() => {});
   // The program ended badly last time: say so, and offer a report (unless it was sent by itself).

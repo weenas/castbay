@@ -104,6 +104,20 @@ pub fn ask_again() {
     linux::ask_again();
 }
 
+/// The process that owns the window a `Target::Window(title)` names (Windows only: the sound of
+/// just that window can be taken from it).
+pub fn window_process(title: &str) -> Option<u32> {
+    #[cfg(windows)]
+    {
+        windows::window_process(title)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = title;
+        None
+    }
+}
+
 /// Names of the monitors, for a picker (empty where the system does its own picking).
 pub fn monitors() -> Result<Vec<String>, Error> {
     #[cfg(windows)]

@@ -21,7 +21,9 @@ struct State<'a> {
 
 /// Delivers the audio the default output plays to `on_samples` (interleaved stereo floats) until
 /// `stop` says so. PipeWire converts whatever the device uses to the format asked for.
-pub fn run_loopback(stop: &dyn Fn() -> bool, mut on_samples: impl FnMut(&[f32])) -> Result<(), Error> {
+///
+/// `process` is only for Windows (the sound of one window): here it is the whole output.
+pub fn run_loopback(_process: Option<u32>, stop: &dyn Fn() -> bool, mut on_samples: impl FnMut(&[f32])) -> Result<(), Error> {
     pw::init();
     let mainloop = pw::main_loop::MainLoopRc::new(None).map_err(platform)?;
     let context = pw::context::ContextRc::new(&mainloop, None).map_err(platform)?;

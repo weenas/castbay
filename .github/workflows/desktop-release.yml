@@ -1,7 +1,9 @@
 name: Desktop release
 
 # Push a tag like desktop-v0.1.0 to build CastBay Desktop for Windows and Linux and publish it as a
-# pre-release, with its source (the sources of the libraries it contains are the submodules
+# release that is not "the latest" (the Android app's downloads follow GitHub's latest release, so a
+# desktop release must never take that place), with its source (the sources of the libraries it
+# contains are the submodules
 # under desktop/third_party). Run by hand (Actions > Desktop release > Run workflow) it builds
 # the same zip and installer and keeps them as build artifacts only (so does a pull request that
 # changes this file, the FFmpeg build script or the installer). `v*` tags are the Android release.
@@ -295,7 +297,7 @@ jobs:
             "dist/CastBay-Desktop-$VERSION-windows-x64.zip" \
             "dist/castbay-desktop_${VERSION}_amd64.deb" \
             "dist/CastBay-Desktop-$VERSION-source.tar.gz" \
-            --title "CastBay Desktop $VERSION" --prerelease \
+            --title "CastBay Desktop $VERSION" --latest=false \
             --notes "CastBay Desktop $VERSION. **Windows 10/11 (64-bit)**: install with the .msi (zh-CN: Chinese setup screens, en-US: English; no administrator rights needed), or unzip the .zip and run \"CastBay Desktop.exe\" without installing. Not code-signed yet: if SmartScreen warns, choose More info, then Run anyway. **Linux (Ubuntu/Debian, 64-bit, Wayland with PipeWire)**: install the .deb with \`sudo apt install ./castbay-desktop_${VERSION}_amd64.deb\`; the system asks which screen or window to share. Casts a screen or window, with sound, to CastBay receivers; turn on Desktop casting in the receiver's settings first."
 
       # Rebuilds the website, which holds the new release's installers for the app's update (see

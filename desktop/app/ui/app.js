@@ -168,7 +168,9 @@ function showView(name) {
   const sub = name === "settings" || name === "paired" || name === "diagnostics";
   $("back").hidden = !sub;
   $("open-settings").hidden = sub;
-  $("title").hidden = !sub; // the name is in the title bar; the bar below only names a sub-page
+  // The name is in the title bar: the main views show only the cast symbol, a sub-page its own name.
+  $("title").firstElementChild.toggleAttribute("hidden", sub); // an SVG has no .hidden property
+  $("title-text").hidden = !sub;
   document.body.dataset.view = name;
   $("title-text").dataset.i18n = TITLES[name] ?? "app_name";
   $("title-text").textContent = t(TITLES[name] ?? "app_name");

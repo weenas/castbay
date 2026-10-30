@@ -1,0 +1,79 @@
+---
+// The download page: everything that can be downloaded, in one place. The top-right Download button of
+// every page leads here. The Android app and the desktop installers are the site's own copies (see
+// integrations/latest-apk.mjs and latest-desktop.mjs), as downloads from GitHub are slow or blocked in
+// some places; the addresses /apk and /desktop/<name> always lead to the newest.
+import Page from '../../layouts/Page.astro';
+import { APK_URL, CERT_SHA256, formatDate } from '../../i18n';
+import { desktopReleases, releases } from '../../releases';
+
+const [android] = await releases('zh');
+const [desktop] = await desktopReleases('zh');
+---
+<Page lang="zh" page="download" title='下载映湾 CastBay：安卓电视、车机接收端，Windows 与 Linux 电脑端' description='下载映湾：安卓电视、电视盒子、车机和平板上的接收端 App，以及把 Windows 或 Linux 电脑投到接收端的映湾电脑端。免费开源。'>
+<main class="wrap doc download">
+  <h1>下载映湾</h1>
+  <p class="lead">
+    映湾分两部分。<strong>安卓 App</strong> 装在显示画面的屏幕上（电视、电视盒子、车机或平板），iPhone、iPad、Mac 和各种视频 App 不用装任何东西就能投过来。<strong>映湾电脑端</strong>装在 Windows 或 Linux 电脑上，把电脑的屏幕或某个窗口投到那个安卓 App。
+  </p>
+
+  <section class="dl-card" id="android">
+    <h2>安卓：电视、电视盒子、车机、平板</h2>
+    <p class="dl-meta">映湾 {android.data.version} · {formatDate('zh', android.data.date)} · 需要安卓 6.0 或更高版本 · 约 9 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href={APK_URL}>下载 APK</a>
+      <a class="btn btn-ghost" href="/zh/guide#安装和更新">怎样装到电视上</a>
+    </p>
+    <p class="note">
+      <a href="/apk">castbay.weenas.com/apk</a> 短到可以用电视遥控器输入。也可以从 <a href="https://github.com/weenas/castbay/releases/latest">GitHub</a> 和 <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay">Obtainium</a> 获取。每个版本都用同一把密钥签名（SHA-256 <code>{CERT_SHA256}</code>）。
+    </p>
+  </section>
+
+  <section class="dl-card" id="windows">
+    <h2>Windows：映湾电脑端</h2>
+    <p class="dl-meta">映湾电脑端 {desktop.data.version} · {formatDate('zh', desktop.data.date)} · Windows 10 或 11（64 位）· 约 4 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href="/desktop/windows-zh">安装程序（中文）</a>
+      <a class="btn btn-ghost" href="/desktop/windows-en">Installer (English)</a>
+      <a class="btn btn-ghost" href="/desktop/windows-zip">免安装版（.zip）</a>
+    </p>
+    <p class="note">
+      安装程序不需要管理员权限；.zip 解压到任何文件夹就能运行，不用安装。需要 Microsoft Edge WebView2 运行库，Windows 11 和较新的 Windows 10 自带。第一次运行时 Windows 可能询问是否允许联网：请允许在专用网络上访问，否则找不到接收端。
+    </p>
+    <p class="note">
+      <strong>暂时没有代码签名。</strong>Windows SmartScreen 可能提示“已保护你的电脑”：点<em>更多信息</em>，再点<em>仍要运行</em>。源码和每个版本的构建过程都是公开的，校验值在<a href="{desktop ? 'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version : 'https://github.com/weenas/castbay/releases'}">发布页</a>。
+    </p>
+  </section>
+
+  <section class="dl-card" id="linux">
+    <h2>Linux：映湾电脑端</h2>
+    <p class="dl-meta">映湾电脑端 {desktop.data.version} · Ubuntu 或 Debian（64 位），Wayland 加 PipeWire · 约 6 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href="/desktop/linux">下载 .deb</a>
+    </p>
+    <p class="note">
+      用 <code>sudo apt install ./castbay-desktop_{desktop.data.version}_amd64.deb</code> 安装。开始投屏时系统会询问要共享哪个屏幕或窗口。装好之后，映湾电脑端可以自己检查并安装新版本。
+    </p>
+  </section>
+
+  <section class="dl-card" id="apple">
+    <h2>iPhone、iPad 和 Mac</h2>
+    <p class="dl-meta">不用下载</p>
+    <p class="note">
+      它们用系统自带的 AirPlay 投屏：打开控制中心，选“屏幕镜像”或 App 里的 AirPlay 按钮，再选映湾所在的屏幕。详见<a href="/zh/guide">使用说明</a>。
+    </p>
+  </section>
+
+  <p class="note">
+    所有版本、校验值和源码：<a href="https://github.com/weenas/castbay/releases">GitHub 发布页</a> · <a href="/zh/changelog">更新日志</a> · 映湾免费开源（GPL-3.0）。
+  </p>
+</main>
+</Page>
+<style>
+  .download .lead { color: var(--text-2); margin: 0 0 8px; }
+  .dl-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; padding: 22px 24px; margin: 22px 0; }
+  .dl-card h2 { margin: 0 0 4px; font-size: 21px; }
+  .dl-meta { color: var(--text-3); font-size: 14px; margin: 0 0 14px; }
+  .dl-card .note { margin-top: 14px; }
+  .dl-card code { overflow-wrap: anywhere; font-size: 13px; }
+</style>

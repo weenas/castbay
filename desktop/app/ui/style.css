@@ -27,6 +27,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .topbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
 .topbar h1 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .brand { color: var(--accent); }
+.ic.big { width: 36px; height: 36px; flex: none; }
+dialog { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--text); padding: 18px; width: min(440px, calc(100vw - 32px)); }
+dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.about-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.about-head h2 { margin: 0; font-size: 16px; }
+#about-title:focus { outline: none; }
+.list + .list { margin-top: 10px; }
+.about-head p { margin: 2px 0 0; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+.dialog-actions .btn[hidden] { display: none; }
 /* The slogan on the main views is a line of text, not a title. */
 body[data-view="home"] #title, body[data-view="casting"] #title { font-size: 14px; font-weight: 500; color: var(--muted); }
 .topbar #open-settings { margin-left: auto; }

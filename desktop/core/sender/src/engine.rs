@@ -219,11 +219,23 @@ fn key_by_reopening(encoder: &str, since_last: Option<Duration>) -> bool {
     encoder == "amf" && since_last.map_or(true, |d| d >= Duration::from_millis(400))
 }
 
+/// The AMD encoder ignores its own key frame interval (a measured cast sent one key frame in two
+/// minutes), so a picture that was damaged on the way is never made whole: it is reopened every
+/// few seconds, which starts with a key frame.
+const AMF_KEY_INTERVAL: Duration = Duration::from_secs(3);
+
+fn key_due(encoder: &str, since_key: Option<Duration>) -> bool {
+    encoder == "amf" && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
+}
+
 fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {
     if st.lost.is_some() {
         return;
     }
-    if st.encoder.is_some() && (link.wants_key_frame() || st.want_key) && key_by_reopening(st.encoder_name, st.last_key_reopen.map(|t| t.elapsed())) {
+    let since_key = st.last_key_reopen.map(|t| t.elapsed());
+    if st.encoder.is_some()
+        && (((link.wants_key_frame() || st.want_key) && key_by_reopening(st.encoder_name, since_key)) || key_due(st.encoder_name, since_key))
+    {
         st.encoder = None;
         st.last_key_reopen = Some(Instant::now());
     }
@@ -238,6 +250,8 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
                     Codec::Qsv => "qsv",
                     Codec::X264 => "x264",
                 };
+                // A new encoder starts with a key frame: the interval above counts from here.
+                st.last_key_reopen = Some(Instant::now());
             }
             Err(e) => {
                 st.failed = Some(Failure::new("encoder", e.to_string()));
@@ -686,6 +700,16 @@ mod tests {
         assert!(!key_by_reopening("amf", Some(Duration::from_millis(100))));
         for other in ["nvenc", "x264", "", "qsv"] {
             assert!(!key_by_reopening(other, None), "{other}");
+        }
+    }
+
+    #[test]
+    fn the_amd_encoder_is_reopened_for_a_key_frame_every_few_seconds() {
+        assert!(!key_due("amf", None));
+        assert!(!key_due("amf", Some(Duration::from_secs(1))));
+        assert!(key_due("amf", Some(AMF_KEY_INTERVAL)));
+        for other in ["nvenc", "x264", "", "qsv"] {
+            assert!(!key_due(other, Some(Duration::from_secs(60))), "{other}");
         }
     }
 }

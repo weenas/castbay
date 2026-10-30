@@ -41,7 +41,7 @@ const [desktop] = await desktopReleases('zh');
       安装程序不需要管理员权限；.zip 解压到任何文件夹就能运行，不用安装。需要 Microsoft Edge WebView2 运行库，Windows 11 和较新的 Windows 10 自带。第一次运行时 Windows 可能询问是否允许联网：请允许在专用网络上访问，否则找不到接收端。
     </p>
     <p class="note">
-      <strong>暂时没有代码签名。</strong>Windows SmartScreen 可能提示“已保护你的电脑”：点<em>更多信息</em>，再点<em>仍要运行</em>。源码和每个版本的构建过程都是公开的，校验值在<a href="{desktop ? 'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version : 'https://github.com/weenas/castbay/releases'}">发布页</a>。
+      <strong>暂时没有代码签名。</strong>Windows SmartScreen 可能提示“已保护你的电脑”：点<em>更多信息</em>，再点<em>仍要运行</em>。源码和每个版本的构建过程都是公开的，校验值在<a href={'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version}>发布页</a>。
     </p>
   </section>
 

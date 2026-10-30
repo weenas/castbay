@@ -56,6 +56,7 @@ update it when something changes.
 ## The AMD encoder
 
 - **Key frames come from restarting the encoder.** FFmpeg's AMD encoder (h264_amf) cannot be told to make a key frame; it makes the first and, in the low-latency mode used here, no more. A receiver that needs one (it was not showing the picture, it dropped some) would wait for ever, so the sender opens the encoder again, at most every 0.4 s, which makes the first picture of the new one a key frame (a hitch of a few frames). NVIDIA's encoder and x264 force key frames.
+- **It also ignores its key frame interval.** A two-minute cast measured on the receiver had one key frame in 3600 pictures, so damage from a lost packet stayed on screen and the picture got worse. The encoder is therefore reopened every 3 s as well (the same hitch, every 3 s).
 
 ## Done differently from what one might expect
 

@@ -18,7 +18,7 @@ mod update;
 mod usage;
 
 use settings::Settings;
-use tauri::menu::{Menu, MenuItem};
+use tauri::menu::{Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 
@@ -56,12 +56,93 @@ fn utc(secs: u64) -> String {
 /// The tray menu's entries, kept to change their words when the language changes.
 struct TrayItems {
     open: MenuItem<tauri::Wry>,
+    settings: MenuItem<tauri::Wry>,
+    /// "Cast something else": the screens and windows that can be switched to while casting.
+    switch: Submenu<tauri::Wry>,
     stop: MenuItem<tauri::Wry>,
     quit: MenuItem<tauri::Wry>,
 }
 
-fn tray_words(zh: bool) -> [&'static str; 3] {
-    if zh { ["打开 CastBay Desktop", "停止投屏", "退出"] } else { ["Open CastBay Desktop", "Stop casting", "Quit"] }
+/// What the entries of the switch submenu stand for (kind and value as `switch_source` takes them),
+/// in the order they were put in the menu: an entry's id is `switch:` and its place in this list.
+#[derive(Default)]
+struct TraySources(Mutex<Vec<(&'static str, String)>>);
+
+/// Open, Settings, Switch, Stop, Quit.
+fn tray_words(zh: bool) -> [&'static str; 5] {
+    if zh {
+        ["打开 CastBay Desktop", "设置", "切换投屏内容", "停止投屏", "退出"]
+    } else {
+        ["Open CastBay Desktop", "Settings", "Switch what is cast", "Stop casting", "Quit"]
+    }
+}
+
+/// A name for a menu: not longer than a menu likes, no line breaks.
+fn menu_text(title: &str) -> String {
+    let clean: String = title.chars().map(|c| if c.is_control() { ' ' } else { c }).collect();
+    let mut short: String = clean.chars().take(48).collect();
+    if clean.chars().count() > 48 {
+        short.push('…');
+    }
+    short
+}
+
+/// Puts the screens and windows that can be cast now into the tray menu's switch entry, and turns
+/// it and the stop entry on or off with the cast. Windows come and go, so it is done again while
+/// a cast runs (see the thread in `main`). Where the system asks what to share (Wayland), there is
+/// nothing to list and the entry stays off.
+fn refresh_tray(app: &AppHandle) {
+    let casting = app.state::<Casting>().stopper.lock().unwrap().is_some();
+    let listed: Option<(Vec<String>, Vec<String>)> = if casting && cfg!(windows) {
+        match (castbay_capture::monitors(), castbay_capture::window_titles()) {
+            (Ok(monitors), Ok(windows)) => Some((monitors, windows)),
+            _ => None,
+        }
+    } else {
+        None
+    };
+    let zh = app.state::<SettingsState>().0.lock().unwrap().chinese(chinese());
+    let handle = app.clone();
+    let _ = app.run_on_main_thread(move || {
+        let (Some(items), Some(sources)) = (handle.try_state::<TrayItems>(), handle.try_state::<TraySources>()) else { return };
+        let mut entries: Vec<(&'static str, String, String)> = Vec::new();
+        if let Some((monitors, windows)) = &listed {
+            for (i, name) in monitors.iter().enumerate() {
+                entries.push(("monitor", i.to_string(), if zh { format!("屏幕 {name}") } else { format!("Screen {name}") }));
+            }
+            for title in windows.iter().take(20) {
+                entries.push(("window", title.clone(), menu_text(title)));
+            }
+        }
+        // Only touch the menu when what it lists changed.
+        let now: Vec<(&'static str, String)> = entries.iter().map(|(k, v, _)| (*k, v.clone())).collect();
+        let mut held = sources.0.lock().unwrap();
+        if *held != now {
+            if let Ok(old) = items.switch.items() {
+                for item in old {
+                    let _ = items.switch.remove(&item);
+                }
+            }
+            for (i, (_, _, text)) in entries.iter().enumerate() {
+                if let Ok(item) = MenuItem::with_id(&handle, format!("switch:{i}"), text, true, None::<&str>) {
+                    let _ = items.switch.append(&item);
+                }
+            }
+            log(&handle, &format!("tray menu: {} screens and windows to switch to", now.len()));
+            *held = now;
+        }
+        let _ = items.switch.set_enabled(listed.is_some() && !entries.is_empty());
+        let _ = items.stop.set_enabled(casting);
+    });
+}
+
+/// The entry `switch:N` of the tray menu was chosen.
+fn tray_switch(app: &AppHandle, index: usize) {
+    let chosen = app.state::<TraySources>().0.lock().unwrap().get(index).cloned();
+    if let Some((kind, value)) = chosen {
+        log(app, &format!("tray menu: switch to {kind} {value}"));
+        let _ = switch_to(&app.state::<Casting>(), kind, &value);
+    }
 }
 
 /// The person's choices, loaded at start and rewritten when they change.
@@ -227,6 +308,9 @@ fn start_cast(args: StartArgs, app: AppHandle, state: State<'_, Casting>, settin
             _ => {}
         }
         let _ = emitter.emit("status", status_json(&status));
+        if matches!(status, Status::Casting { .. } | Status::SourceLost | Status::Switched | Status::Ended(_)) {
+            refresh_tray(&emitter);
+        }
     });
     log(&app, &format!("start: {}:{} {} {} {} {}", args.ip, args.port, args.kind, format!("{}fps {}Mbit/s", settings.fps, settings.bitrate_mbps), settings.encoder, if args.kind == "window" { "" } else { args.value.as_str() }));
     if let Ok(dir) = app.path().app_data_dir() {
@@ -308,8 +392,10 @@ fn set_settings(patch: serde_json::Value, app: AppHandle, settings: State<'_, Se
     usage_changed(&app, current.usage_stats, next.usage_stats);
     if next.language != current.language {
         if let Some(items) = app.try_state::<TrayItems>() {
-            let [open, stop, quit] = tray_words(next.chinese(chinese()));
+            let [open, settings, switch, stop, quit] = tray_words(next.chinese(chinese()));
             let _ = items.open.set_text(open);
+            let _ = items.settings.set_text(settings);
+            let _ = items.switch.set_text(switch);
             let _ = items.stop.set_text(stop);
             let _ = items.quit.set_text(quit);
         }
@@ -678,8 +764,12 @@ fn open_logs(app: AppHandle) -> Result<(), String> {
 /// `window`, `value` the monitor's number or the window's title, as when starting).
 #[tauri::command]
 fn switch_source(kind: String, value: String, state: State<'_, Casting>) -> Result<(), String> {
-    let target = match kind.as_str() {
-        "window" if !value.is_empty() => Target::Window(value),
+    switch_to(&state, &kind, &value)
+}
+
+fn switch_to(state: &Casting, kind: &str, value: &str) -> Result<(), String> {
+    let target = match kind {
+        "window" if !value.is_empty() => Target::Window(value.to_string()),
         "window" => return Err("no window named".into()),
         _ => Target::Monitor(value.parse().unwrap_or(0)),
     };
@@ -893,20 +983,30 @@ fn main() {
                     }
                 });
             }
-            let [open_text, stop_text, quit_text] = tray_words(zh);
+            let [open_text, settings_text, switch_text, stop_text, quit_text] = tray_words(zh);
             let open = MenuItem::with_id(app, "open", open_text, true, None::<&str>)?;
-            let stop = MenuItem::with_id(app, "stop", stop_text, true, None::<&str>)?;
+            let settings_item = MenuItem::with_id(app, "settings", settings_text, true, None::<&str>)?;
+            let switch = Submenu::with_id(app, "switch", switch_text, false)?;
+            let stop = MenuItem::with_id(app, "stop", stop_text, false, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", quit_text, true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &stop, &quit_item])?;
+            let menu = Menu::with_items(app, &[&open, &settings_item, &PredefinedMenuItem::separator(app)?, &switch, &stop, &PredefinedMenuItem::separator(app)?, &quit_item])?;
             let mut tray = TrayIconBuilder::new()
                 .tooltip("CastBay Desktop")
                 .menu(&menu)
                 .show_menu_on_left_click(false)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "open" => show_main(app),
+                    "settings" => {
+                        show_main(app);
+                        let _ = app.emit("tray", json!({"kind": "settings"}));
+                    }
                     "stop" => stop_casting(app),
                     "quit" => quit(app),
-                    _ => {}
+                    other => {
+                        if let Some(index) = other.strip_prefix("switch:").and_then(|n| n.parse::<usize>().ok()) {
+                            tray_switch(app, index);
+                        }
+                    }
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. } = event {
@@ -917,7 +1017,14 @@ fn main() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
-            app.manage(TrayItems { open, stop, quit: quit_item });
+            app.manage(TrayItems { open, settings: settings_item, switch, stop, quit: quit_item });
+            app.manage(TraySources::default());
+            // Windows come and go: while a cast runs, the list in the tray menu is kept up to date.
+            let handle = app.handle().clone();
+            std::thread::spawn(move || loop {
+                std::thread::sleep(Duration::from_secs(3));
+                refresh_tray(&handle);
+            });
             // Started with Windows: wait in the tray until the person opens it.
             if !std::env::args().any(|a| a == "--minimized") {
                 show_main(app.handle());

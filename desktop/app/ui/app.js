@@ -11,7 +11,7 @@ const TEXT = {
     w_title: "开始使用", w_1: "在电视或平板上打开映湾，在设置里开启“电脑投屏”。",
     w_2: "如果 Windows 防火墙弹窗询问，请允许在专用网络上访问，否则找不到接收端。",
     w_3: "在下面选择接收端并开始投屏。第一次连接时接收端会显示 6 位配对码，在这里输入即可。",
-    receivers: "接收端", what: "投什么", screen: "整个屏幕", window: "某个窗口",
+    receivers: "接收端", what: "投什么", screen: "整个屏幕", window: "指定窗口",
     scanning: "正在查找接收端…", refreshing: "正在刷新…", empty_title: "没有找到接收端", empty_body: "在电视或平板上打开映湾，开启“电脑投屏”；两者需在同一网络，Windows 防火墙要允许本程序访问专用网络。",
     password: "接收端密码", start: "开始投屏", stop: "停止投屏", change: "更改",
     system_picker: "开始投屏时，系统会询问要共享哪个屏幕或窗口。", with_audio: "带声音", no_audio: "不带声音", no_windows: "没有可投的窗口", no_screens: "没有可投的屏幕", screen_n: "屏幕 {0}",
@@ -47,7 +47,7 @@ const TEXT = {
     w_title: "Getting started", w_1: "On the TV or tablet, open CastBay and turn on \"Desktop casting\" in its settings.",
     w_2: "If Windows asks about the firewall, allow access on private networks. Otherwise receivers cannot be found.",
     w_3: "Pick the receiver below and start. The first time, the receiver shows a 6-digit code: type it here.",
-    receivers: "Receivers", what: "What to cast", screen: "A screen", window: "A window",
+    receivers: "Receivers", what: "What to cast", screen: "Entire screen", window: "Single window",
     scanning: "Looking for receivers…", refreshing: "Refreshing…", empty_title: "No receiver found", empty_body: "Open CastBay on the TV or tablet and turn on Desktop casting. Both must be on the same network, and the Windows firewall must allow this app on private networks.",
     password: "Receiver password", start: "Start casting", stop: "Stop casting", change: "Change",
     system_picker: "When you start, the system asks which screen or window to share.", with_audio: "with sound", no_audio: "no sound", no_windows: "No window to cast", no_screens: "No screen to cast", screen_n: "Screen {0}",
@@ -77,8 +77,22 @@ const TEXT = {
     f_encoder: "The video encoder could not start: {0}", f_capture: "Screen capture failed: {0}", f_protocol: "Talking to the receiver failed: {0}",
   },
 };
+// Words that are about Windows, said differently where the program runs on Linux.
+const TEXT_LINUX = {
+  zh: {
+    s_autostart: "登录后自动启动", aria_s_autostart: "登录后自动启动",
+    w_2: "如果防火墙拦截了，请允许本程序在局域网内访问，否则找不到接收端。",
+    empty_body: "在电视或平板上打开映湾，开启“电脑投屏”；两者需在同一网络，防火墙要允许本程序访问局域网。",
+  },
+  en: {
+    s_autostart: "Start at login", aria_s_autostart: "Start at login",
+    w_2: "If a firewall blocks it, allow this app on the local network. Otherwise receivers cannot be found.",
+    empty_body: "Open CastBay on the TV or tablet and turn on Desktop casting. Both must be on the same network, and the firewall must allow this app on the local network.",
+  },
+};
+const ON_WINDOWS = /Windows/i.test(navigator.userAgent);
 let lang = "en";
-const t = (key, ...args) => String(TEXT[lang][key] ?? TEXT.en[key] ?? key).replace(/\{(\d)\}/g, (_, i) => args[i] ?? "");
+const t = (key, ...args) => String((!ON_WINDOWS && TEXT_LINUX[lang]?.[key]) || (TEXT[lang][key] ?? TEXT.en[key] ?? key)).replace(/\{(\d)\}/g, (_, i) => args[i] ?? "");
 const systemLang = () => ((navigator.language || "en").toLowerCase().startsWith("zh") ? "zh" : "en");
 
 // ---------------------------------------------------------------- state

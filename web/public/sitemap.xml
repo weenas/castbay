@@ -126,4 +126,18 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/download"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/download"/>
   </url>
+  <url>
+    <loc>https://castbay.weenas.com/desktop-guide</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/desktop-guide"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/desktop-guide"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/desktop-guide"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/desktop-guide</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/desktop-guide"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/desktop-guide"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/desktop-guide"/>
+  </url>
 </urlset>

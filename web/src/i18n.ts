@@ -1,6 +1,6 @@
 // The words the shared header and footer use, and where each page lives in each language.
 export type Lang = 'en' | 'zh';
-export type PageName = 'index' | 'download' | 'guide' | 'tech' | 'faq' | 'changelog' | 'compatibility' | 'feedback' | 'privacy';
+export type PageName = 'index' | 'download' | 'guide' | 'desktop-guide' | 'tech' | 'faq' | 'changelog' | 'compatibility' | 'feedback' | 'privacy';
 
 export const BASE_URL = 'https://castbay.weenas.com';
 
@@ -16,6 +16,7 @@ export const strings = {
     themeToDark: 'Switch to dark theme',
     home: 'Home',
     guide: 'User guide',
+    desktopGuide: 'Desktop guide',
     faq: 'FAQ',
     tech: 'How it works',
     changelog: 'Changelog',
@@ -37,6 +38,7 @@ export const strings = {
     themeToDark: '切换到深色',
     home: '主页',
     guide: '使用说明',
+    desktopGuide: '电脑端说明',
     faq: '常见问题',
     tech: '技术原理',
     changelog: '更新日志',

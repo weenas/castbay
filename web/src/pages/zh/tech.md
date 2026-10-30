@@ -51,7 +51,7 @@ DLNA（Digital Living Network Alliance，数字生活网络联盟）制定了让
 
 ## 从电脑投屏：映湾桌面端
 
-Windows 和 Linux 电脑没有 AirPlay 可用，所以映湾桌面端使用映湾自己的连接，只有映湾接收端能听懂。接收端会在网络上公布自己（`_castbay._tcp`，和 AirPlay 的做法类似），双方建立一条 TLS 连接，各自用自己的密钥证明身份。第一次连接时，接收端会显示一个由双方密钥算出的 6 位数字，在电脑上输入即可；之后接收端会被记住，密钥变化会被拒绝。连接里传的是 H.264 视频（能用显卡就用显卡编码：AMD、NVIDIA，否则用 CPU 的 x264），每 2 秒有一帧完整的画面（关键帧），丢包造成的损伤不会一直留在屏幕上，还有 AAC 声音。电视照样用硬件解码，和屏幕镜像一样。协议写在<a href="https://github.com/weenas/castbay/blob/main/desktop/docs/protocol.md">源码</a>里。
+Windows 和 Linux 电脑没有 AirPlay 可用，所以映湾桌面端使用映湾自己的连接，只有映湾接收端能听懂。接收端会在网络上公布自己（`_castbay._tcp`，和 AirPlay 的做法类似），双方建立一条 TLS 连接，各自用自己的密钥证明身份。第一次连接时，接收端会显示一个由双方密钥算出的 6 位数字，在电脑上输入即可；之后接收端会被记住，密钥变化会被拒绝。连接里传的是 H.264 视频（能用显卡就用显卡编码：AMD、NVIDIA，否则用 CPU 的 x264），每 2 秒有一帧完整的画面（关键帧），丢帧之后的损伤不会一直留在屏幕上（走的是一条 TCP 连接，路上不会丢数据；发送端在连接装不下时会主动丢掉一些画面），还有 AAC 声音。电视照样用硬件解码，和屏幕镜像一样。协议写在<a href="https://github.com/weenas/castbay/blob/main/desktop/docs/protocol.md">源码</a>里。
 
 ## 手机是怎么找到电视的
 

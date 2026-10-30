@@ -55,7 +55,7 @@ update it when something changes.
 
 ## The AMD encoder
 
-- **It ignores its own key frame interval.** A two-minute cast measured on the receiver had one key frame in 3600 pictures, so damage from a lost packet stayed on screen and the picture got worse. FFmpeg 8 and later (CastBay uses 9.0.2; 7.1 had no code for it) make a key frame when asked, so the sender asks every 2 s and whenever the receiver does. NVIDIA's encoder and x264 keep the interval themselves.
+- **It ignores its own key frame interval.** A two-minute cast measured on the receiver had one key frame in 3600 pictures, so damage after a dropped picture stayed on screen and the picture got worse. FFmpeg 8 and later (CastBay uses 9.0.2; 7.1 had no code for it) make a key frame when asked, so the sender asks every 2 s and whenever the receiver does. NVIDIA's encoder and x264 keep the interval themselves.
 
 ## Done differently from what one might expect
 

@@ -219,6 +219,16 @@ fn key_due(encoder: &str, since_key: Option<Duration>) -> bool {
     encoder == "amf" && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
 }
 
+/// After the sender dropped a picture (the link could not take it) every picture that follows
+/// builds on one the receiver never got, so the next one should be a key frame: at once, but not for
+/// every picture of a burst of drops (a key frame is the biggest picture there is, and sending one
+/// into a link that is already full only makes more drops).
+const KEY_AFTER_DROP_GAP: Duration = Duration::from_millis(500);
+
+fn key_after_drop(since_key: Option<Duration>) -> bool {
+    since_key.map_or(true, |d| d >= KEY_AFTER_DROP_GAP)
+}
+
 /// Pushes the current picture into the encoder and sends what came out.
 fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {
     if st.lost.is_some() {
@@ -270,6 +280,9 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
                     SendResult::Dropped => {
                         st.dropped += 1;
                         st.rate.dropped(Instant::now());
+                        if key_after_drop(st.last_key.map(|t| t.elapsed())) {
+                            st.want_key = true;
+                        }
                     }
                     SendResult::Closed => {
                         st.lost.get_or_insert_with(|| "connection lost".into());
@@ -681,6 +694,13 @@ fn report(state: &Arc<Mutex<State>>, started: Instant, stop: &Arc<AtomicBool>, o
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_dropped_picture_is_followed_by_a_key_frame_but_not_for_each_drop_of_a_burst() {
+        assert!(key_after_drop(None));
+        assert!(key_after_drop(Some(KEY_AFTER_DROP_GAP)));
+        assert!(!key_after_drop(Some(Duration::from_millis(100))), "the last key frame is still on its way");
+    }
 
     #[test]
     fn the_amd_encoder_is_asked_for_a_key_frame_every_two_seconds() {

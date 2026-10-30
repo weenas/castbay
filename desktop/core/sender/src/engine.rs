@@ -257,6 +257,9 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
 /// Repeats at the full rate after a new picture, so that the encoder can bring a still picture to its
 /// best (a picture is sharper after a few passes), then the rate is lowered.
 const REFINE_REPEATS: u32 = 8;
+/// Repeats in a row (about a second, at ten a second) before the person is told the screen is still:
+/// a screen that changes a couple of times a second would otherwise make the note blink.
+const STILL_NOTE_AFTER: u32 = REFINE_REPEATS + 10;
 /// How often the picture is repeated on a still screen: only to keep the stream alive.
 const STILL_REPEAT: Duration = Duration::from_millis(100);
 
@@ -554,7 +557,7 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
             if st.have_picture && st.last.elapsed() >= repeat_wait(interval, st.repeats_in_a_row, st.gap) {
                 push(&mut st, link, Instant::now(), started, &config, codec, true);
                 st.repeats_in_a_row = st.repeats_in_a_row.saturating_add(1);
-                if st.repeats_in_a_row >= REFINE_REPEATS && !st.still && interval < STILL_REPEAT {
+                if st.repeats_in_a_row >= STILL_NOTE_AFTER && !st.still && interval < STILL_REPEAT {
                     st.still = true;
                     on_status(Status::Still(true));
                 }

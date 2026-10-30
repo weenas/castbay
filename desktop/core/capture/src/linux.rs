@@ -19,6 +19,14 @@ use pw::{properties::properties, spa};
 use crate::{Ended, Error, Frame, Target};
 
 static DATA_DIR: OnceLock<PathBuf> = OnceLock::new();
+/// Set when the next share must be asked for again, whatever was chosen before (the person wants
+/// to change what is cast). The old choice is kept until a new one is made, so a dialog that is
+/// cancelled leaves the cast as it was.
+static ASK_AGAIN: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+pub fn ask_again() {
+    ASK_AGAIN.store(true, std::sync::atomic::Ordering::SeqCst);
+}
 
 pub fn set_data_dir(dir: &Path) {
     let _ = DATA_DIR.set(dir.to_path_buf());
@@ -50,6 +58,9 @@ const REMEMBERED_CHOICE_WAIT: Duration = Duration::from_secs(15);
 const STALE: &str = "the remembered screen-share choice did not answer";
 
 async fn open_portal(target: &Target) -> Result<Share, Error> {
+    if ASK_AGAIN.swap(false, std::sync::atomic::Ordering::SeqCst) {
+        return open_portal_with(target, false).await;
+    }
     match open_portal_with(target, true).await {
         Err(Error::Platform(message)) if message == STALE => {
             // The remembered choice is no longer good: forget it and let the system ask again.
@@ -70,16 +81,16 @@ async fn open_portal_with(target: &Target, use_token: bool) -> Result<Share, Err
         .and_then(|f| std::fs::read_to_string(f).ok())
         .map(|t| t.trim().to_string())
         .filter(|t| !t.is_empty());
-    let source = match target {
-        Target::Monitor(_) => SourceType::Monitor,
-        Target::Window(_) => SourceType::Window,
-    };
+    // The system's dialog does the picking, so it offers both: a screen is the natural start, but a
+    // window is the way round a fullscreen picture that GNOME stops sending (direct scanout).
+    let _ = target;
+    let source = SourceType::Monitor | SourceType::Window;
     proxy
         .select_sources(
             &session,
             SelectSourcesOptions::default()
                 .set_cursor_mode(CursorMode::Embedded)
-                .set_sources(ashpd::enumflags2::BitFlags::from_flag(source))
+                .set_sources(source)
                 .set_multiple(false)
                 .set_restore_token(token.as_deref())
                 .set_persist_mode(PersistMode::ExplicitlyRevoked),

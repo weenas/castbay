@@ -97,6 +97,13 @@ pub fn set_data_dir(dir: &std::path::Path) {
     let _ = dir;
 }
 
+/// Makes the next capture on Linux show the system's dialog even if a choice is remembered (to change
+/// what is cast while casting). Nothing elsewhere.
+pub fn ask_again() {
+    #[cfg(target_os = "linux")]
+    linux::ask_again();
+}
+
 /// Names of the monitors, for a picker (empty where the system does its own picking).
 pub fn monitors() -> Result<Vec<String>, Error> {
     #[cfg(windows)]

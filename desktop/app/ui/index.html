@@ -74,7 +74,7 @@
         <button type="button" role="radio" id="kind-window" data-kind="window"><span data-i18n="window"></span></button>
       </div>
       <select id="source" class="select" data-aria="source"></select>
-      <p id="system-picker-note" class="muted" data-i18n="system_picker" hidden></p>
+      <p id="system-picker-note" class="muted" hidden><span data-i18n="system_picker"></span> <button type="button" id="reshare" class="link" data-i18n="reshare"></button></p>
     </section>
 
     <section id="view-casting" class="view" hidden>
@@ -99,6 +99,10 @@
           <button id="switch-do" class="btn secondary" data-i18n="switch_do"></button>
         </div>
         <p id="switch-note" class="note" role="status"></p>
+      </div>
+      <div id="switch-ask" class="card" hidden>
+        <p class="muted note" data-i18n="switch_ask_title"></p>
+        <button id="switch-ask-do" class="btn secondary" data-i18n="switch_ask_do"></button>
       </div>
       <div id="lock-note" class="notice warn" hidden><svg class="ic"><use href="#i-lock"/></svg><span data-i18n="locked_note"></span></div>
       <details id="details" class="card details">

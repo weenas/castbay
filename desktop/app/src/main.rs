@@ -481,6 +481,20 @@ fn forget_receiver(id: String, app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Forgets which screen or window was shared, so the system asks again at the next cast (on Linux
+/// the answer is kept and the dialog does not show).
+#[tauri::command]
+fn forget_share(app: AppHandle) -> Result<(), String> {
+    let dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    match std::fs::remove_file(dir.join("screencast-token")) {
+        Ok(()) => {}
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => return Err(e.to_string()),
+    }
+    log(&app, "forgot the shared screen or window");
+    Ok(())
+}
+
 /// Whether `url` is one of this project's pages the program opens: a release page on GitHub or a
 /// page of the website (the changelog), with nothing in it that could be taken for more.
 fn project_page(url: &str) -> bool {
@@ -826,6 +840,11 @@ fn switch_source(kind: String, value: String, state: State<'_, Casting>) -> Resu
 
 fn switch_to(state: &Casting, kind: &str, value: &str) -> Result<(), String> {
     let target = match kind {
+        // Where the system does the picking (Linux): its dialog is shown again.
+        "ask" => {
+            castbay_capture::ask_again();
+            Target::Monitor(0)
+        }
         "window" if !value.is_empty() => Target::Window(value.to_string()),
         "window" => return Err("no window named".into()),
         _ => Target::Monitor(value.parse().unwrap_or(0)),
@@ -1103,7 +1122,7 @@ fn main() {
                 }
             }
         })
-        .invoke_handler(tauri::generate_handler![get_settings, set_settings, reset_settings, list_paired, discover, sources, start_cast, submit_code, switch_source, stop_cast, forget_receiver, open_logs, open_release, install_update, encoders, diagnostics_view, upload_report, crash_pending, send_crash_report, dismiss_crash, autostart_get, autostart_set])
+        .invoke_handler(tauri::generate_handler![get_settings, set_settings, reset_settings, list_paired, discover, sources, start_cast, submit_code, switch_source, stop_cast, forget_receiver, forget_share, open_logs, open_release, install_update, encoders, diagnostics_view, upload_report, crash_pending, send_crash_report, dismiss_crash, autostart_get, autostart_set])
         .run(tauri::generate_context!())
         .expect("the CastBay Desktop window failed to start");
 }

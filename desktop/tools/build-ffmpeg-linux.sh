@@ -9,6 +9,8 @@
 #
 # An existing build from the same submodule commits is kept.
 set -euo pipefail
+# This script, by an address that holds after the cd: it is part of what the build is made from (WANT below).
+SELF="$(cd "$(dirname "$0")" && pwd)/$(basename "$0")"
 cd "$(dirname "$0")/.."
 
 OUT="$PWD/build/ffmpeg"
@@ -17,7 +19,7 @@ WORK="$PWD/build/ffmpeg-work"
 STAMP="$OUT/.built-from"
 
 commit() { git -C "$THIRD/$1" rev-parse HEAD 2>/dev/null || cat "$THIRD/$1/.commit"; }
-WANT="linux $(commit FFmpeg) $(commit x264) $(commit nv-codec-headers) $(cksum < "$0")"
+WANT="linux $(commit FFmpeg) $(commit x264) $(commit nv-codec-headers) $(cksum < "$SELF")"
 if [[ -f "$STAMP" && "$(cat "$STAMP")" == "$WANT" && -f "$OUT/lib/libavcodec.a" ]]; then
   echo "FFmpeg is already built from these commits: $OUT"
   exit 0

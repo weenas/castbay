@@ -119,6 +119,14 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
             stream.isAudioOnly -> StreamKind.AUDIO
             else -> StreamKind.MIRRORING
         }
+        // The TV's own screen saver (and its screen-off timer) counts from the last key press: a cast
+        // that nobody touches the remote for must still keep the screen on. The music screen and the
+        // video player did this for themselves; the mirroring picture did not.
+        val view = LocalView.current
+        DisposableEffect(view) {
+            view.keepScreenOn = true
+            onDispose { view.keepScreenOn = false }
+        }
         var menuOpen by remember(kind) { mutableStateOf(false) }
         // Where the quick menu is, so a tap on it doesn't count as a tap on the picture.
         var menuBounds by remember { mutableStateOf<androidx.compose.ui.geometry.Rect?>(null) }

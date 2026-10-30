@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 // ---------------------------------------------------------------- text
 const TEXT = {
   zh: {
-    app_name: "映湾桌面端", about_close: "关闭", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_ignore: "忽略此版本", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
+    app_name: "映湾桌面端", tray_no_receiver: "找不到上次投屏用的接收端。请在列表里选一台，再点开始投屏。", tray_needs_password: "上次的接收端需要密码。请在这里输入密码，再点开始投屏。", about_close: "关闭", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_ignore: "忽略此版本", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
     aria_back: "返回", aria_settings: "设置", aria_refresh: "刷新", aria_what: "投什么", aria_source: "选择要投的内容", aria_code: "配对码",
     aria_s_quality: "画质", aria_s_bitrate: "码率", aria_s_fps: "帧率", aria_s_audio: "同时传声音", aria_s_autostart: "开机自动启动",
     w_title: "开始使用", w_1: "在电视或平板上打开映湾，在设置里开启“电脑投屏”。",
@@ -41,7 +41,7 @@ const TEXT = {
     f_encoder: "无法启动视频编码器：{0}", f_capture: "屏幕捕获出错：{0}", f_protocol: "和接收端通信出错：{0}",
   },
   en: {
-    app_name: "CastBay Desktop", about_close: "Close", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_ignore: "Skip this version", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
+    app_name: "CastBay Desktop", tray_no_receiver: "The receiver used last time was not found. Choose one in the list, then press Start casting.", tray_needs_password: "The receiver used last time needs a password. Enter it here, then press Start casting.", about_close: "Close", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_ignore: "Skip this version", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
     aria_back: "Back", aria_settings: "Settings", aria_refresh: "Refresh", aria_what: "What to cast", aria_source: "Choose what to cast", aria_code: "Pairing code",
     aria_s_quality: "Quality", aria_s_bitrate: "Bitrate", aria_s_fps: "Frame rate", aria_s_audio: "Send sound too", aria_s_autostart: "Start with Windows",
     w_title: "Getting started", w_1: "On the TV or tablet, open CastBay and turn on \"Desktop casting\" in its settings.",
@@ -350,7 +350,9 @@ function submitCode() {
 function onStatus(s) {
   showError("");
   switch (s.kind) {
-    case "connecting": casting = true; resetCasting(); showView("casting"); break;
+    case "connecting":
+      // Also a cast the tray menu started, with the window closed: the page follows it.
+      casting = true; castNote = { fps: settings.fps, audio: !!settings.send_audio }; resetCasting(); showView("casting"); showSwitchBox(); break;
     case "needs_code": $("state-line").textContent = t("needs_code"); $("code-box").hidden = false; $("code").value = ""; $("code").focus(); break;
     case "casting":
       $("code-box").hidden = true;
@@ -657,6 +659,10 @@ function wire() {
   listen("tray", ({ payload }) => {
     if (payload.kind === "settings") { renderSettings(); showView("settings"); }
     if (payload.kind === "about") openAbout();
+    // The tray menu could not start a cast by itself: the window is open, and says why.
+    if (payload.kind === "no_receiver") { refreshReceivers(); showError(t("tray_no_receiver")); }
+    if (payload.kind === "needs_password") { refreshReceivers(); showError(t("tray_needs_password")); }
+    if (payload.kind === "start_failed") showError(t("failed", payload.reason));
   });
 }
 

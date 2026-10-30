@@ -78,6 +78,11 @@ fn tray_words(zh: bool) -> [&'static str; 6] {
     }
 }
 
+/// What the switch entry is called while nothing is cast: the same list, but choosing from it starts a cast.
+fn tray_start_word(zh: bool) -> &'static str {
+    if zh { "开始投屏" } else { "Start casting" }
+}
+
 /// A name for a menu: not longer than a menu likes, no line breaks.
 fn menu_text(title: &str) -> String {
     let clean: String = title.chars().map(|c| if c.is_control() { ' ' } else { c }).collect();
@@ -94,7 +99,10 @@ fn menu_text(title: &str) -> String {
 /// nothing to list and the entry stays off.
 fn refresh_tray(app: &AppHandle) {
     let casting = app.state::<Casting>().stopper.lock().unwrap().is_some();
-    let listed: Option<(Vec<String>, Vec<String>)> = if casting && cfg!(windows) {
+    let settings = app.state::<SettingsState>().0.lock().unwrap().clone();
+    // Without a cast it starts one, to the receiver chosen last: there has to be one.
+    let can_start = !settings.last_receiver.is_empty();
+    let listed: Option<(Vec<String>, Vec<String>)> = if (casting || can_start) && cfg!(windows) {
         match (castbay_capture::monitors(), castbay_capture::window_titles()) {
             (Ok(monitors), Ok(windows)) => Some((monitors, windows)),
             _ => None,
@@ -102,7 +110,7 @@ fn refresh_tray(app: &AppHandle) {
     } else {
         None
     };
-    let zh = app.state::<SettingsState>().0.lock().unwrap().chinese(chinese());
+    let zh = settings.chinese(chinese());
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
         let (Some(items), Some(sources)) = (handle.try_state::<TrayItems>(), handle.try_state::<TraySources>()) else { return };
@@ -132,17 +140,50 @@ fn refresh_tray(app: &AppHandle) {
             log(&handle, &format!("tray menu: {} screens and windows to switch to", now.len()));
             *held = now;
         }
+        let [_, _, switch_word, ..] = tray_words(zh);
+        let _ = items.switch.set_text(if casting { switch_word } else { tray_start_word(zh) });
         let _ = items.switch.set_enabled(listed.is_some() && !entries.is_empty());
         let _ = items.stop.set_enabled(casting);
     });
 }
 
-/// The entry `switch:N` of the tray menu was chosen.
-fn tray_switch(app: &AppHandle, index: usize) {
+/// The entry `switch:N` of the tray menu was chosen: another thing to cast while a cast runs, else
+/// the start of one.
+fn tray_choose(app: &AppHandle, index: usize) {
     let chosen = app.state::<TraySources>().0.lock().unwrap().get(index).cloned();
-    if let Some((kind, value)) = chosen {
+    let Some((kind, value)) = chosen else { return };
+    if app.state::<Casting>().stopper.lock().unwrap().is_some() {
         log(app, &format!("tray menu: switch to {kind} {value}"));
         let _ = switch_to(&app.state::<Casting>(), kind, &value);
+    } else {
+        let app = app.clone();
+        std::thread::spawn(move || tray_start(&app, kind, value));
+    }
+}
+
+/// Casts `kind`/`value` (a screen's number or a window's title) to the receiver chosen last, without
+/// opening the window. Where that cannot be done by itself the window opens and says why: the
+/// receiver is not there, it wants a password, or it wants the code it shows (the cast asks for the
+/// window then, see `start_cast_inner`).
+fn tray_start(app: &AppHandle, kind: &'static str, value: String) {
+    let wanted = app.state::<SettingsState>().0.lock().unwrap().last_receiver.clone();
+    log(app, &format!("tray menu: start casting a {kind}"));
+    let found = castbay_link::browse(Duration::from_secs(3)).ok().and_then(|list| list.into_iter().find(|r| r.id == wanted));
+    let ask_for_the_window = |kind: &str, reason: &str| {
+        log(app, &format!("tray menu: cannot start by itself ({kind})"));
+        show_main(app);
+        let _ = app.emit("tray", json!({"kind": kind, "reason": reason}));
+    };
+    let Some(receiver) = found else { return ask_for_the_window("no_receiver", "") };
+    if receiver.password {
+        return ask_for_the_window("needs_password", "");
+    }
+    let Some(ip) = receiver.addresses.iter().find(|a| a.is_ipv4()).or(receiver.addresses.first()) else {
+        return ask_for_the_window("no_receiver", "");
+    };
+    let args = StartArgs { id: receiver.id.clone(), ip: ip.to_string(), port: receiver.port, password: None, kind: kind.to_string(), value };
+    if let Err(reason) = start_cast_inner(args, app) {
+        ask_for_the_window("start_failed", &reason);
     }
 }
 
@@ -250,8 +291,14 @@ fn status_json(status: &Status) -> serde_json::Value {
 }
 
 #[tauri::command]
-fn start_cast(args: StartArgs, app: AppHandle, state: State<'_, Casting>, settings: State<'_, SettingsState>) -> Result<(), String> {
-    let settings = settings.0.lock().unwrap().clone();
+fn start_cast(args: StartArgs, app: AppHandle) -> Result<(), String> {
+    start_cast_inner(args, &app)
+}
+
+/// Starts a cast: the page's Start button and the tray menu both come here.
+fn start_cast_inner(args: StartArgs, app: &AppHandle) -> Result<(), String> {
+    let state = app.state::<Casting>();
+    let settings = app.state::<SettingsState>().0.lock().unwrap().clone();
     if state.stopper.lock().unwrap().is_some() {
         return Err("already casting".into());
     }
@@ -304,6 +351,8 @@ fn start_cast(args: StartArgs, app: AppHandle, state: State<'_, Casting>, settin
                 }
             }
             Status::Ended(reason) if reason != "stopped" => bring_back(&emitter),
+            // The receiver wants the code it shows: only the window can take it.
+            Status::NeedsCode => show_main(&emitter),
             // What is cast went away and the cast waits: the window comes back to choose another.
             Status::SourceLost => bring_back(&emitter),
             _ => {}
@@ -1011,7 +1060,7 @@ fn main() {
                     "quit" => quit(app),
                     other => {
                         if let Some(index) = other.strip_prefix("switch:").and_then(|n| n.parse::<usize>().ok()) {
-                            tray_switch(app, index);
+                            tray_choose(app, index);
                         }
                     }
                 })

@@ -27,6 +27,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .topbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
 .topbar h1 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .brand { color: var(--accent); }
+/* The slogan on the main views is a line of text, not a title. */
+body[data-view="home"] #title, body[data-view="casting"] #title { font-size: 14px; font-weight: 500; color: var(--muted); }
 .topbar #open-settings { margin-left: auto; }
 .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted); }
 .icon-btn:hover { background: var(--card-2); color: var(--text); }

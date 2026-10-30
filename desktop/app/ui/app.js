@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 // ---------------------------------------------------------------- text
 const TEXT = {
   zh: {
-    app_name: "映湾桌面端", settings: "设置", download: "下载", update_now: "更新", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
+    app_name: "映湾桌面端", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
     aria_back: "返回", aria_settings: "设置", aria_refresh: "刷新", aria_what: "投什么", aria_source: "选择要投的内容", aria_code: "配对码",
     aria_s_quality: "画质", aria_s_bitrate: "码率", aria_s_fps: "帧率", aria_s_audio: "同时传声音", aria_s_autostart: "开机自动启动",
     w_title: "开始使用", w_1: "在电视或平板上打开映湾，在设置里开启“电脑投屏”。",
@@ -41,7 +41,7 @@ const TEXT = {
     f_encoder: "无法启动视频编码器：{0}", f_capture: "屏幕捕获出错：{0}", f_protocol: "和接收端通信出错：{0}",
   },
   en: {
-    app_name: "CastBay Desktop", settings: "Settings", download: "Download", update_now: "Update", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
+    app_name: "CastBay Desktop", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
     aria_back: "Back", aria_settings: "Settings", aria_refresh: "Refresh", aria_what: "What to cast", aria_source: "Choose what to cast", aria_code: "Pairing code",
     aria_s_quality: "Quality", aria_s_bitrate: "Bitrate", aria_s_fps: "Frame rate", aria_s_audio: "Send sound too", aria_s_autostart: "Start with Windows",
     w_title: "Getting started", w_1: "On the TV or tablet, open CastBay and turn on \"Desktop casting\" in its settings.",
@@ -168,12 +168,10 @@ function showView(name) {
   const sub = name === "settings" || name === "paired" || name === "diagnostics";
   $("back").hidden = !sub;
   $("open-settings").hidden = sub;
-  // The name is in the title bar: the main views show only the cast symbol, a sub-page its own name.
-  $("title").firstElementChild.toggleAttribute("hidden", sub); // an SVG has no .hidden property
-  $("title-text").hidden = !sub;
+  // The name is in the title bar: the main views say the slogan, a sub-page its own name.
   document.body.dataset.view = name;
-  $("title-text").dataset.i18n = TITLES[name] ?? "app_name";
-  $("title-text").textContent = t(TITLES[name] ?? "app_name");
+  $("title-text").dataset.i18n = TITLES[name] ?? "slogan";
+  $("title-text").textContent = t(TITLES[name] ?? "slogan");
   $("action-bar").hidden = sub;
   $("start").hidden = name === "casting";
   $("stop").hidden = name !== "casting";
@@ -564,7 +562,7 @@ function wire() {
   $("language").addEventListener("change", async () => {
     await save({ language: $("language").value });
     applyLanguage(); renderSettings(); renderReceivers(); fillSources();
-    $("title-text").textContent = t(TITLES[view] ?? "app_name");
+    $("title-text").textContent = t(TITLES[view] ?? "slogan");
   });
   $("autostart").addEventListener("click", async () => {
     const on = $("autostart").getAttribute("aria-checked") !== "true";
@@ -585,7 +583,7 @@ function wire() {
     $("reset-text").textContent = t("s_reset");
     settings = await invoke("reset_settings");
     applyLanguage(); renderSettings(); renderReceivers(); fillSources(); renderSummary();
-    $("title-text").textContent = t(TITLES[view] ?? "app_name");
+    $("title-text").textContent = t(TITLES[view] ?? "slogan");
   });
   // The website's feedback page, which says what version this is (and that it comes from the program).
   $("feedback").addEventListener("click", async () => {

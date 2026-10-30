@@ -152,14 +152,8 @@
         <button id="reset" class="row link-row"><span id="reset-text" data-i18n="s_reset"></span><svg class="ic small"><use href="#i-refresh"/></svg></button>
       </div>
 
-      <div class="section-head"><h2 data-i18n="s_about"></h2></div>
       <div class="list">
-        <div class="row"><span><span data-i18n="s_version"></span> <span id="version">–</span></span><span id="update-status" class="muted"></span></div>
-        <button id="check-update" class="row link-row"><span data-i18n="s_check_update"></span><svg class="ic small"><use href="#i-refresh"/></svg></button>
-        <button id="open-diagnostics" class="row link-row"><span data-i18n="s_diagnostics"></span><svg class="ic small"><use href="#i-chevron"/></svg></button>
-        <button id="feedback" class="row link-row"><span data-i18n="s_feedback"></span><svg class="ic small"><use href="#i-external"/></svg></button>
-        <button id="logs" class="row link-row"><span data-i18n="s_logs"></span><svg class="ic small"><use href="#i-external"/></svg></button>
-        <button id="open-source" class="row link-row"><span data-i18n="s_license"></span><svg class="ic small"><use href="#i-external"/></svg></button>
+        <button id="open-about" class="row link-row"><span data-i18n="s_about"></span><svg class="ic small"><use href="#i-chevron"/></svg></button>
       </div>
     </section>
 
@@ -193,6 +187,25 @@
     <button id="stop" class="btn danger wide" hidden data-i18n="stop"></button>
   </footer>
 </div>
+  <dialog id="about" aria-labelledby="about-title">
+    <div class="about-head">
+      <svg class="ic brand big" aria-hidden="true"><use href="#i-cast"/></svg>
+      <div><h2 id="about-title" tabindex="-1" autofocus data-i18n="app_name"></h2><p class="muted" data-i18n="slogan"></p></div>
+    </div>
+    <div class="list">
+      <div class="row"><span><span data-i18n="s_version"></span> <span id="version">–</span></span><span id="update-status" class="muted"></span></div>
+      <button id="check-update" class="row link-row"><span data-i18n="s_check_update"></span><svg class="ic small"><use href="#i-refresh"/></svg></button>
+      <button id="open-diagnostics" class="row link-row"><span data-i18n="s_diagnostics"></span><svg class="ic small"><use href="#i-chevron"/></svg></button>
+      <button id="feedback" class="row link-row"><span data-i18n="s_feedback"></span><svg class="ic small"><use href="#i-external"/></svg></button>
+      <button id="logs" class="row link-row"><span data-i18n="s_logs"></span><svg class="ic small"><use href="#i-external"/></svg></button>
+      <button id="open-source" class="row link-row"><span data-i18n="s_license"></span><svg class="ic small"><use href="#i-external"/></svg></button>
+    </div>
+    <div class="dialog-actions">
+      <button id="about-notes" class="btn secondary" hidden data-i18n="update_notes"></button>
+      <button id="about-update" class="btn primary" hidden data-i18n="update_now"></button>
+      <button id="about-close" class="btn secondary" data-i18n="about_close"></button>
+    </div>
+  </dialog>
 <script src="app.js"></script>
 </body>
 </html>

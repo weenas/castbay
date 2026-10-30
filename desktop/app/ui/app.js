@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 // ---------------------------------------------------------------- text
 const TEXT = {
   zh: {
-    app_name: "映湾桌面端", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_ignore: "忽略此版本", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
+    app_name: "映湾桌面端", about_close: "关闭", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_ignore: "忽略此版本", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
     aria_back: "返回", aria_settings: "设置", aria_refresh: "刷新", aria_what: "投什么", aria_source: "选择要投的内容", aria_code: "配对码",
     aria_s_quality: "画质", aria_s_bitrate: "码率", aria_s_fps: "帧率", aria_s_audio: "同时传声音", aria_s_autostart: "开机自动启动",
     w_title: "开始使用", w_1: "在电视或平板上打开映湾，在设置里开启“电脑投屏”。",
@@ -41,7 +41,7 @@ const TEXT = {
     f_encoder: "无法启动视频编码器：{0}", f_capture: "屏幕捕获出错：{0}", f_protocol: "和接收端通信出错：{0}",
   },
   en: {
-    app_name: "CastBay Desktop", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_ignore: "Skip this version", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
+    app_name: "CastBay Desktop", about_close: "Close", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_ignore: "Skip this version", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
     aria_back: "Back", aria_settings: "Settings", aria_refresh: "Refresh", aria_what: "What to cast", aria_source: "Choose what to cast", aria_code: "Pairing code",
     aria_s_quality: "Quality", aria_s_bitrate: "Bitrate", aria_s_fps: "Frame rate", aria_s_audio: "Send sound too", aria_s_autostart: "Start with Windows",
     w_title: "Getting started", w_1: "On the TV or tablet, open CastBay and turn on \"Desktop casting\" in its settings.",
@@ -469,18 +469,35 @@ async function checkUpdate() {
 // portable zip) gets the release page instead.
 async function installUpdate() {
   if (!latest) return;
-  const text = $("update-text"), button = $("update-open");
-  button.disabled = true;
-  text.textContent = t("up_downloading", latest.version);
+  // The notice on the page and the About window both start it, and both say how it goes.
+  const buttons = [$("update-open"), $("about-update")];
+  const say = (words) => { $("update-text").textContent = words; if ($("about").open) $("update-status").textContent = words; };
+  buttons.forEach((b) => { b.disabled = true; });
+  say(t("up_downloading", latest.version));
   try {
     const done = await invoke("install_update", { version: latest.version });
-    text.textContent = t(done === "installing" ? "up_installing" : "up_opened");
-    if (done === "opened") button.disabled = false;
+    say(t(done === "installing" ? "up_installing" : "up_opened"));
+    if (done === "opened") buttons.forEach((b) => { b.disabled = false; });
   } catch (e) {
-    button.disabled = false;
-    if (e === "manual") { text.textContent = t("update_text", latest.version); invoke("open_release", { url: latest.url }).catch(() => {}); }
-    else text.textContent = e === "busy" ? t("up_busy") : e === "cancelled" ? t("up_cancelled") : t("up_error", e);
+    buttons.forEach((b) => { b.disabled = false; });
+    if (e === "manual") { say(t("update_text", latest.version)); invoke("open_release", { url: latest.url }).catch(() => {}); }
+    else say(e === "busy" ? t("up_busy") : e === "cancelled" ? t("up_cancelled") : t("up_error", e));
   }
+}
+
+// ---------------------------------------------------------------- about
+// Opened from Settings and from the tray menu. It says the version and whether a newer one is out,
+// with the buttons to read what is new and to update, and holds the small links of the program.
+function openAbout() {
+  const newer = latest && typeof latest === "object";
+  $("about-update").hidden = !newer;
+  $("about-notes").hidden = !newer;
+  if (newer) $("update-status").textContent = t("up_new", latest.version);
+  if (!$("about").open) $("about").showModal();
+}
+
+function changelogUrl(version) {
+  return `https://castbay.weenas.com/${lang === "zh" ? "zh/" : ""}changelog#desktop-v${version}`;
 }
 
 function showUpdateResult(result, loud) {
@@ -546,8 +563,14 @@ function wire() {
   });
   // The website's changelog, at this version's notes, in the program's language.
   $("update-notes").addEventListener("click", () => {
-    if (latest) invoke("open_release", { url: `https://castbay.weenas.com/${lang === "zh" ? "zh/" : ""}changelog#desktop-v${latest.version}` }).catch(() => {});
+    if (latest) invoke("open_release", { url: changelogUrl(latest.version) }).catch(() => {});
   });
+  $("open-about").addEventListener("click", openAbout);
+  $("about-close").addEventListener("click", () => $("about").close());
+  $("about-update").addEventListener("click", installUpdate);
+  $("about-notes").addEventListener("click", () => { if (latest) invoke("open_release", { url: changelogUrl(latest.version) }).catch(() => {}); });
+  // The diagnostics are a page of their own: the window gets out of the way.
+  $("open-diagnostics").addEventListener("click", () => $("about").close());
   $("start").addEventListener("click", startCast);
   $("switch-do").addEventListener("click", switchSource);
   $("switch-source").addEventListener("focus", refreshSwitchList);
@@ -609,12 +632,19 @@ function wire() {
   $("diag-cancel").addEventListener("click", () => setDiagnosticsAsk(false));
   $("diag-confirm").addEventListener("click", uploadReport);
   $("open-paired").addEventListener("click", async () => { await renderPaired(); showView("paired"); });
-  $("check-update").addEventListener("click", async () => { $("update-status").textContent = t("up_checking"); showUpdateResult(await checkUpdate(), true); });
+  $("check-update").addEventListener("click", async () => {
+    $("update-status").textContent = t("up_checking");
+    showUpdateResult(await checkUpdate(), true);
+    if ($("about").open) openAbout(); // the update buttons follow what was found
+  });
   $("logs").addEventListener("click", () => invoke("open_logs").catch((e) => showError(String(e))));
   $("open-source").addEventListener("click", () => invoke("open_release", { url: "https://github.com/weenas/castbay/releases/" }).catch(() => {}));
   listen("status", ({ payload }) => onStatus(payload));
   // The tray menu's "Settings".
-  listen("tray", ({ payload }) => { if (payload.kind === "settings") { renderSettings(); showView("settings"); } });
+  listen("tray", ({ payload }) => {
+    if (payload.kind === "settings") { renderSettings(); showView("settings"); }
+    if (payload.kind === "about") openAbout();
+  });
 }
 
 async function init() {

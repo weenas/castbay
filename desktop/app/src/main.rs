@@ -60,6 +60,7 @@ struct TrayItems {
     /// "Cast something else": the screens and windows that can be switched to while casting.
     switch: Submenu<tauri::Wry>,
     stop: MenuItem<tauri::Wry>,
+    about: MenuItem<tauri::Wry>,
     quit: MenuItem<tauri::Wry>,
 }
 
@@ -68,12 +69,12 @@ struct TrayItems {
 #[derive(Default)]
 struct TraySources(Mutex<Vec<(&'static str, String)>>);
 
-/// Open, Settings, Switch, Stop, Quit.
-fn tray_words(zh: bool) -> [&'static str; 5] {
+/// Open, Settings, Switch, Stop, About, Quit.
+fn tray_words(zh: bool) -> [&'static str; 6] {
     if zh {
-        ["打开 CastBay Desktop", "设置", "切换投屏内容", "停止投屏", "退出"]
+        ["打开 CastBay Desktop", "设置", "切换投屏内容", "停止投屏", "关于", "退出"]
     } else {
-        ["Open CastBay Desktop", "Settings", "Switch what is cast", "Stop casting", "Quit"]
+        ["Open CastBay Desktop", "Settings", "Switch what is cast", "Stop casting", "About", "Quit"]
     }
 }
 
@@ -392,11 +393,12 @@ fn set_settings(patch: serde_json::Value, app: AppHandle, settings: State<'_, Se
     usage_changed(&app, current.usage_stats, next.usage_stats);
     if next.language != current.language {
         if let Some(items) = app.try_state::<TrayItems>() {
-            let [open, settings, switch, stop, quit] = tray_words(next.chinese(chinese()));
+            let [open, settings, switch, stop, about, quit] = tray_words(next.chinese(chinese()));
             let _ = items.open.set_text(open);
             let _ = items.settings.set_text(settings);
             let _ = items.switch.set_text(switch);
             let _ = items.stop.set_text(stop);
+            let _ = items.about.set_text(about);
             let _ = items.quit.set_text(quit);
         }
     }
@@ -983,13 +985,14 @@ fn main() {
                     }
                 });
             }
-            let [open_text, settings_text, switch_text, stop_text, quit_text] = tray_words(zh);
+            let [open_text, settings_text, switch_text, stop_text, about_text, quit_text] = tray_words(zh);
             let open = MenuItem::with_id(app, "open", open_text, true, None::<&str>)?;
             let settings_item = MenuItem::with_id(app, "settings", settings_text, true, None::<&str>)?;
             let switch = Submenu::with_id(app, "switch", switch_text, false)?;
             let stop = MenuItem::with_id(app, "stop", stop_text, false, None::<&str>)?;
+            let about_item = MenuItem::with_id(app, "about", about_text, true, None::<&str>)?;
             let quit_item = MenuItem::with_id(app, "quit", quit_text, true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&open, &settings_item, &PredefinedMenuItem::separator(app)?, &switch, &stop, &PredefinedMenuItem::separator(app)?, &quit_item])?;
+            let menu = Menu::with_items(app, &[&open, &settings_item, &PredefinedMenuItem::separator(app)?, &switch, &stop, &PredefinedMenuItem::separator(app)?, &about_item, &quit_item])?;
             let mut tray = TrayIconBuilder::new()
                 .tooltip("CastBay Desktop")
                 .menu(&menu)
@@ -999,6 +1002,10 @@ fn main() {
                     "settings" => {
                         show_main(app);
                         let _ = app.emit("tray", json!({"kind": "settings"}));
+                    }
+                    "about" => {
+                        show_main(app);
+                        let _ = app.emit("tray", json!({"kind": "about"}));
                     }
                     "stop" => stop_casting(app),
                     "quit" => quit(app),
@@ -1017,7 +1024,7 @@ fn main() {
                 tray = tray.icon(icon.clone());
             }
             tray.build(app)?;
-            app.manage(TrayItems { open, settings: settings_item, switch, stop, quit: quit_item });
+            app.manage(TrayItems { open, settings: settings_item, switch, stop, about: about_item, quit: quit_item });
             app.manage(TraySources::default());
             // Windows come and go: while a cast runs, the list in the tray menu is kept up to date.
             let handle = app.handle().clone();

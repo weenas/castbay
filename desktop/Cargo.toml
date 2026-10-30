@@ -9,4 +9,7 @@ repository = "https://github.com/weenas/castbay"
 publish = false
 
 [profile.release]
-debug = 1
+# The debug information was 160 of the 188 MB of the Linux binary (25 MB as a .deb). The function
+# names stay (crash reports print a backtrace); the file and line numbers do not.
+debug = 0
+strip = "debuginfo"

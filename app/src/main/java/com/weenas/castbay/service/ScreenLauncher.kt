@@ -73,6 +73,13 @@ object ScreenLauncher {
         }
     }
 
+    /** "Open When Casting" is off and nothing of CastBay is on screen: say where the switch is (a TV in its screen saver shows nothing, but one on the home screen or in an app does). */
+    fun hintSetting(context: Context) {
+        if (visible) return
+        Log.i(TAG, "A cast started while CastBay is not on screen and Open When Casting is off")
+        Toast.makeText(context, R.string.open_on_cast_off_toast, Toast.LENGTH_LONG).show()
+    }
+
     /** Opens the screen if it is not showing; must run on the main thread (the toast). */
     fun show(context: Context) {
         if (visible) return

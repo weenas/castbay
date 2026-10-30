@@ -112,7 +112,7 @@ On **Windows**, casting a window sends only that window's sound. On **Linux** th
 - **Another device is using it**: stop the other cast first, or allow takeover at the receiver.
 - **The receiver was reset**: if the window says its key changed, choose **Forget this receiver** and pair again.
 - **The picture gets worse the longer it casts** (AMD graphics): fixed in 0.1.5. Update.
-- **A TV in its screen saver stays black**: needs CastBay 1.8.10 on the TV with **Open When Casting** on.
+- **A TV in its screen saver stays black**: needs CastBay 1.8.10 on the TV with **Open When Casting** on ([how](/faq/#why-does-a-tv-in-its-screen-saver-stay-black-when-i-cast)).
 - **Log files**: **Open log folder** in About.
 
 ## Privacy and security

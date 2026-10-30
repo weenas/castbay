@@ -91,6 +91,15 @@ On a BYD car display, yes. Switching the car off doesn't shut the display down: 
 
 On TVs, and on devices that don't force-stop apps, CastBay starts receiving by itself after booting or waking.
 
+### Why does a TV in its screen saver stay black when I cast?
+
+CastBay only wakes the TV and opens itself when **Open When Casting** is on (Settings → Playback; it is off by default). While it is off, a cast that starts while the TV shows its screen saver, the home screen or another app plays "behind" it: the sender says it is casting, the TV shows nothing new.
+
+1. On the TV, turn on **Settings → Playback → Open When Casting**. It jumps to Android's "Display over other apps" page: allow CastBay there.
+2. If your TV has no such page, allow it from a computer: `adb shell appops set com.weenas.castbay SYSTEM_ALERT_WINDOW allow`.
+
+From then on, a cast wakes the TV from its screen saver and opens CastBay by itself. This needs CastBay 1.8.10 or later on the TV (it applies to AirPlay, DLNA and computer casts alike).
+
 ### Why did changing a setting stop my cast?
 
 Connection and screen-mirroring settings (the device name, casting verification, resolution and so on) only take effect when the receiver restarts, so the device that was casting has to connect again. Playback settings, such as picture fit, stats and lyrics, apply at once without interrupting anything.

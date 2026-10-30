@@ -124,13 +124,31 @@ fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, ov
     let base_us = started.elapsed().as_micros() as u64;
     let mut pending: Vec<f32> = Vec::with_capacity(frame_len * 4);
     let mut sent: u64 = 0;
+    // Where the sound stopped and how much of the start of the next is still to be faded in: a
+    // wave cut off in the middle, or started at once, is heard as a click.
+    let mut last = [0f32; 2];
+    let mut fade_in = 0usize;
     while !over() {
         // The sound of one window's process (changing the window changes it): the capture of the
         // sound is left and started again when it changes.
         let wanted = *process.lock().unwrap();
         let changed = || over() || *process.lock().unwrap() != wanted;
         let _ = castbay_capture::audio::run_loopback(wanted, &changed, |samples| {
-            pending.extend_from_slice(samples);
+            if fade_in > 0 {
+                let mut faded = samples.to_vec();
+                for pair in faded.chunks_exact_mut(2) {
+                    let gain = 1.0 - fade_in as f32 / AUDIO_FADE as f32;
+                    pair[0] *= gain;
+                    pair[1] *= gain;
+                    fade_in = fade_in.saturating_sub(1);
+                }
+                pending.extend_from_slice(&faded);
+            } else {
+                pending.extend_from_slice(samples);
+            }
+            if let Some(tail) = pending.rchunks_exact(2).next() {
+                last = [tail[0], tail[1]];
+            }
             // Never more than about a second behind: an encoder that cannot keep up loses sound, not time.
             if pending.len() > frame_len * 48 {
                 let drop = pending.len() - frame_len * 4;
@@ -147,6 +165,30 @@ fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, ov
                 }
             }
         });
+        if over() {
+            return;
+        }
+        if *process.lock().unwrap() != wanted {
+            // Changed on purpose: the end of the old sound goes down to silence, the new one starts
+            // at once (and fades in).
+            for i in 0..AUDIO_FADE {
+                let gain = 1.0 - (i + 1) as f32 / AUDIO_FADE as f32;
+                pending.extend_from_slice(&[last[0] * gain, last[1] * gain]);
+            }
+            pending.resize(pending.len().div_ceil(frame_len) * frame_len, 0.0);
+            while pending.len() >= frame_len {
+                let chunk: Vec<f32> = pending.drain(..frame_len).collect();
+                if let Some(frame) = enc.encode(&chunk) {
+                    if let Some(link) = session_ref.lock().unwrap().as_ref() {
+                        link.send_audio(base_us + sent * frame_us, &frame);
+                    }
+                    sent += 1;
+                    counter.store(sent, Ordering::Relaxed);
+                }
+            }
+            fade_in = AUDIO_FADE;
+            continue;
+        }
         for _ in 0..10 {
             if over() {
                 return;
@@ -155,6 +197,9 @@ fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, ov
         }
     }
 }
+
+/// How many sample pairs (about 10 ms) a change of sound is faded over.
+const AUDIO_FADE: usize = 480;
 
 struct State {
     encoder: Option<Enc>,

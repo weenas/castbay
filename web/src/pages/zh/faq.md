@@ -18,7 +18,7 @@ Android 6.0 及以上的安卓设备都可以接收：电视、电视盒子、�
 
 ### 可以从 Windows 或 Linux 电脑投屏吗？
 
-可以，用**映湾桌面端**：一个单独的程序，适用于 Windows 10/11 和 Ubuntu、Debian。它把整个屏幕或某个窗口连同声音投到运行映湾的设备上；先在那台设备的映湾设置里打开**电脑投屏**。它用映湾自己的加密连接，不是 AirPlay、DLNA 或 Miracast，所以只能投到映湾接收端，延迟很低：家庭网络里约四分之一秒。在<a href="/zh/download">下载页</a>获取，其余见<a href="/zh/desktop-guide">桌面端使用说明</a>。Mac 不需要额外安装：它用 AirPlay 投屏。
+可以，用**映湾桌面端**：一个单独的程序，适用于 Windows 10/11 和 Ubuntu、Debian。它把整个屏幕或指定窗口连同声音投到运行映湾的设备上；先在那台设备的映湾设置里打开**电脑投屏**。它用映湾自己的加密连接，不是 AirPlay、DLNA 或 Miracast，所以只能投到映湾接收端，延迟很低：家庭网络里约四分之一秒。在<a href="/zh/download">下载页</a>获取，其余见<a href="/zh/desktop-guide">桌面端使用说明</a>。Mac 不需要额外安装：它用 AirPlay 投屏。
 
 ### 如何把 APK 安装到电视上？
 

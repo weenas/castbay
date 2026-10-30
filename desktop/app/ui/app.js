@@ -200,16 +200,15 @@ function goBack() {
 }
 
 // ---------------------------------------------------------------- home
-function pairText(r) {
-  const parts = [];
+// What the receiver asks of this PC, as one line: "Paired" (in green) when it has been paired with,
+// whatever the receiver would ask of a new one; otherwise what it asks. Then "needs a password".
+function pairLine(r) {
   const known = paired.some((p) => p.id === r.id);
-  if (r.pair === "open") parts.push(t("pair_open"));
-  else if (r.pair === "ask") parts.push(t("pair_ask"));
-  else parts.push(known ? t("paired") : t("pair_pin"));
-  // Paired before, whatever the receiver asks for now.
-  if (known && r.pair !== "pin") parts.push(t("paired"));
+  const parts = [known ? el("span", { class: "paired-ok", text: t("paired") }) : t(r.pair === "open" ? "pair_open" : r.pair === "ask" ? "pair_ask" : "pair_pin")];
   if (r.password) parts.push(t("needs_password"));
-  return parts.join(" · ");
+  const line = el("div", { class: "meta" });
+  parts.forEach((part, i) => { if (i) line.append(" · "); line.append(part); });
+  return line;
 }
 
 function renderReceivers() {
@@ -220,7 +219,7 @@ function renderReceivers() {
     const pick = () => { selected = r; save({ last_receiver: r.id }); renderReceivers(); };
     list.append(el("li", { role: "option", "aria-selected": String(on), tabindex: "0", onclick: pick, onkeydown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } } },
       el("span", { class: "badge" }, icon("tv")),
-      el("div", { class: "grow" }, el("div", { class: "name", text: r.name }), el("div", { class: "meta", text: [r.ip, r.model, r.app_version && `v${r.app_version}`].filter(Boolean).join(" · ") }), el("div", { class: "meta", text: pairText(r) })),
+      el("div", { class: "grow" }, el("div", { class: "name", text: r.name }), el("div", { class: "meta", text: [r.ip, r.model, r.app_version && `v${r.app_version}`].filter(Boolean).join(" · ") }), pairLine(r)),
       el("span", { class: "end" }, on ? icon("check") : r.password ? icon("lock") : null)));
   }
   // While looking: say so, instead of an empty list or the "none found" card.

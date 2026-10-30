@@ -9,11 +9,11 @@ use std::time::{Duration, Instant};
 use castbay_capture::Target;
 use castbay_encode::ffmpeg::{Codec, FfmpegEncoder};
 use castbay_encode::scale::{bgra_to_nv12_fit, fit_size};
-use castbay_encode::{Config, Encoded};
+use castbay_encode::{Config, Encoded, VideoFormat};
 use castbay_link::{Event, SendResult, Session};
 
 use crate::rate::RateControl;
-use crate::{Failure, OnStatus, Options, Report, Status};
+use crate::{Failure, FormatChoice, OnStatus, Options, Report, Status};
 
 /// The encoder library inside this process when it was built in, else an FFmpeg child process.
 enum Enc {
@@ -61,10 +61,24 @@ impl Enc {
     }
 }
 
+/// The formats to offer, best first. H.265 only when it is wanted and a graphics card encoder for it opens
+/// with the planned picture (the CPU encoder makes H.264 only): a hardware encoder is the only
+/// one that is cheap enough to make the smaller stream worth it, and it is tried now, not after the offer.
+fn wanted_formats(choice: FormatChoice, codec: Option<Codec>, h265: &Config) -> Vec<String> {
+    let h264 = VideoFormat::H264.protocol_name().to_string();
+    if choice == FormatChoice::H264 {
+        return vec![h264];
+    }
+    match Enc::open(h265, codec) {
+        Ok((_, used)) if used != Codec::X264 => vec![VideoFormat::H265.protocol_name().to_string(), h264],
+        _ => vec![h264],
+    }
+}
+
 /// The encoders that open on this computer, in the order "automatic" tries them. A hardware
 /// encoder is tried with a small picture and closed again at once, so this takes a moment.
 pub fn available_encoders() -> Vec<Codec> {
-    let config = Config { width: 640, height: 360, fps: 30, bitrate_bps: 2_000_000, gop: 60 };
+    let config = Config { width: 640, height: 360, fps: 30, bitrate_bps: 2_000_000, gop: 60, format: Default::default() };
     [Codec::Amf, Codec::Nvenc, Codec::X264].into_iter().filter(|codec| Enc::new(&config, *codec).is_ok()).collect()
 }
 
@@ -140,6 +154,8 @@ fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, ov
 
 struct State {
     encoder: Option<Enc>,
+    /// What the encoder makes (what was agreed with the receiver).
+    format: VideoFormat,
     /// Which encoder it is: amf, nvenc, x264 (empty before one opened).
     encoder_name: &'static str,
     /// When a key frame was last made or asked for ([`key_due`]).
@@ -286,7 +302,7 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
         return;
     }
     if st.encoder.is_none() {
-        let config = Config { bitrate_bps: st.rate.current(), ..config.clone() };
+        let config = Config { bitrate_bps: st.rate.current(), format: st.format, ..config.clone() };
         match Enc::open(&config, codec) {
             Ok((e, used)) => {
                 st.encoder = Some(e);
@@ -366,7 +382,7 @@ pub fn run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) -> O
 }
 
 fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) -> Option<String> + Send>, stop: Arc<AtomicBool>, switch: Arc<Mutex<Option<Target>>>, done: std::sync::mpsc::Sender<Result<Report, Failure>>) -> Result<(), Failure> {
-    let Options { addr, receiver_id, name, password, target, fps, bitrate_bps, codec, audio, max_size, data_dir, max_duration } = options;
+    let Options { addr, receiver_id, name, password, target, fps, bitrate_bps, codec, video_format, audio, max_size, data_dir, max_duration } = options;
     castbay_capture::set_data_dir(&data_dir);
     on_status(Status::Connecting);
     let runtime = tokio::runtime::Runtime::new().map_err(|e| Failure::new("other", e.to_string()))?;
@@ -404,7 +420,11 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
         channels: castbay_capture::audio::CHANNELS,
         config_hex: enc.config().iter().map(|b| format!("{b:02x}")).collect(),
     });
+    // H.265 is offered only if a graphics card can encode it here: tried now, so that the offer is not
+    // one the encoder then cannot keep.
+    let formats = wanted_formats(video_format, codec, &Config { width, height, fps, bitrate_bps, gop: fps * 2, format: VideoFormat::H265 });
     let link_config = castbay_link::Config {
+        formats,
         name,
         password,
         width,
@@ -424,7 +444,8 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let session = runtime
         .block_on(castbay_link::connect(addr, &identity, &mut pins, receiver_id.as_deref(), &link_config, &mut ask))
         .map_err(Failure::from)?;
-    on_status(Status::Casting { receiver: session.receiver_name.clone(), width, height });
+    let format = VideoFormat::from_protocol_name(&session.format).unwrap_or_default();
+    on_status(Status::Casting { receiver: session.receiver_name.clone(), width, height, format: format.protocol_name() });
     // Awake for as long as this thread (which ends up running the capture) casts.
     let _awake = crate::power::Awake::new();
     let audio_accepted = session.audio_accepted;
@@ -432,7 +453,7 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
 
     let started = Instant::now();
     let interval = Duration::from_micros(1_000_000 / fps as u64);
-    let encoder_config = Config { width, height, fps, bitrate_bps, gop: fps * 2 };
+    let encoder_config = Config { width, height, fps, bitrate_bps, gop: fps * 2, format };
     let finish = Arc::new(AtomicBool::new(false));
     let over = {
         let (stop, finish) = (stop.clone(), finish.clone());
@@ -441,6 +462,7 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let session_ref = Arc::new(Mutex::new(Some(session)));
     let state = Arc::new(Mutex::new(State {
         encoder: None,
+        format,
         encoder_name: "",
         last_key: None,
         nv12: vec![0; (width * height * 3 / 2) as usize],
@@ -585,6 +607,8 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                 let mut st = state.lock().unwrap();
                 match renewed {
                     Some(session) => {
+                        // The same receiver, so the same format; but it is what was agreed, not what was assumed.
+                        st.format = VideoFormat::from_protocol_name(&session.format).unwrap_or_default();
                         *session_ref.lock().unwrap() = Some(session);
                         st.encoder = None;
                         st.captured.clear();

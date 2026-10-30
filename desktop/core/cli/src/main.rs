@@ -248,7 +248,7 @@ fn bench_encode(args: &[String]) {
         next = next.max(frame.timestamp.saturating_sub(interval)) + interval;
         let (w, h) = ((frame.width & !1) as usize, (frame.height & !1) as usize);
         if encoder.is_none() {
-            let config = Config { width: w as u32, height: h as u32, fps, bitrate_bps: bitrate, gop: fps * 2 };
+            let config = Config { width: w as u32, height: h as u32, fps, bitrate_bps: bitrate, gop: fps * 2, format: Default::default() };
             let made = match codec {
                 Some(c) => castbay_encode::ffmpeg::FfmpegEncoder::new(&config, c).map(Any::Ff),
                 None => MfEncoder::new(config, kind).map(Any::Mf),
@@ -413,14 +413,15 @@ fn cast(args: &[String]) {
         fps,
         bitrate_bps: bitrate,
         codec: Some(codec),
+        video_format: castbay_sender::FormatChoice::parse(option(args, "--format").unwrap_or("auto")).expect("--format: auto, h264 or h265"),
         audio: args.iter().any(|a| a == "--audio"),
         max_size: (option(args, "--max-width").and_then(|v| v.parse().ok()).unwrap_or(1920), option(args, "--max-height").and_then(|v| v.parse().ok()).unwrap_or(1080)),
         data_dir: data_dir(args),
         max_duration: Some(Duration::from_secs(seconds)),
     };
     let on_status = Arc::new(move |status: Status| match status {
-        Status::Casting { receiver, width, height } => {
-            println!("casting {target:?} ({width}x{height}) to {receiver} for {seconds} s at {fps} fps, {} kbit/s, {codec:?}", bitrate / 1000)
+        Status::Casting { receiver, width, height, format } => {
+            println!("casting {target:?} ({width}x{height}) to {receiver} for {seconds} s at {fps} fps, {} kbit/s, {codec:?}, {format}", bitrate / 1000)
         }
         Status::Reconnecting(reason) => println!("connection lost ({reason}); reconnecting"),
         Status::Reconnected => println!("reconnected"),

@@ -962,8 +962,10 @@ class AirPlayManager private constructor(private val context: Context) {
             if (_deviceRequest.value?.deviceId == deviceId) _deviceRequest.value = null
         }
 
-        override fun sessionStarted(session: Any, deviceId: String, name: String, width: Int, height: Int, fps: Int) {
-            Log.i(TAG, "Desktop sender: ${Log.personal(name)}, ${width}x$height")
+        override fun videoFormats() = if (hevcSupport.hardware) listOf("h264", "h265") else listOf("h264")
+
+        override fun sessionStarted(session: Any, deviceId: String, name: String, width: Int, height: Int, fps: Int, h265: Boolean) {
+            Log.i(TAG, "Desktop sender: ${Log.personal(name)}, ${width}x$height, ${if (h265) "H.265" else "H.264"}")
             synchronized(desktopLock) {
                 // Another sender on screen (a second device taking over is allowed): it makes way.
                 if (dlnaOnScreen()) stopDlnaVideo()
@@ -971,7 +973,7 @@ class AirPlayManager private constructor(private val context: Context) {
                 mainHandler.removeCallbacks(stopAwaitingNext)
                 desktopSession = session
                 desktopSenderId = deviceId
-                videoRenderer.configure(width, height)
+                videoRenderer.configure(width, height, h265)
                 currentStreamInfo = StreamInfo(
                     sourceName = name, sourceModel = "CastBay Desktop", videoWidth = width, videoHeight = height,
                     videoFps = fps, audioSampleRate = 0, audioChannels = 0, isMirroring = true, isPlaying = true, isDesktop = true, sender = name

@@ -66,6 +66,21 @@ CbEnc *cb_enc_open(const char *name, int width, int height, int fps, int bitrate
         av_dict_set(&o, "forced_idr", "1", 0);
         av_dict_set(&o, "header_spacing", "1", 0);
         av_dict_set(&o, "async_depth", "1", 0);
+    } else if (!strcmp(name, "hevc_amf")) {
+        av_dict_set(&o, "usage", "ultralowlatency", 0);
+        av_dict_set(&o, "quality", "speed", 0);
+        av_dict_set(&o, "rc", "cbr", 0);
+        av_dict_set(&o, "forced_idr", "1", 0);
+        /* The parameter sets (VPS, SPS, PPS) in front of each IDR picture, so a receiver can start from any of them. */
+        av_dict_set(&o, "header_insertion_mode", "idr", 0);
+        av_dict_set(&o, "async_depth", "1", 0);
+    } else if (!strcmp(name, "hevc_nvenc")) {
+        av_dict_set(&o, "preset", "p1", 0);
+        av_dict_set(&o, "tune", "ull", 0);
+        av_dict_set(&o, "rc", "cbr", 0);
+        av_dict_set(&o, "forced-idr", "1", 0);
+        av_dict_set(&o, "zerolatency", "1", 0);
+        av_dict_set(&o, "delay", "0", 0);
     } else if (!strcmp(name, "h264_nvenc")) {
         av_dict_set(&o, "preset", "p1", 0);
         av_dict_set(&o, "tune", "ull", 0);

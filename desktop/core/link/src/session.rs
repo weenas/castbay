@@ -44,6 +44,17 @@ pub struct Config {
     pub source: String,
     /// Audio to offer along with the picture; the receiver says whether it will play it.
     pub audio: Option<AudioOffer>,
+    /// The video formats the sender can make, best first (`h265`, `h264`). The first one the receiver
+    /// says it decodes is offered; a receiver that says nothing decodes `h264` only.
+    pub formats: Vec<String>,
+}
+
+/// What a receiver that does not say anything decodes.
+const DEFAULT_FORMATS: [&str; 1] = ["h264"];
+
+/// The format to offer: the sender's best that the receiver (its `hello`'s `video`) decodes, else H.264.
+pub fn choose_format(wanted: &[String], receiver_video: &[String]) -> String {
+    wanted.iter().find(|f| receiver_video.contains(f)).cloned().unwrap_or_else(|| "h264".to_string())
 }
 
 /// Where the pairing code comes from: the person at the keyboard, who reads it off the TV.
@@ -178,6 +189,8 @@ pub struct Session {
     pub receiver_name: String,
     /// The receiver will play the offered audio: only then is it sent.
     pub audio_accepted: bool,
+    /// The video format that was offered and accepted: `h264` or `h265`.
+    pub format: String,
 }
 
 /// Connects to the receiver at `addr`, pairs if it asks, and offers the stream.
@@ -225,6 +238,11 @@ pub async fn connect(
         return Err(Error::Protocol(format!("expected hello, got {}", kind(&first))));
     }
     let receiver_name = first.get("name").and_then(Value::as_str).unwrap_or("").to_string();
+    let receiver_video: Vec<String> = match first.get("video").and_then(Value::as_array) {
+        Some(list) => list.iter().filter_map(Value::as_str).map(str::to_string).collect(),
+        None => DEFAULT_FORMATS.iter().map(|f| f.to_string()).collect(),
+    };
+    let format = choose_format(&config.formats, &receiver_video);
     let id = receiver_id.map(str::to_string).or_else(|| first.get("id").and_then(Value::as_str).map(str::to_string)).unwrap_or_default();
 
     // Admission: a reject, a pairing code to type, or ready.
@@ -250,7 +268,7 @@ pub async fn connect(
         pins.pin(&id, &receiver_fp, &receiver_name)?;
     }
 
-    let mut offer = json!({"t": "offer", "codec": "h264", "width": config.width, "height": config.height,
+    let mut offer = json!({"t": "offer", "codec": format, "width": config.width, "height": config.height,
         "fps": config.fps, "bitrate": config.bitrate_bps, "source": config.source});
     if let Some(audio) = &config.audio {
         offer["audio"] = json!({"codec": "aac", "sample_rate": audio.sample_rate, "channels": audio.channels, "config": audio.config_hex});
@@ -276,7 +294,7 @@ pub async fn connect(
     let closed = Arc::new(AtomicBool::new(false));
     let writer_task = tokio::spawn(write_loop(writer, queue, audio_queue, closed.clone()));
     let reader_task = tokio::spawn(read_loop(reader, events_tx, closed.clone()));
-    Ok(Session { frames, audio, events, dropping, closed, writer: writer_task, reader: reader_task, receiver_id: id, receiver_name, audio_accepted })
+    Ok(Session { frames, audio, events, dropping, closed, writer: writer_task, reader: reader_task, receiver_id: id, receiver_name, audio_accepted, format })
 }
 
 /// Pictures waiting to be written; more than this and the connection is not keeping up.
@@ -397,5 +415,23 @@ impl Session {
         drop(self.frames);
         let _ = timeout(Duration::from_secs(3), self.writer).await;
         self.reader.abort();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::choose_format;
+
+    fn v(items: &[&str]) -> Vec<String> {
+        items.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn the_best_format_both_sides_have_is_offered() {
+        assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&["h264", "h265"])), "h265");
+        assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&["h264"])), "h264", "the receiver does not decode H.265");
+        assert_eq!(choose_format(&v(&["h264"]), &v(&["h264", "h265"])), "h264", "the sender cannot encode H.265, or was told not to");
+        assert_eq!(choose_format(&v(&["h265"]), &v(&["h264"])), "h264", "nothing in common: H.264, which every receiver decodes");
+        assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&[])), "h264");
     }
 }

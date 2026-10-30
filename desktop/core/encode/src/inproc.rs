@@ -3,7 +3,7 @@
 
 use std::ffi::{c_char, c_int, CString};
 
-use crate::{ffmpeg::Codec, Config, Encoded, Error};
+use crate::{ffmpeg::Codec, Config, Encoded, Error, VideoFormat};
 
 #[repr(C)]
 struct CbEnc {
@@ -44,11 +44,14 @@ unsafe impl Send for InProcessEncoder {}
 
 impl InProcessEncoder {
     pub fn new(config: &Config, codec: Codec) -> Result<Self, Error> {
-        let name = match codec {
-            Codec::Amf => "h264_amf",
-            Codec::Nvenc => "h264_nvenc",
-            Codec::X264 => "libx264",
-            Codec::Qsv => return Err(Error("Intel Quick Sync is not built into the in-process encoder yet".into())),
+        let name = match (codec, config.format) {
+            (Codec::Amf, VideoFormat::H264) => "h264_amf",
+            (Codec::Amf, VideoFormat::H265) => "hevc_amf",
+            (Codec::Nvenc, VideoFormat::H264) => "h264_nvenc",
+            (Codec::Nvenc, VideoFormat::H265) => "hevc_nvenc",
+            (Codec::X264, VideoFormat::H264) => "libx264",
+            (Codec::X264, VideoFormat::H265) => return Err(Error("the CPU encoder makes H.264 only".into())),
+            (Codec::Qsv, _) => return Err(Error("Intel Quick Sync is not built into the in-process encoder yet".into())),
         };
         let cname = CString::new(name).unwrap();
         let mut err = [0 as c_char; 256];

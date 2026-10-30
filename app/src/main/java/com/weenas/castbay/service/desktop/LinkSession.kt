@@ -2,6 +2,7 @@ package com.weenas.castbay.service.desktop
 
 import com.weenas.castbay.service.AccessPolicy
 import com.weenas.castbay.util.Log
+import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedInputStream
 import java.io.DataInputStream
@@ -97,7 +98,8 @@ class LinkSession(
             if (hello.optInt("v", 0) < LinkProtocol.VERSION) return refuse("unsupported")
             val receiverKey = MessageDigest.getInstance("SHA-256").digest(LinkIdentity.certificate().publicKey.encoded)
             send(JSONObject().put("t", "hello").put("v", LinkProtocol.VERSION).put("name", host.receiverName)
-                .put("id", receiverId).put("app", "CastBay").put("os", "android"))
+                .put("id", receiverId).put("app", "CastBay").put("os", "android")
+                .put("video", JSONArray(host.videoFormats())))
 
             val paired = pairings.contains(fingerprint)
             when (host.admission(deviceId, name, paired)) {
@@ -125,7 +127,7 @@ class LinkSession(
             while (true) {
                 val size = validate(offer) ?: return refuse("unsupported")
                 onAdmitted(this)
-                host.sessionStarted(this, deviceId, name, size.first, size.second, offer.optInt("fps", 30))
+                host.sessionStarted(this, deviceId, name, size.first, size.second, offer.optInt("fps", 30), offer.optString("codec") == "h265")
                 started = true
                 audio?.stop()
                 audio = offeredAudio(offer)
@@ -244,7 +246,7 @@ class LinkSession(
 
     /** The offer's size, or null if this receiver cannot take it. */
     private fun validate(offer: JSONObject): Pair<Int, Int>? {
-        if (offer.optString("codec") != "h264") return null
+        if (offer.optString("codec") !in host.videoFormats()) return null
         val width = offer.optInt("width", 0)
         val height = offer.optInt("height", 0)
         if (width !in 16..MAX_SIZE || height !in 16..MAX_SIZE || width % 2 != 0 || height % 2 != 0) return null

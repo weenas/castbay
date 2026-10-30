@@ -12,6 +12,32 @@ pub mod inproc;
 #[cfg(windows)]
 pub mod windows;
 
+/// The video format of a cast: what the encoder makes and the receiver decodes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum VideoFormat {
+    #[default]
+    H264,
+    H265,
+}
+
+impl VideoFormat {
+    /// The name the protocol and the receiver use (`offer.codec`).
+    pub fn protocol_name(self) -> &'static str {
+        match self {
+            VideoFormat::H264 => "h264",
+            VideoFormat::H265 => "h265",
+        }
+    }
+
+    pub fn from_protocol_name(name: &str) -> Option<VideoFormat> {
+        match name {
+            "h264" => Some(VideoFormat::H264),
+            "h265" => Some(VideoFormat::H265),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Config {
     /// Both must be even.
@@ -21,6 +47,8 @@ pub struct Config {
     pub bitrate_bps: u32,
     /// Frames between key frames.
     pub gop: u32,
+    /// H.264 unless the receiver and the encoder both do H.265.
+    pub format: VideoFormat,
 }
 
 /// One encoded access unit in Annex B format; a key frame carries SPS and PPS in front.
@@ -90,6 +118,22 @@ pub fn bgra_to_nv12(src: &[u8], stride: usize, width: usize, height: usize, out:
             first += count;
         }
     });
+}
+
+/// The NAL unit types of an H.265 Annex B buffer (VPS 32, SPS 33, PPS 34; IDR 19 and 20, CRA 21 are
+/// the pictures one can start from).
+pub fn nal_types_h265(data: &[u8]) -> Vec<u8> {
+    let mut types = Vec::new();
+    let mut i = 0;
+    while i + 3 < data.len() {
+        if data[i] == 0 && data[i + 1] == 0 && data[i + 2] == 1 {
+            types.push((data[i + 3] >> 1) & 0x3F);
+            i += 3;
+        } else {
+            i += 1;
+        }
+    }
+    types
 }
 
 /// Splits an Annex B buffer into its NAL units' types, for finding key frames and parameter sets.

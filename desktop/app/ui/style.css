@@ -27,6 +27,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .topbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
 .topbar h1 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .brand { color: var(--accent); }
+.paired-ok { color: var(--success); font-weight: 500; }
 .ic.big { width: 36px; height: 36px; flex: none; }
 dialog { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--card); color: var(--text); padding: 18px; width: min(440px, calc(100vw - 32px)); }
 dialog::backdrop { background: rgba(0, 0, 0, 0.45); }

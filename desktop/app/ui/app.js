@@ -126,6 +126,8 @@ function applyLanguage() {
   lang = settings.language === "zh" || settings.language === "en" ? settings.language : systemLang();
   document.documentElement.lang = lang;
   document.title = t("app_name");
+  // The window's own title bar says the name in the chosen language; the page below does not repeat it.
+  try { window.__TAURI__.window.getCurrentWindow().setTitle(t("app_name")); } catch { /* the title stays as it was */ }
   document.querySelectorAll("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll("[data-aria]").forEach((el) => el.setAttribute("aria-label", t("aria_" + el.dataset.aria)));
 }
@@ -166,7 +168,7 @@ function showView(name) {
   const sub = name === "settings" || name === "paired" || name === "diagnostics";
   $("back").hidden = !sub;
   $("open-settings").hidden = sub;
-  $("title").firstElementChild.toggleAttribute("hidden", sub); // an SVG has no .hidden property
+  $("title").hidden = !sub; // the name is in the title bar; the bar below only names a sub-page
   document.body.dataset.view = name;
   $("title-text").dataset.i18n = TITLES[name] ?? "app_name";
   $("title-text").textContent = t(TITLES[name] ?? "app_name");

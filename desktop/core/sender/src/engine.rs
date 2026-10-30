@@ -225,7 +225,8 @@ fn key_by_reopening(encoder: &str, since_last: Option<Duration>) -> bool {
 const AMF_KEY_INTERVAL: Duration = Duration::from_secs(3);
 
 fn key_due(encoder: &str, since_key: Option<Duration>) -> bool {
-    encoder == "amf" && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
+    // CASTBAY_NO_REOPEN: to see what the encoder does by itself (with CASTBAY_ENC_OPTS, see the encoder shim).
+    encoder == "amf" && std::env::var_os("CASTBAY_NO_REOPEN").is_none() && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
 }
 
 fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {

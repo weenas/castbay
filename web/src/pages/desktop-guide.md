@@ -81,10 +81,29 @@ Press the sliders icon at the top right. Changes apply to the next cast.
 
 ## Linux notes
 
-- **What to share**: there is no list of screens and windows in the window. When you press **Start casting** the system asks which to share. Tick **remember this choice** and it does not ask again. If the remembered choice goes stale, CastBay Desktop forgets it after 15 seconds and the system's dialog comes back; choose again. (It is kept in `~/.local/share/castbay-desktop/screencast-token`; deleting that file does the same.)
+- **What to share**: there is no list of screens and windows in the window. When you press **Start casting** the system asks which to share, a screen or a window. Tick **remember this choice** and it does not ask again; **Choose again** on the main page makes it ask at the next cast. If the remembered choice goes stale, CastBay Desktop forgets it after 15 seconds and the system's dialog comes back; choose again. (It is kept in `~/.local/share/castbay-desktop/screencast-token`; deleting that file does the same.)
+- **Changing what is cast**: **Change what is cast…** on the casting page opens the system's dialog again, without ending the cast. If you cancel it, the cast goes on as it was. The tray menu's switch entry stays grey on Linux, because only the system's dialog can choose.
 - **Tray**: closing the window during a cast keeps the cast running in the tray. GNOME shows no tray icons by default (install the AppIndicator extension to see one); without it, open **CastBay Desktop** from the applications menu again and the running window comes back.
 - **Start at login** writes `~/.config/autostart/castbay-desktop.desktop`.
 - **Encoders**: NVIDIA graphics cards use NVENC; everything else uses x264 on the CPU (AMD and Intel hardware encoders are not built in yet).
+
+<a id="linux-fullscreen"></a>
+
+### A fullscreen video stops moving on the TV
+
+When a **whole screen** is cast and a video is played **fullscreen** (in a browser or a player), the picture on the TV can freeze while the computer's own screen plays on. It is not the connection and not the video format.
+
+- **Why**: while a fullscreen window covers the screen, GNOME sends that window straight to the display ("direct scanout") and stops giving new pictures to programs that record the screen, until something else is redrawn. It is GNOME's behaviour (mutter), seen with NVIDIA graphics on Wayland, and CastBay Desktop cannot change it from outside; the report is [mutter issue 3074](https://gitlab.gnome.org/GNOME/mutter/-/issues/3074), and KDE has a similar one ([KDE bug 495287](https://bugs.kde.org/show_bug.cgi?id=495287)).
+- **What to do**: cast the **window** instead of the screen. When the system asks what to share, choose the browser's or the player's window; its picture keeps moving fullscreen. If the system does not ask, press **Choose again** on the main page first. Already casting a screen: **Change what is cast…** on the casting page.
+
+<a id="linux-sound"></a>
+
+### The whole computer's sound is sent, not one window's
+
+On **Windows**, casting a window sends only that window's sound. On **Linux** the sound of the whole computer is sent, also when a window is cast: music from another program goes to the TV too.
+
+- **Why**: on Wayland the system's share dialog gives the program a picture, and does not say which program the window belongs to, so CastBay Desktop cannot tell whose sound goes with it. (Windows says which program owns a window, and can hand over one program's sound.)
+- **What to do**: stop or mute the other sound while casting, or turn off **Send sound too** in the settings and let the TV stay silent.
 
 ## If something goes wrong
 

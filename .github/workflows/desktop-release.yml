@@ -8,6 +8,10 @@ name: Desktop release
 on:
   push:
     tags: ['desktop-v*']
+    # A change to what the caches below are made from builds on main too, so main holds them:
+    # a branch or a tag reads the caches of its own ref and of the default branch, no others.
+    branches: [main]
+    paths: ['.github/workflows/desktop-release.yml', 'desktop/tools/build-ffmpeg*', 'desktop/third_party/**', 'desktop/Cargo.lock']
   workflow_dispatch:
   # A change to this file runs it too (as a build only), so it is tried before a tag needs it.
   pull_request:
@@ -44,19 +48,22 @@ jobs:
             exit 1
           fi
 
-      # Only the desktop submodules; the Android ones (OpenSSL, UxPlay, ...) aren't needed.
-      - name: Fetch the desktop submodules
-        run: git submodule update --init --depth 1 -- desktop/third_party/FFmpeg desktop/third_party/x264 desktop/third_party/nv-codec-headers desktop/third_party/AMF
-
       # FFmpeg and x264 take a while to build: kept until a submodule or the build script changes.
+      # Saved from main only (see the triggers); every other run reads it.
       - name: Note the submodule commits
         id: libs
         run: echo "commits=$(git ls-tree HEAD desktop/third_party/ | awk '{print $3}' | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: ffmpeg
         with:
           path: desktop/build/ffmpeg
           key: ffmpeg-${{ hashFiles('desktop/tools/build-ffmpeg.*') }}-${{ steps.libs.outputs.commits }}
+
+      # Only the desktop submodules; the Android ones (OpenSSL, UxPlay, ...) aren't needed. Not at
+      # all when FFmpeg comes from the cache, except for a release, which ships their sources.
+      - name: Fetch the desktop submodules
+        if: steps.ffmpeg.outputs.cache-hit != 'true' || startsWith(github.ref, 'refs/tags/')
+        run: git submodule update --init --depth 1 -- desktop/third_party/FFmpeg desktop/third_party/x264 desktop/third_party/nv-codec-headers desktop/third_party/AMF
 
       - name: Build FFmpeg and x264 from the submodules
         if: steps.ffmpeg.outputs.cache-hit != 'true'
@@ -66,9 +73,38 @@ jobs:
           /c/msys64/usr/bin/pacman -S --noconfirm --needed make diffutils nasm pkgconf perl gawk git
           cmd //c "desktop\\tools\\build-ffmpeg.cmd"
 
+      - name: Keep FFmpeg for the other runs
+        if: github.ref == 'refs/heads/main' && steps.ffmpeg.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: desktop/build/ffmpeg
+          key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
+
+      # The Rust build: the dependencies are the long part and change with Cargo.lock only.
+      - name: Restore the Rust build
+        id: rust
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            desktop/target
+          key: desktop-release-${{ runner.os }}-${{ hashFiles('desktop/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            desktop-release-${{ runner.os }}-${{ hashFiles('desktop/Cargo.lock') }}-
+            desktop-release-${{ runner.os }}-
+
       - name: Build CastBay Desktop
         working-directory: desktop
         run: cargo build --release --locked -p castbay-desktop --features ffmpeg-lib
+
+      - name: Keep the Rust build for the other runs
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            desktop/target
+          key: ${{ steps.rust.outputs.cache-primary-key }}
 
       - name: Package
         run: |
@@ -160,25 +196,54 @@ jobs:
           sudo apt-get install -y --no-install-recommends libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev \
             librsvg2-dev libssl-dev libdbus-1-dev libpipewire-0.3-dev libspa-0.2-dev libclang-dev clang nasm
 
-      - name: Fetch the desktop submodules
-        run: git submodule update --init --depth 1 -- desktop/third_party/FFmpeg desktop/third_party/x264 desktop/third_party/nv-codec-headers
-
       - name: Note the submodule commits
         id: libs
         run: echo "commits=$(git ls-tree HEAD desktop/third_party/ | awk '{print $3}' | tr -d '\n')" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         id: ffmpeg
         with:
           path: desktop/build/ffmpeg
           key: ffmpeg-linux-${{ hashFiles('desktop/tools/build-ffmpeg-linux.sh') }}-${{ steps.libs.outputs.commits }}
 
+      - name: Fetch the desktop submodules
+        if: steps.ffmpeg.outputs.cache-hit != 'true' || startsWith(github.ref, 'refs/tags/')
+        run: git submodule update --init --depth 1 -- desktop/third_party/FFmpeg desktop/third_party/x264 desktop/third_party/nv-codec-headers
+
       - name: Build FFmpeg and x264 from the submodules
         if: steps.ffmpeg.outputs.cache-hit != 'true'
         run: desktop/tools/build-ffmpeg-linux.sh
 
+      - name: Keep FFmpeg for the other runs
+        if: github.ref == 'refs/heads/main' && steps.ffmpeg.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: desktop/build/ffmpeg
+          key: ${{ steps.ffmpeg.outputs.cache-primary-key }}
+
+      - name: Restore the Rust build
+        id: rust
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            desktop/target
+          key: desktop-release-${{ runner.os }}-${{ hashFiles('desktop/Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            desktop-release-${{ runner.os }}-${{ hashFiles('desktop/Cargo.lock') }}-
+            desktop-release-${{ runner.os }}-
+
       - name: Build CastBay Desktop
         working-directory: desktop
         run: cargo build --release --locked -p castbay-desktop --features ffmpeg-lib
+
+      - name: Keep the Rust build for the other runs
+        if: github.ref == 'refs/heads/main'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            desktop/target
+          key: ${{ steps.rust.outputs.cache-primary-key }}
 
       - name: Package
         run: |

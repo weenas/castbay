@@ -5,7 +5,7 @@ const $ = (id) => document.getElementById(id);
 // ---------------------------------------------------------------- text
 const TEXT = {
   zh: {
-    app_name: "映湾桌面端", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
+    app_name: "映湾桌面端", slogan: "一投即达，自在映湾", settings: "设置", download: "下载", update_now: "更新", update_ignore: "忽略此版本", update_notes: "更新内容", got_it: "知道了", ok: "确定", search_again: "重新查找",
     aria_back: "返回", aria_settings: "设置", aria_refresh: "刷新", aria_what: "投什么", aria_source: "选择要投的内容", aria_code: "配对码",
     aria_s_quality: "画质", aria_s_bitrate: "码率", aria_s_fps: "帧率", aria_s_audio: "同时传声音", aria_s_autostart: "开机自动启动",
     w_title: "开始使用", w_1: "在电视或平板上打开映湾，在设置里开启“电脑投屏”。",
@@ -41,7 +41,7 @@ const TEXT = {
     f_encoder: "无法启动视频编码器：{0}", f_capture: "屏幕捕获出错：{0}", f_protocol: "和接收端通信出错：{0}",
   },
   en: {
-    app_name: "CastBay Desktop", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
+    app_name: "CastBay Desktop", slogan: "Cast it, it's there. Kick back with CastBay.", settings: "Settings", download: "Download", update_now: "Update", update_ignore: "Skip this version", update_notes: "What's new", got_it: "Got it", ok: "OK", search_again: "Search again",
     aria_back: "Back", aria_settings: "Settings", aria_refresh: "Refresh", aria_what: "What to cast", aria_source: "Choose what to cast", aria_code: "Pairing code",
     aria_s_quality: "Quality", aria_s_bitrate: "Bitrate", aria_s_fps: "Frame rate", aria_s_audio: "Send sound too", aria_s_autostart: "Start with Windows",
     w_title: "Getting started", w_1: "On the TV or tablet, open CastBay and turn on \"Desktop casting\" in its settings.",
@@ -488,7 +488,9 @@ function showUpdateResult(result, loud) {
   if (result && typeof result === "object") {
     latest = result;
     $("update-text").textContent = t("update_text", result.version);
-    $("update").hidden = false;
+    // A version the person chose to skip is not announced on the main page again (a check they asked
+    // for says it anyway); a newer one is.
+    $("update").hidden = !loud && settings.ignored_update === result.version;
     status.textContent = t("up_new", result.version);
   } else if (loud) {
     status.textContent = t(result === "latest" ? "up_latest" : result === "dev" ? "up_dev" : "up_failed");
@@ -538,6 +540,10 @@ function wire() {
   $("welcome-ok").addEventListener("click", () => { $("welcome").hidden = true; save({ welcome_done: true }); });
   $("forget").addEventListener("click", async () => { if (failedReceiverId) { await invoke("forget_receiver", { id: failedReceiverId }); showError(""); refreshReceivers(); } });
   $("update-open").addEventListener("click", installUpdate);
+  $("update-ignore").addEventListener("click", async () => {
+    if (latest) await save({ ignored_update: latest.version });
+    $("update").hidden = true;
+  });
   // The website's changelog, at this version's notes, in the program's language.
   $("update-notes").addEventListener("click", () => {
     if (latest) invoke("open_release", { url: `https://castbay.weenas.com/${lang === "zh" ? "zh/" : ""}changelog#desktop-v${latest.version}` }).catch(() => {});

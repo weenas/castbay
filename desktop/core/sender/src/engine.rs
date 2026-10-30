@@ -458,7 +458,14 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let repeater = {
         let (state, session_ref, config, over, on_status) = (state.clone(), session_ref.clone(), encoder_config.clone(), over.clone(), on_status.clone());
         std::thread::spawn(move || loop {
-            std::thread::sleep(interval / 4);
+            // Sleeps until the repeat is due (or a quarter interval, to hear the receiver and the end in
+            // time): a fixed sleep of a quarter interval is rounded up to a whole millisecond or more, and
+            // 60 repeats a second came out as 50.
+            let due = {
+                let st = state.lock().unwrap();
+                if st.have_picture { interval.saturating_sub(st.last.elapsed()) } else { interval / 4 }
+            };
+            std::thread::sleep(due.clamp(Duration::from_millis(1), interval));
             let mut st = state.lock().unwrap();
             if over() || st.failed.is_some() || st.ended.is_some() {
                 return;

@@ -4,9 +4,9 @@ lang: zh
 toc: true
 page: desktop-guide
 title: '桌面端使用说明 – 映湾 CastBay'
-description: '映湾桌面端的使用说明：把 Windows 或 Linux 电脑的屏幕或某个窗口投到映湾接收端、托盘菜单、每一个设置、更新，以及它会往网络上发送什么。'
+description: '映湾桌面端的使用说明：把 Windows 或 Linux 电脑的屏幕或指定窗口投到映湾接收端、托盘菜单、每一个设置、更新，以及它会往网络上发送什么。'
 heading: '映湾桌面端使用说明'
-intro: '映湾桌面端把电脑的屏幕或某个窗口连同声音投到运行映湾的设备上。在<a href="/zh/download">下载页</a>获取。接收端一侧的用法见<a href="/zh/guide">使用说明</a>。'
+intro: '映湾桌面端把电脑的屏幕或指定窗口连同声音投到运行映湾的设备上。在<a href="/zh/download">下载页</a>获取。接收端一侧的用法见<a href="/zh/guide">使用说明</a>。'
 ---
 
 映湾桌面端使用自己的加密连接，不是 AirPlay 或 DLNA，所以延迟很低：家庭网络里约四分之一秒。

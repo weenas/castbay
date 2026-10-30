@@ -413,7 +413,7 @@ fn cast(args: &[String]) {
         fps,
         bitrate_bps: bitrate,
         codec: Some(codec),
-        video_format: castbay_sender::FormatChoice::parse(option(args, "--format").unwrap_or("auto")).expect("--format: auto, h264 or h265"),
+        video_format: castbay_sender::FormatChoice::parse(option(args, "--format").unwrap_or("h264")).expect("--format: h264, auto or h265"),
         audio: args.iter().any(|a| a == "--audio"),
         max_size: (option(args, "--max-width").and_then(|v| v.parse().ok()).unwrap_or(1920), option(args, "--max-height").and_then(|v| v.parse().ok()).unwrap_or(1080)),
         data_dir: data_dir(args),

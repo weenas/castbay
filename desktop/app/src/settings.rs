@@ -28,7 +28,7 @@ pub struct Settings {
     pub usage_stats: bool,
     /// `auto`, `amf`, `nvenc` or `x264`.
     pub encoder: String,
-    /// `auto` (H.265 where the receiver and a graphics card both do it), `h264` or `h265`.
+    /// `h264` (the default), `auto` (H.265 where the receiver and a graphics card both do it) or `h265` (the same, asked for).
     pub video_format: String,
     /// `auto` (follow the system), `zh` or `en`.
     pub language: String,
@@ -56,7 +56,7 @@ impl Default for Settings {
             ignored_update: String::new(),
             usage_stats: false,
             encoder: "auto".into(),
-            video_format: "auto".into(),
+            video_format: "h264".into(),
             language: "auto".into(),
             last_receiver: String::new(),
             source_kind: "monitor".into(),
@@ -319,14 +319,14 @@ mod tests {
     #[test]
     fn the_video_format_is_one_of_three() {
         let mut s = Settings::default();
-        assert_eq!(s.video_format, "auto");
+        assert_eq!(s.video_format, "h264");
         s.apply(&json!({"video_format": "h265"})).unwrap();
         assert_eq!(s.video_format, "h265");
         assert!(s.apply(&json!({"video_format": "vp9"})).is_err());
         assert!(s.apply(&json!({"video_format": 265})).is_err());
         assert_eq!(s.video_format, "h265", "a refused value changes nothing");
         s.restore_defaults();
-        assert_eq!(s.video_format, "auto", "it is how the program behaves, so it goes back");
+        assert_eq!(s.video_format, "h264", "it is how the program behaves, so it goes back");
     }
 
     #[test]

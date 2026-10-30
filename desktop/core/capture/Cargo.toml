@@ -10,6 +10,8 @@ description = "Screen and window capture for CastBay Desktop"
 
 [target.'cfg(windows)'.dependencies]
 windows-capture = "1"
+# The `implement` macro that makes the completion handler of the per-window audio looks for this crate by name.
+windows-core = "0.61"
 
 [target.'cfg(windows)'.dependencies.windows]
 version = "0.61"

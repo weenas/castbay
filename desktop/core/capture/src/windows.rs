@@ -142,6 +142,11 @@ pub fn monitors() -> Result<Vec<String>, Error> {
         .collect())
 }
 
+/// The process that owns the window `Target::Window(title)` names, to hear just its sound.
+pub fn window_process(title: &str) -> Option<u32> {
+    Window::from_contains_name(title).ok()?.process_id().ok()
+}
+
 /// Titles of the windows that can be captured, for the picker.
 pub fn windows() -> Result<Vec<String>, Error> {
     let windows = Window::enumerate().map_err(|e| Error::Platform(e.to_string()))?;

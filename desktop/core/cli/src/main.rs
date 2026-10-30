@@ -12,12 +12,31 @@ fn main() {
         Some("bench-encode") => bench_encode(&args[1..]),
         Some("cast") => cast(&args[1..]),
         Some("capture-test") => capture_test(&args[1..]),
+        Some("audio-test") => audio_test(&args[1..]),
         Some("discover") => discover(&args[1..]),
         _ => {
             eprintln!("usage: castbay-cast list | discover | capture-test [--window] [--seconds S] [--png FILE] | cast (--host H --port P | --receiver NAME) [--code auto|DIGITS|prompt] [--password PW] [--identity DIR] ... | bench-capture|bench-encode [--monitor N | --window TITLE] [--seconds S] [--fps F] [--bitrate BPS] [--sw]");
             std::process::exit(2);
         }
     }
+}
+
+/// Listens for a few seconds to the PC's sound, or to that of the window whose title contains
+/// `--window` (Windows), and prints the loudest sample of each second.
+fn audio_test(args: &[String]) {
+    let process = option(args, "--window").map(|title| castbay_capture::window_process(title).unwrap_or_else(|| panic!("no window named {title}")));
+    let seconds: u64 = option(args, "--seconds").and_then(|v| v.parse().ok()).unwrap_or(5);
+    println!("listening for {seconds} s to {}", process.map(|p| format!("process {p} and what it started")).unwrap_or("everything played".into()));
+    let (started, mut peak, mut second) = (Instant::now(), 0f32, 0u64);
+    let result = castbay_capture::audio::run_loopback(process, &|| started.elapsed() >= Duration::from_secs(seconds), |samples| {
+        peak = samples.iter().fold(peak, |m, s| m.max(s.abs()));
+        let now = started.elapsed().as_secs();
+        if now > second {
+            println!("second {second}: peak {peak:.3}");
+            (second, peak) = (now, 0.0);
+        }
+    });
+    println!("{}", result.map(|_| "done".to_string()).unwrap_or_else(|e| format!("failed: {e}")));
 }
 
 fn list() {

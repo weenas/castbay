@@ -117,7 +117,7 @@ fn open_aac() -> Option<Box<dyn Aac>> {
 
 /// Captures what the PC plays, encodes it and sends it on the current connection until the end.
 /// A device that goes away (the default output changed) is picked up again a second later.
-fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, over: impl Fn() -> bool, started: Instant, counter: Arc<std::sync::atomic::AtomicU64>) {
+fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, over: impl Fn() -> bool, started: Instant, counter: Arc<std::sync::atomic::AtomicU64>, process: Arc<Mutex<Option<u32>>>) {
     let samples_per_frame = enc.frame_samples();
     let frame_len = samples_per_frame * castbay_capture::audio::CHANNELS as usize;
     let frame_us = samples_per_frame as u64 * 1_000_000 / castbay_capture::audio::SAMPLE_RATE as u64;
@@ -125,7 +125,11 @@ fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, ov
     let mut pending: Vec<f32> = Vec::with_capacity(frame_len * 4);
     let mut sent: u64 = 0;
     while !over() {
-        let _ = castbay_capture::audio::run_loopback(&over, |samples| {
+        // The sound of one window's process (changing the window changes it): the capture of the
+        // sound is left and started again when it changes.
+        let wanted = *process.lock().unwrap();
+        let changed = || over() || *process.lock().unwrap() != wanted;
+        let _ = castbay_capture::audio::run_loopback(wanted, &changed, |samples| {
             pending.extend_from_slice(samples);
             // Never more than about a second behind: an encoder that cannot keep up loses sound, not time.
             if pending.len() > frame_len * 48 {
@@ -497,10 +501,12 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     }));
 
     let audio_frames = Arc::new(std::sync::atomic::AtomicU64::new(0));
+    // Whose sound is sent: that of the window being cast (on Windows), else the whole output's.
+    let audio_process: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(None));
     let audio_thread = match aac {
         Some(enc) if audio_accepted => {
-            let (session_ref, over, counter) = (session_ref.clone(), over.clone(), audio_frames.clone());
-            Some(std::thread::spawn(move || run_audio(enc, session_ref, over, started, counter)))
+            let (session_ref, over, counter, process) = (session_ref.clone(), over.clone(), audio_frames.clone(), audio_process.clone());
+            Some(std::thread::spawn(move || run_audio(enc, session_ref, over, started, counter, process)))
         }
         _ => None,
     };
@@ -696,6 +702,10 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                 }
                 Mode::Run(ref current) => {
                     let current = current.clone();
+                    *audio_process.lock().unwrap() = match &current {
+                        Target::Window(title) => castbay_capture::window_process(title),
+                        Target::Monitor(_) => None,
+                    };
                     let seen = state.lock().unwrap().frames_seen;
                     let stop_when = {
                         let (over, switch) = (over.clone(), switch.clone());

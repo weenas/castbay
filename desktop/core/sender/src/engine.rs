@@ -216,7 +216,7 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
 /// lost the thread (it was not showing, or the picture was dropped) would wait for ever. At most
 /// every 400 ms, so a receiver asking again at once does not make the encoder restart for each ask.
 fn key_by_reopening(encoder: &str, since_last: Option<Duration>) -> bool {
-    encoder == "amf" && since_last.map_or(true, |d| d >= Duration::from_millis(400))
+    encoder == "amf" && std::env::var_os("CASTBAY_NO_REOPEN").is_none() && since_last.map_or(true, |d| d >= Duration::from_millis(400))
 }
 
 /// The AMD encoder ignores its own key frame interval (a measured cast sent one key frame in two

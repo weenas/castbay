@@ -281,6 +281,7 @@ fn status_json(status: &Status) -> serde_json::Value {
         Status::Reconnecting(reason) => json!({"kind": "reconnecting", "reason": reason}),
         Status::Reconnected => json!({"kind": "reconnected"}),
         Status::Bitrate(bps) => json!({"kind": "bitrate", "bps": bps}),
+        Status::Still(still) => json!({"kind": "still", "still": still}),
         Status::SourceLost => json!({"kind": "source_lost"}),
         Status::Switched => json!({"kind": "switched"}),
         Status::SwitchFailed(reason) => json!({"kind": "switch_failed", "reason": reason}),

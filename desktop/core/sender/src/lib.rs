@@ -60,6 +60,9 @@ pub enum Status {
     Receiver { decode_ms: i64, dropped: u64, fps: f64 },
     /// The bitrate in use changed (the connection could not keep up, or has recovered), in bit/s.
     Bitrate(u32),
+    /// The screen stopped changing and the frame rate was lowered (true), or it changed again and the
+    /// rate is what was asked for (false).
+    Still(bool),
     /// What is cast went away (the window was closed): the cast goes on with the last picture
     /// and waits for [`Switcher::switch`] to name something else.
     SourceLost,

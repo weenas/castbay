@@ -142,8 +142,8 @@ struct State {
     encoder: Option<Enc>,
     /// Which encoder it is: amf, nvenc, x264 (empty before one opened).
     encoder_name: &'static str,
-    /// When the encoder was last reopened to get a key frame ([`key_by_reopening`]).
-    last_key_reopen: Option<Instant>,
+    /// When a key frame was last made or asked for ([`key_due`]).
+    last_key: Option<Instant>,
     nv12: Vec<u8>,
     have_picture: bool,
     last: Instant,
@@ -210,35 +210,19 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
     }
 }
 
-/// Pushes the current picture into the encoder and sends what came out.
-/// Whether a key frame is made by opening the encoder again (its first picture is a key frame).
-/// FFmpeg's AMD encoder (h264_amf) has no way to force one and makes only the first; a receiver that
-/// lost the thread (it was not showing, or the picture was dropped) would wait for ever. At most
-/// every 400 ms, so a receiver asking again at once does not make the encoder restart for each ask.
-fn key_by_reopening(encoder: &str, since_last: Option<Duration>) -> bool {
-    encoder == "amf" && std::env::var_os("CASTBAY_NO_REOPEN").is_none() && since_last.map_or(true, |d| d >= Duration::from_millis(400))
-}
-
 /// The AMD encoder ignores its own key frame interval (a measured cast sent one key frame in two
-/// minutes), so a picture that was damaged on the way is never made whole: it is reopened every
-/// few seconds, which starts with a key frame.
-const AMF_KEY_INTERVAL: Duration = Duration::from_secs(3);
+/// minutes), so a picture damaged on the way would never be made whole: the sender asks for one at
+/// the interval the others keep by themselves (FFmpeg 8 and later make a key frame when asked).
+const AMF_KEY_INTERVAL: Duration = Duration::from_secs(2);
 
 fn key_due(encoder: &str, since_key: Option<Duration>) -> bool {
-    // CASTBAY_NO_REOPEN: to see what the encoder does by itself (with CASTBAY_ENC_OPTS, see the encoder shim).
-    encoder == "amf" && std::env::var_os("CASTBAY_NO_REOPEN").is_none() && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
+    encoder == "amf" && since_key.map_or(false, |d| d >= AMF_KEY_INTERVAL)
 }
 
+/// Pushes the current picture into the encoder and sends what came out.
 fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {
     if st.lost.is_some() {
         return;
-    }
-    let since_key = st.last_key_reopen.map(|t| t.elapsed());
-    if st.encoder.is_some()
-        && (((link.wants_key_frame() || st.want_key) && key_by_reopening(st.encoder_name, since_key)) || key_due(st.encoder_name, since_key))
-    {
-        st.encoder = None;
-        st.last_key_reopen = Some(Instant::now());
     }
     if st.encoder.is_none() {
         let config = Config { bitrate_bps: st.rate.current(), ..config.clone() };
@@ -252,7 +236,7 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
                     Codec::X264 => "x264",
                 };
                 // A new encoder starts with a key frame: the interval above counts from here.
-                st.last_key_reopen = Some(Instant::now());
+                st.last_key = Some(Instant::now());
             }
             Err(e) => {
                 st.failed = Some(Failure::new("encoder", e.to_string()));
@@ -262,7 +246,11 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
     }
     let pts = captured.duration_since(started).as_micros() as i64;
     let nv12 = std::mem::take(&mut st.nv12);
-    let result = st.encoder.as_mut().unwrap().encode(&nv12, pts, link.wants_key_frame() || st.want_key);
+    let key = link.wants_key_frame() || st.want_key || key_due(st.encoder_name, st.last_key.map(|t| t.elapsed()));
+    if key {
+        st.last_key = Some(Instant::now());
+    }
+    let result = st.encoder.as_mut().unwrap().encode(&nv12, pts, key);
     st.want_key = false;
     st.nv12 = nv12;
     st.captured.push_back(captured);
@@ -392,7 +380,7 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let state = Arc::new(Mutex::new(State {
         encoder: None,
         encoder_name: "",
-        last_key_reopen: None,
+        last_key: None,
         nv12: vec![0; (width * height * 3 / 2) as usize],
         have_picture: false,
         last: Instant::now(),
@@ -695,17 +683,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn only_the_amd_encoder_makes_key_frames_by_reopening_and_not_in_a_hurry() {
-        assert!(key_by_reopening("amf", None));
-        assert!(key_by_reopening("amf", Some(Duration::from_millis(400))));
-        assert!(!key_by_reopening("amf", Some(Duration::from_millis(100))));
-        for other in ["nvenc", "x264", "", "qsv"] {
-            assert!(!key_by_reopening(other, None), "{other}");
-        }
-    }
-
-    #[test]
-    fn the_amd_encoder_is_reopened_for_a_key_frame_every_few_seconds() {
+    fn the_amd_encoder_is_asked_for_a_key_frame_every_two_seconds() {
         assert!(!key_due("amf", None));
         assert!(!key_due("amf", Some(Duration::from_secs(1))));
         assert!(key_due("amf", Some(AMF_KEY_INTERVAL)));

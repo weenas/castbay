@@ -1,23 +1,24 @@
 ---
 import Page from '../layouts/Page.astro';
 import { APK_URL, formatDate } from '../i18n';
-import { releases } from '../releases';
+import { desktopReleases, releases } from '../releases';
 import Screenshots from '../components/Screenshots.astro';
 import CarAudio from '../components/CarAudio.astro';
 
 // The newest release, shown under the download button.
 const [latest] = await releases('en');
+const [desktop] = await desktopReleases('en');
 ---
-<Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TVs, Cars and Tablets – Mirror Your iPhone' description='Free, open-source app that turns an Android TV, TV box, car display or tablet into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too.'>
+<Page lang="en" page="index" title='CastBay: AirPlay Receiver for Android TVs, Cars and Tablets – Mirror Your iPhone' description='Free, open-source app that turns an Android TV, TV box, car display or tablet into an AirPlay receiver: mirror your iPhone, iPad or Mac, play music with lyrics, and cast video. DLNA too, and CastBay Desktop casts a Windows or Linux computer.'>
 <main>
   <section class="hero">
     <div class="wrap">
       <p class="eyebrow slogan">Cast it, it's there. Kick back with CastBay.</p>
       <h1>
-        Cast your iPhone to your Android screen
+        Cast your iPhone, Mac or PC to your Android screen
       </h1>
       <p class="lead">
-        CastBay lets an Android TV, car display or tablet receive AirPlay screen mirroring, music and video, and the cast button in video and music apps (DLNA). Free, open source, no ads.
+        CastBay lets an Android TV, car display or tablet receive AirPlay screen mirroring, music and video from an iPhone, iPad or Mac, and the cast button in video and music apps (DLNA). With CastBay Desktop, a Windows or Linux computer can cast its screen or a window too. Free, open source, no ads.
       </p>
       <div class="actions">
         <a class="btn btn-primary" href={APK_URL}>
@@ -31,8 +32,16 @@ const [latest] = await releases('en');
         Version {latest.data.version} · {formatDate('en', latest.data.date)} · <a href="/changelog">What's new</a><br>
         For Android TVs, TV boxes, car displays and tablets on Android 6.0 or later
       </p>
+      <div class="desktop-dl">
+        <p class="desktop-label"><strong>CastBay Desktop {desktop.data.version}</strong>: cast a computer's screen or a window to the screen above</p>
+        <div class="actions">
+          <a class="btn btn-ghost btn-sm" href="/desktop/windows-en">Windows</a>
+          <a class="btn btn-ghost btn-sm" href="/desktop/linux">Linux (.deb)</a>
+          <a class="more" href="/download">All downloads</a>
+          <a class="more" href="/desktop-guide">Desktop guide</a>
+        </div>
+      </div>
       <p class="channels">
-        Casting from a computer? <a href="/download#windows">CastBay Desktop for Windows</a> and <a href="/download#linux">Linux</a> are on the <a href="/download">download page</a>.<br>
         Also on: <a href="https://github.com/weenas/castbay/releases">GitHub releases</a> · <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay">Obtainium</a> · F-Droid (under review) · <a href="/faq#where-can-i-get-castbay-and-can-i-switch-between-sources">What's the difference?</a>
       </p>
       <div class="chips">
@@ -40,6 +49,7 @@ const [latest] = await releases('en');
         <span class="chip">Music &amp; lyrics</span>
         <span class="chip">Video casting</span>
         <span class="chip">DLNA</span>
+        <span class="chip">Windows &amp; Linux</span>
         <span class="chip">H.265 · 4K</span>
         <span class="chip">English &amp; Chinese</span>
       </div>

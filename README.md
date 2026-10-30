@@ -19,14 +19,14 @@
 
 **Cast it, it's there. Kick back with CastBay.** · 一投即达，自在映湾
 
-**Website: [castbay.weenas.com](https://castbay.weenas.com)** · [User guide](https://castbay.weenas.com/guide) · [How it works](https://castbay.weenas.com/tech) · **Download: [CastBay.apk](https://github.com/weenas/castbay/releases/latest/download/CastBay.apk)** ([all releases](https://github.com/weenas/castbay/releases)) · [Privacy policy](https://castbay.weenas.com/privacy)
+**Website: [castbay.weenas.com](https://castbay.weenas.com)** · [User guide](https://castbay.weenas.com/guide) · [All downloads](https://castbay.weenas.com/download) · [How it works](https://castbay.weenas.com/tech) · **Download: [CastBay.apk](https://github.com/weenas/castbay/releases/latest/download/CastBay.apk)** ([all releases](https://github.com/weenas/castbay/releases)) · [Privacy policy](https://castbay.weenas.com/privacy)
 
 <p align="center">
   <a href="https://github.com/weenas/castbay/releases/latest/download/CastBay.apk"><img src="https://raw.githubusercontent.com/Kunzisoft/Github-badge/main/get-it-on-github.png" alt="Get it on GitHub" height="60"></a>
   <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="60"></a>
 </p>
 
-CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). Free, open source, no ads.
+CastBay (Chinese: 映湾) turns an Android TV, TV box, car display or tablet into a receiver for iPhone, iPad and Mac: AirPlay screen mirroring, music and video, plus the cast button in video and music apps (DLNA). **CastBay Desktop** casts a Windows or Linux computer's screen or a window to it too ([download](https://castbay.weenas.com/download) · [guide](https://castbay.weenas.com/desktop-guide) · [source](desktop/)). Free, open source, no ads.
 
 ## Features
 

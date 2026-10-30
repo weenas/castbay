@@ -14,7 +14,11 @@ intro: 'Not answered here? See the <a href="/guide">user guide</a>, or <a href="
 
 ### Which devices are supported?
 
-Android devices on Android 6.0 or later: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. Tested on Xiaomi (Android 6), TCL (Android 9) and Sony (Android 12) TVs, a Google TV Streamer and a BYD DiLink 5.0 car display (Android 12); see the [compatibility list](/compatibility).
+Android devices on Android 6.0 or later receive: TVs, TV boxes, car displays and tablets, worked with a remote or a touch screen. They receive from iPhone, iPad and Mac (AirPlay), from the cast button of apps (DLNA) and from Windows and Linux computers (CastBay Desktop). Tested on Xiaomi (Android 6), TCL (Android 9) and Sony (Android 12) TVs, a Google TV Streamer and a BYD DiLink 5.0 car display (Android 12); see the [compatibility list](/compatibility).
+
+### Can I cast from a Windows or Linux computer?
+
+Yes, with **CastBay Desktop**, a separate program for Windows 10/11 and Ubuntu or Debian. It casts the whole screen or a single window, with its sound, to a device running CastBay; turn on **Desktop casting** in that device's CastBay settings first. It uses CastBay's own encrypted connection rather than AirPlay, DLNA or Miracast, so it casts to CastBay receivers only, and the delay is low: about a quarter of a second on a home network. Get it on the [download page](/download); the [Desktop guide](/desktop-guide) explains the rest. A Mac needs nothing extra: it casts with AirPlay.
 
 ### How do I install the APK on a TV?
 
@@ -26,7 +30,7 @@ Each release is built by GitHub from the tagged source, not on anyone's computer
 
 ### Where can I get CastBay, and can I switch between sources?
 
-From two places:
+Everything is on the [download page](/download), from two places:
 
 - **This website or GitHub** ([CastBay.apk](/apk), [releases](https://github.com/weenas/castbay/releases)): signed with CastBay's own key. CastBay checks for new versions and installs them from About. [Obtainium](https://github.com/ImranR98/Obtainium) can also follow the GitHub releases (same key, so they update each other).
 - **F-Droid** (submitted, under review): F-Droid builds CastBay from its source code itself and signs it with its own key; updates come through the F-Droid client, and CastBay doesn't check for updates there.

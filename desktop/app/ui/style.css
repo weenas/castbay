@@ -27,6 +27,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .topbar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--card); }
 .topbar h1 { flex: 1; margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
 .brand { color: var(--accent); }
+.topbar #open-settings { margin-left: auto; }
 .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--muted); }
 .icon-btn:hover { background: var(--card-2); color: var(--text); }
 .icon-btn.small { width: 30px; height: 30px; }

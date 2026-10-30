@@ -12,6 +12,7 @@
       {
         "title": "CastBay Desktop",
         "visible": false,
+        "center": true,
         "width": 540,
         "height": 660,
         "minWidth": 460,

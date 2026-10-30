@@ -531,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "castbay-desktop"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "castbay-capture",
  "castbay-link",

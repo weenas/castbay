@@ -607,6 +607,8 @@ function wire() {
   $("logs").addEventListener("click", () => invoke("open_logs").catch((e) => showError(String(e))));
   $("open-source").addEventListener("click", () => invoke("open_release", { url: "https://github.com/weenas/castbay/releases/" }).catch(() => {}));
   listen("status", ({ payload }) => onStatus(payload));
+  // The tray menu's "Settings".
+  listen("tray", ({ payload }) => { if (payload.kind === "settings") { renderSettings(); showView("settings"); } });
 }
 
 async function init() {

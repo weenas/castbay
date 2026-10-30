@@ -82,8 +82,9 @@ After the handshake the TLS stream carries messages:
 
 `video` payload: `u64` presentation time in microseconds on the sender's monotonic clock
 (only differences are meaningful), `u8` flags (bit 0: key frame, with SPS and PPS before the
-IDR slice in the same unit), then one H.264 access unit in Annex B format. The receiver
-hands it straight to the decoder and does not reorder.
+IDR slice in the same unit), then one access unit in Annex B format: H.264, or H.265 when the
+`offer` said `h265` (a key frame then carries VPS, SPS and PPS in front of the IRAP slice).
+The receiver hands it straight to the decoder and does not reorder.
 
 `audio` payload: `u64` presentation time in microseconds on the same clock as `video`, then
 one raw AAC-LC frame (1024 samples per channel, no ADTS header; at most 64 KiB). Audio is
@@ -103,12 +104,12 @@ Every control message has a `t` field. v1 messages:
 
 | `t` | From | Fields | Meaning |
 | --- | --- | --- | --- |
-| `hello` | both | `v`, `name`, `id`, `app` (name and version), `os`; the sender adds `password` when the receiver announced `pw` | first message from each side |
+| `hello` | both | `v`, `name`, `id`, `app` (name and version), `os`; the sender adds `password` when the receiver announced `pw`; the receiver adds `video`, the formats it decodes (`["h264"]`, or `["h264", "h265"]` where it has a hardware H.265 decoder; absent means `["h264"]`) | first message from each side |
 | `pair_required` | receiver | none | a code is needed: the TV shows it, the sender asks its user and answers with `pair` |
 | `pair` | sender | `sas` | the code the user entered |
 | `pair_result` | receiver | `ok`, `reason` | `reason`: `wrong_code`, `locked`, `expired`, `denied` |
 | `ready` | receiver | none | the sender may cast (admitted, paired if needed); the sender then sends `offer` |
-| `offer` | sender | `codec` (`h264`), `width`, `height`, `fps`, `bitrate`, `source` (`screen` or `window`), optional `audio` (see above) | what will be sent; sent again when the size changes |
+| `offer` | sender | `codec` (`h264`, or `h265` only if the receiver's `hello` listed it), `width`, `height`, `fps`, `bitrate`, `source` (`screen` or `window`), optional `audio` (see above) | what will be sent; sent again when the size changes |
 | `accept` | receiver | `audio` (bool, optional) | start sending; `audio` says the offered audio will be played |
 | `reject` | receiver | `reason` | `busy`, `blocked`, `approval_needed` (asked on the TV: connect again once allowed), `locked` (pairing paused), `wrong_password`, `unsupported` |
 | `keyframe` | receiver | none | send an IDR now |

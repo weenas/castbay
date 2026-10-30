@@ -38,6 +38,8 @@ pub struct Options {
     pub max_size: (u32, u32),
     /// The encoder to use; None picks the first that works: AMD, NVIDIA, then x264 on the CPU.
     pub codec: Option<Codec>,
+    /// H.264, or H.265 where the receiver decodes it and a graphics card encodes it (the CPU makes H.264 only).
+    pub video_format: FormatChoice,
     /// Where the identity and the pinned receivers live.
     pub data_dir: PathBuf,
     /// Send the sound the PC is playing too (needs the in-process encoders, feature `ffmpeg-lib`).
@@ -47,12 +49,33 @@ pub struct Options {
 }
 
 /// What the person at the keyboard sees while casting.
+/// What the person asked for: Auto uses H.265 whenever both sides can, H.264 and H.265 ask for one.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FormatChoice {
+    #[default]
+    Auto,
+    H264,
+    H265,
+}
+
+impl FormatChoice {
+    pub fn parse(name: &str) -> Option<FormatChoice> {
+        match name {
+            "auto" => Some(FormatChoice::Auto),
+            "h264" => Some(FormatChoice::H264),
+            "h265" => Some(FormatChoice::H265),
+            _ => None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Status {
     Connecting,
     /// The receiver asked for a pairing code (it shows one on its screen).
     NeedsCode,
-    Casting { receiver: String, width: u32, height: u32 },
+    /// `format` is what is sent: `h264` or `h265`.
+    Casting { receiver: String, width: u32, height: u32, format: &'static str },
     /// The connection broke; a new one is being made.
     Reconnecting(String),
     Reconnected,

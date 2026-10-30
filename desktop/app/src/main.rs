@@ -277,7 +277,7 @@ fn status_json(status: &Status) -> serde_json::Value {
     match status {
         Status::Connecting => json!({"kind": "connecting"}),
         Status::NeedsCode => json!({"kind": "needs_code"}),
-        Status::Casting { receiver, width, height } => json!({"kind": "casting", "receiver": receiver, "width": width, "height": height}),
+        Status::Casting { receiver, width, height, format } => json!({"kind": "casting", "receiver": receiver, "width": width, "height": height, "format": format}),
         Status::Reconnecting(reason) => json!({"kind": "reconnecting", "reason": reason}),
         Status::Reconnected => json!({"kind": "reconnected"}),
         Status::Bitrate(bps) => json!({"kind": "bitrate", "bps": bps}),
@@ -323,6 +323,7 @@ fn start_cast_inner(args: StartArgs, app: &AppHandle) -> Result<(), String> {
         fps,
         bitrate_bps,
         codec,
+        video_format: castbay_sender::FormatChoice::parse(&settings.video_format).unwrap_or_default(),
         audio: settings.send_audio,
         max_size: (1920, 1080),
         data_dir,

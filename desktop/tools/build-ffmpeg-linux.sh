@@ -17,7 +17,7 @@ WORK="$PWD/build/ffmpeg-work"
 STAMP="$OUT/.built-from"
 
 commit() { git -C "$THIRD/$1" rev-parse HEAD 2>/dev/null || cat "$THIRD/$1/.commit"; }
-WANT="linux $(commit FFmpeg) $(commit x264) $(commit nv-codec-headers)"
+WANT="linux $(commit FFmpeg) $(commit x264) $(commit nv-codec-headers) $(cksum < "$0")"
 if [[ -f "$STAMP" && "$(cat "$STAMP")" == "$WANT" && -f "$OUT/lib/libavcodec.a" ]]; then
   echo "FFmpeg is already built from these commits: $OUT"
   exit 0
@@ -51,7 +51,7 @@ mkdir -p "$WORK/ffmpeg" && cd "$WORK/ffmpeg"
   --disable-everything --disable-avformat --disable-avdevice --disable-avfilter --disable-swresample \
   --enable-avcodec --enable-avutil --enable-swscale \
   --enable-libx264 --enable-ffnvcodec --enable-nvenc \
-  --enable-encoder=libx264,h264_nvenc,aac --enable-parser=h264 \
+  --enable-encoder=libx264,h264_nvenc,hevc_nvenc,aac --enable-parser=h264,hevc \
   --extra-cflags="-I$OUT/include" --extra-ldflags="-L$OUT/lib"
 make -j"$JOBS"
 make install

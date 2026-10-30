@@ -24,8 +24,11 @@ interface LinkHost {
     /** A sender was admitted: remember it as allowed. */
     fun remember(deviceId: String, name: String)
 
-    /** The picture size [width]x[height] is about to arrive; called again when it changes. */
-    fun sessionStarted(session: Any, deviceId: String, name: String, width: Int, height: Int, fps: Int)
+    /** The video formats this device decodes, as the protocol names them: always `h264`, and `h265` where a hardware decoder exists. */
+    fun videoFormats(): List<String>
+
+    /** The picture size [width]x[height] is about to arrive, as H.265 or else H.264; called again when it changes. */
+    fun sessionStarted(session: Any, deviceId: String, name: String, width: Int, height: Int, fps: Int, h265: Boolean)
 
     /** One access unit; false when the decoder dropped it and wants a key frame. */
     fun video(data: ByteArray, presentationTimeUs: Long): Boolean

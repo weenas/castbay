@@ -4,7 +4,7 @@
 
 use castbay_encode::ffmpeg::Codec;
 use castbay_encode::inproc::{AacEncoder, InProcessEncoder};
-use castbay_encode::{nal_types, Config};
+use castbay_encode::{nal_types, nal_types_h265, Config, VideoFormat};
 
 const W: usize = 640;
 const H: usize = 360;
@@ -20,7 +20,7 @@ fn picture(i: usize) -> Vec<u8> {
 }
 
 fn config() -> Config {
-    Config { width: W as u32, height: H as u32, fps: 30, bitrate_bps: 2_000_000, gop: 60 }
+    Config { width: W as u32, height: H as u32, fps: 30, bitrate_bps: 2_000_000, gop: 60, format: VideoFormat::H264 }
 }
 
 /// 60 pictures, a key frame forced at 20 and 40: every picture comes out at once, the first
@@ -42,6 +42,45 @@ fn check(codec: Codec) {
         }
     }
     assert!(keys.contains(&0) && keys.contains(&20) && keys.contains(&40), "{codec:?}: key frames at {keys:?}");
+}
+
+fn config_h265() -> Config {
+    Config { format: VideoFormat::H265, ..config() }
+}
+
+/// The same for H.265: the first unit carries the parameter sets (VPS, SPS, PPS) and an IDR picture,
+/// and the pictures forced to be key frames are IDR pictures with the parameter sets in front.
+fn check_h265(codec: Codec) {
+    let mut encoder = InProcessEncoder::new(&config_h265(), codec).unwrap_or_else(|e| panic!("{codec:?}: {e}"));
+    let mut keys = Vec::new();
+    for i in 0..60 {
+        let unit = encoder
+            .encode(&picture(i), i as i64 * 33_333, i == 20 || i == 40)
+            .unwrap_or_else(|e| panic!("{codec:?} picture {i}: {e}"))
+            .unwrap_or_else(|| panic!("{codec:?} held picture {i} back"));
+        let types = nal_types_h265(&unit.data);
+        if i == 0 || unit.key {
+            assert!(types.contains(&32) && types.contains(&33) && types.contains(&34), "{codec:?}: picture {i} lacks VPS, SPS or PPS: {types:?}");
+            assert!(types.contains(&19) || types.contains(&20), "{codec:?}: picture {i} is no IDR picture: {types:?}");
+        }
+        if unit.key {
+            keys.push(i);
+        }
+    }
+    assert!(keys.contains(&0) && keys.contains(&20) && keys.contains(&40), "{codec:?}: key frames at {keys:?}");
+}
+
+#[test]
+fn nvenc_makes_h265_where_there_is_an_nvidia_gpu() {
+    match InProcessEncoder::new(&config_h265(), Codec::Nvenc) {
+        Ok(_) => check_h265(Codec::Nvenc),
+        Err(e) => eprintln!("skipped: no H.265 NVENC here ({e})"),
+    }
+}
+
+#[test]
+fn the_cpu_encoder_makes_h264_only() {
+    assert!(InProcessEncoder::new(&config_h265(), Codec::X264).is_err());
 }
 
 #[test]

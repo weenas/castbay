@@ -28,6 +28,8 @@ pub struct Settings {
     pub usage_stats: bool,
     /// `auto`, `amf`, `nvenc` or `x264`.
     pub encoder: String,
+    /// `auto` (H.265 where the receiver and a graphics card both do it), `h264` or `h265`.
+    pub video_format: String,
     /// `auto` (follow the system), `zh` or `en`.
     pub language: String,
     /// The receiver picked last time (its id).
@@ -54,6 +56,7 @@ impl Default for Settings {
             ignored_update: String::new(),
             usage_stats: false,
             encoder: "auto".into(),
+            video_format: "auto".into(),
             language: "auto".into(),
             last_receiver: String::new(),
             source_kind: "monitor".into(),
@@ -69,6 +72,7 @@ impl Default for Settings {
 pub const BITRATE_MBPS: std::ops::RangeInclusive<u32> = 2..=20;
 const FPS: [u32; 2] = [30, 60];
 const ENCODERS: [&str; 4] = ["auto", "amf", "nvenc", "x264"];
+const VIDEO_FORMATS: [&str; 3] = ["auto", "h264", "h265"];
 const LANGUAGES: [&str; 3] = ["auto", "zh", "en"];
 const KINDS: [&str; 2] = ["monitor", "window"];
 
@@ -120,6 +124,7 @@ impl Settings {
                     _ => return Err(format!("{key}: not one of saver, balanced, smooth")),
                 },
                 "encoder" => next.encoder = choice(value, &ENCODERS, key)?,
+                "video_format" => next.video_format = choice(value, &VIDEO_FORMATS, key)?,
                 "language" => next.language = choice(value, &LANGUAGES, key)?,
                 "source_kind" => next.source_kind = choice(value, &KINDS, key)?,
                 "send_audio" => next.send_audio = boolean(value, key)?,
@@ -309,6 +314,19 @@ mod tests {
         assert_eq!((s.fps, s.bitrate_mbps, s.encoder.as_str(), s.language.as_str()), (fresh.fps, fresh.bitrate_mbps, "auto", "auto"));
         assert_eq!((s.send_audio, s.error_reports, s.check_updates, s.usage_stats, s.minimize_on_cast), (true, false, true, false, true));
         assert_eq!((s.last_receiver.as_str(), s.source_kind.as_str(), s.source_window.as_str(), s.welcome_done), ("tv-1", "window", "Notes", true));
+    }
+
+    #[test]
+    fn the_video_format_is_one_of_three() {
+        let mut s = Settings::default();
+        assert_eq!(s.video_format, "auto");
+        s.apply(&json!({"video_format": "h265"})).unwrap();
+        assert_eq!(s.video_format, "h265");
+        assert!(s.apply(&json!({"video_format": "vp9"})).is_err());
+        assert!(s.apply(&json!({"video_format": 265})).is_err());
+        assert_eq!(s.video_format, "h265", "a refused value changes nothing");
+        s.restore_defaults();
+        assert_eq!(s.video_format, "auto", "it is how the program behaves, so it goes back");
     }
 
     #[test]

@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">CastBay</string>
-    <string name="app_tagline">AirPlay and DLNA receiver for Android\u00A0TVs, car\u00A0displays and tablets</string>
+    <string name="app_tagline">AirPlay, DLNA and PC receiver for Android\u00A0TVs, car\u00A0displays and tablets</string>
     <string name="app_slogan">Cast it, it\'s there. Kick back with CastBay.</string>
 
     <!-- Common -->

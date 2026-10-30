@@ -63,8 +63,12 @@ mkdir -p "$WORK/ffmpeg" && cd "$WORK/ffmpeg"
   --extra-cflags="-I$OUT/include" --extra-ldflags="-LIBPATH:$OUT/lib"
 make -j"$JOBS"
 make install
-# The MSVC toolchain installs libavcodec.a etc.; the linker looks for avcodec.lib.
-for f in "$OUT"/lib/lib{avcodec,avutil,swscale}.a; do cp "$f" "$(echo "$f" | sed 's#/lib/lib\(.*\)\.a$#/lib/\1.lib#')"; done
+# FFmpeg 7 installs libavcodec.a etc. with the MSVC toolchain, the linker looks for avcodec.lib
+# (FFmpeg 8 and later install the .lib themselves).
+for f in "$OUT"/lib/lib{avcodec,avutil,swscale}.a; do
+  [[ -f "$f" ]] && cp "$f" "$(echo "$f" | sed 's#/lib/lib\(.*\)\.a$#/lib/\1.lib#')"
+done
+for n in avcodec avutil swscale; do [[ -f "$OUT/lib/$n.lib" ]] || { echo "$n.lib was not built" >&2; exit 1; }; done
 cd "$OLDPWD"
 
 echo "$WANT" > "$STAMP"

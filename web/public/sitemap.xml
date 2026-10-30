@@ -112,4 +112,18 @@
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/faq"/>
     <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/faq"/>
   </url>
+  <url>
+    <loc>https://castbay.weenas.com/download</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/download"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/download"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/download"/>
+  </url>
+  <url>
+    <loc>https://castbay.weenas.com/zh/download</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://castbay.weenas.com/download"/>
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://castbay.weenas.com/zh/download"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://castbay.weenas.com/download"/>
+  </url>
 </urlset>

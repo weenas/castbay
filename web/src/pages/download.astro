@@ -1,0 +1,79 @@
+---
+// The download page: everything that can be downloaded, in one place. The top-right Download button of
+// every page leads here. The Android app and the desktop installers are the site's own copies (see
+// integrations/latest-apk.mjs and latest-desktop.mjs), as downloads from GitHub are slow or blocked in
+// some places; the addresses /apk and /desktop/<name> always lead to the newest.
+import Page from '../layouts/Page.astro';
+import { APK_URL, CERT_SHA256, formatDate } from '../i18n';
+import { desktopReleases, releases } from '../releases';
+
+const [android] = await releases('en');
+const [desktop] = await desktopReleases('en');
+---
+<Page lang="en" page="download" title='Download CastBay: Android app, CastBay Desktop for Windows and Linux' description='Download CastBay: the Android receiver for TVs, TV boxes, car displays and tablets, and CastBay Desktop to cast a Windows or Linux computer to it. Free and open source.'>
+<main class="wrap doc download">
+  <h1>Download CastBay</h1>
+  <p class="lead">
+    CastBay has two parts. The <strong>Android app</strong> goes on the screen that shows the picture (a TV, TV box, car display or tablet) and receives from iPhone, iPad, Mac and video apps without anything else installed on them. <strong>CastBay Desktop</strong> goes on a Windows or Linux computer to cast its screen or a window to that Android app.
+  </p>
+
+  <section class="dl-card" id="android">
+    <h2>Android: TVs, TV boxes, car displays, tablets</h2>
+    <p class="dl-meta">CastBay {android.data.version} · {formatDate('en', android.data.date)} · Android 6.0 or later · about 9 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href={APK_URL}>Download APK</a>
+      <a class="btn btn-ghost" href="/guide#install-and-update">How to install it on a TV</a>
+    </p>
+    <p class="note">
+      <a href="/apk">castbay.weenas.com/apk</a> is short enough to type on a TV remote. Also on <a href="https://github.com/weenas/castbay/releases/latest">GitHub</a> and <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/weenas/castbay">Obtainium</a>. Every release is signed with the same key (SHA-256 <code>{CERT_SHA256}</code>).
+    </p>
+  </section>
+
+  <section class="dl-card" id="windows">
+    <h2>Windows: CastBay Desktop</h2>
+    <p class="dl-meta">CastBay Desktop {desktop.data.version} · {formatDate('en', desktop.data.date)} · Windows 10 or 11, 64-bit · about 4 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href="/desktop/windows-en">Installer (English)</a>
+      <a class="btn btn-ghost" href="/desktop/windows-zh">安装程序（中文）</a>
+      <a class="btn btn-ghost" href="/desktop/windows-zip">Portable (.zip)</a>
+    </p>
+    <p class="note">
+      The installer needs no administrator rights; the .zip runs from any folder without installing. It needs the Microsoft Edge WebView2 runtime, which comes with Windows 11 and recent Windows 10. The first time, Windows may ask to let it use the network: allow it on private networks, or receivers cannot be found.
+    </p>
+    <p class="note">
+      <strong>Not code-signed yet.</strong> Windows SmartScreen may say it protected your PC: choose <em>More info</em>, then <em>Run anyway</em>. The source and every build are public, and the checksums are on the <a href="{desktop ? 'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version : 'https://github.com/weenas/castbay/releases'}">release page</a>.
+    </p>
+  </section>
+
+  <section class="dl-card" id="linux">
+    <h2>Linux: CastBay Desktop</h2>
+    <p class="dl-meta">CastBay Desktop {desktop.data.version} · Ubuntu or Debian, 64-bit, Wayland with PipeWire · about 6 MB</p>
+    <p class="actions">
+      <a class="btn btn-primary" href="/desktop/linux">Download .deb</a>
+    </p>
+    <p class="note">
+      Install it with <code>sudo apt install ./castbay-desktop_{desktop.data.version}_amd64.deb</code>. The system asks which screen or window to share when a cast starts. CastBay Desktop can then check for and install newer versions itself.
+    </p>
+  </section>
+
+  <section class="dl-card" id="apple">
+    <h2>iPhone, iPad and Mac</h2>
+    <p class="dl-meta">Nothing to download</p>
+    <p class="note">
+      They cast with AirPlay, which is already built in: open Control Center, choose Screen Mirroring or the AirPlay button in an app, and pick the CastBay screen. See the <a href="/guide">user guide</a>.
+    </p>
+  </section>
+
+  <p class="note">
+    All versions, checksums and source code: <a href="https://github.com/weenas/castbay/releases">GitHub releases</a> · <a href="/changelog">Changelog</a> · CastBay is free and open source (GPL-3.0).
+  </p>
+</main>
+</Page>
+<style>
+  .download .lead { color: var(--text-2); margin: 0 0 8px; }
+  .dl-card { background: var(--card); border: 1px solid var(--card-border); border-radius: 16px; padding: 22px 24px; margin: 22px 0; }
+  .dl-card h2 { margin: 0 0 4px; font-size: 21px; }
+  .dl-meta { color: var(--text-3); font-size: 14px; margin: 0 0 14px; }
+  .dl-card .note { margin-top: 14px; }
+  .dl-card code { overflow-wrap: anywhere; font-size: 13px; }
+</style>

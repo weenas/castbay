@@ -6,11 +6,20 @@
 // Anything that goes wrong here only leaves the files out (the app then uses GitHub); the build
 // goes on.
 import { createHash } from 'node:crypto';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, writeFile } from 'node:fs/promises';
 
 const REPO = 'weenas/castbay';
-// The installers the app asks for: the .msi in each language, the .deb of each architecture.
-const WANTED = /^(CastBay-Desktop-[\d.]+-windows-x64-(zh-CN|en-US)\.msi|castbay-desktop_[\d.]+_(amd64|arm64)\.deb)$/;
+// The installers the app asks for: the .msi in each language, the .deb of each architecture; and the
+// portable .zip, which the download page offers.
+const WANTED = /^(CastBay-Desktop-[\d.]+-windows-x64-(zh-CN|en-US)\.msi|CastBay-Desktop-[\d.]+-windows-x64\.zip|castbay-desktop_[\d.]+_(amd64|arm64)\.deb)$/;
+// The addresses that do not change with the version, for the download page: /desktop/<name> goes to the
+// file of the newest release (the site's copy, else GitHub's).
+const ALIASES = [
+  ['windows-zh', /-windows-x64-zh-CN\.msi$/],
+  ['windows-en', /-windows-x64-en-US\.msi$/],
+  ['windows-zip', /-windows-x64\.zip$/],
+  ['linux', /_amd64\.deb$/],
+];
 // The static assets' limit is 25 MiB a file; a bigger one is left out (the app uses GitHub for it).
 const MAX_BYTES = 25 * 1024 * 1024 - 1;
 
@@ -70,6 +79,13 @@ export default function latestDesktop() {
             files[asset.name] = sha256;
           }
           if (Object.keys(files).length === 0) throw new Error(`no installers in ${newest.tag_name}`);
+          // Where each alias goes: the copy on the site, or GitHub's when the file was too big to keep.
+          const redirects = ALIASES.map(([alias, pattern]) => {
+            const asset = newest.assets.find((a) => pattern.test(a.name));
+            if (!asset) return `/desktop/${alias} ${newest.html_url} 302\n`;
+            return `/desktop/${alias} ${files[asset.name] ? `/desktop/${version}/${asset.name}` : asset.browser_download_url} 302\n`;
+          });
+          await appendFile(new URL('_redirects', dir), redirects.join(''));
           await writeFile(
             new URL('desktop/latest.json', dir),
             JSON.stringify({ version, page: newest.html_url, files }, null, 2) + '\n'
@@ -77,6 +93,9 @@ export default function latestDesktop() {
           logger.info(`CastBay Desktop ${version}: ${Object.keys(files).length} installers`);
         } catch (error) {
           logger.warn(`CastBay Desktop installers left out of the site: ${error}`);
+          // The download page's addresses then lead to the releases.
+          const page = `https://github.com/${REPO}/releases`;
+          await appendFile(new URL('_redirects', dir), ALIASES.map(([alias]) => `/desktop/${alias} ${page} 302\n`).join('')).catch(() => {});
         }
       },
     },

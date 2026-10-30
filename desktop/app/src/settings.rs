@@ -21,6 +21,9 @@ pub struct Settings {
     pub error_reports: bool,
     /// Look for a newer version when the program starts (the Check for updates button always works).
     pub check_updates: bool,
+    /// The newest version the person chose not to be reminded of ("Skip this version"): its notice
+    /// stays away from the main page until a newer one comes out. Empty when none.
+    pub ignored_update: String,
     /// Send anonymous usage statistics, once a day (off until the person turns it on; usage.rs).
     pub usage_stats: bool,
     /// `auto`, `amf`, `nvenc` or `x264`.
@@ -48,6 +51,7 @@ impl Default for Settings {
             minimize_on_cast: true,
             error_reports: false,
             check_updates: true,
+            ignored_update: String::new(),
             usage_stats: false,
             encoder: "auto".into(),
             language: "auto".into(),
@@ -122,6 +126,13 @@ impl Settings {
                 "minimize_on_cast" => next.minimize_on_cast = boolean(value, key)?,
                 "error_reports" => next.error_reports = boolean(value, key)?,
                 "check_updates" => next.check_updates = boolean(value, key)?,
+                "ignored_update" => {
+                    let version = text(value, key)?;
+                    if !version.is_empty() && !crate::update::valid_version(&version) {
+                        return Err(format!("{key}: not a version"));
+                    }
+                    next.ignored_update = version;
+                }
                 "usage_stats" => next.usage_stats = boolean(value, key)?,
                 "welcome_done" => next.welcome_done = boolean(value, key)?,
                 "migrated" => next.migrated = boolean(value, key)?,
@@ -147,6 +158,7 @@ impl Settings {
             source_window: std::mem::take(&mut self.source_window),
             welcome_done: self.welcome_done,
             migrated: self.migrated,
+            ignored_update: std::mem::take(&mut self.ignored_update),
             ..fresh
         };
     }
@@ -297,6 +309,21 @@ mod tests {
         assert_eq!((s.fps, s.bitrate_mbps, s.encoder.as_str(), s.language.as_str()), (fresh.fps, fresh.bitrate_mbps, "auto", "auto"));
         assert_eq!((s.send_audio, s.error_reports, s.check_updates, s.usage_stats, s.minimize_on_cast), (true, false, true, false, true));
         assert_eq!((s.last_receiver.as_str(), s.source_kind.as_str(), s.source_window.as_str(), s.welcome_done), ("tv-1", "window", "Notes", true));
+    }
+
+    #[test]
+    fn a_skipped_version_is_a_version_or_nothing() {
+        let mut s = Settings::default();
+        assert_eq!(s.ignored_update, "");
+        s.apply(&json!({"ignored_update": "0.1.4"})).unwrap();
+        assert_eq!(s.ignored_update, "0.1.4");
+        assert!(s.apply(&json!({"ignored_update": "https://evil.example/"})).is_err());
+        assert!(s.apply(&json!({"ignored_update": 4})).is_err());
+        assert_eq!(s.ignored_update, "0.1.4", "a refused value changes nothing");
+        s.restore_defaults();
+        assert_eq!(s.ignored_update, "0.1.4", "it is what the person decided, not how the program behaves");
+        s.apply(&json!({"ignored_update": ""})).unwrap();
+        assert_eq!(s.ignored_update, "");
     }
 
     #[test]

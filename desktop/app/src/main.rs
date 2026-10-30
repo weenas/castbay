@@ -482,7 +482,11 @@ fn forget_receiver(id: String, app: AppHandle) -> Result<(), String> {
 /// Whether `url` is one of this project's pages the program opens: a release page on GitHub or a
 /// page of the website (the changelog), with nothing in it that could be taken for more.
 fn project_page(url: &str) -> bool {
-    (url.starts_with("https://github.com/weenas/castbay/releases/") || url.starts_with("https://castbay.weenas.com/"))
+    // The release pages, a file of the repository (the licence), the repository itself, the website.
+    (url.starts_with("https://github.com/weenas/castbay/releases/")
+        || url.starts_with("https://github.com/weenas/castbay/blob/")
+        || url == "https://github.com/weenas/castbay"
+        || url.starts_with("https://castbay.weenas.com/"))
         && !url.chars().any(|c| c.is_control() || c == '"' || c == ' ' || c == '\\')
 }
 
@@ -1112,6 +1116,8 @@ mod tests {
             "https://github.com/weenas/castbay/releases/tag/desktop-v0.1.3",
             "https://castbay.weenas.com/changelog#desktop-v0.1.3",
             "https://castbay.weenas.com/zh/changelog#desktop-v0.1.3",
+            "https://github.com/weenas/castbay/blob/main/LICENSE",
+            "https://github.com/weenas/castbay",
         ] {
             assert!(project_page(ok), "{ok}");
         }
@@ -1123,6 +1129,9 @@ mod tests {
             "https://castbay.weenas.com/a b",
             "https://castbay.weenas.com/\"x",
             "https://github.com/weenas/castbay/issues/1",
+            "https://github.com/weenas/castbay.evil.example/",
+            "https://github.com/weenas/castbay-evil",
+            "https://github.com/other/castbay/blob/main/LICENSE",
         ] {
             assert!(!project_page(bad), "{bad}");
         }

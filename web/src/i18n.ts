@@ -38,7 +38,7 @@ export const strings = {
     themeToDark: '切换到深色',
     home: '主页',
     guide: '使用说明',
-    desktopGuide: '电脑端说明',
+    desktopGuide: '桌面端说明',
     faq: '常见问题',
     tech: '技术原理',
     changelog: '更新日志',

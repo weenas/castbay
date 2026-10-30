@@ -14,7 +14,11 @@ intro: '找不到答案？看看<a href="/zh/guide">使用说明</a>，或者<a 
 
 ### 支持哪些设备？
 
-Android 6.0 及以上的安卓设备：电视、电视盒子、车机和平板都可以，用遥控器或触摸屏操作。已在小米（Android 6）、TCL（Android 9）和索尼（Android 12）电视、Google TV Streamer 以及比亚迪 DiLink 5.0 车机（Android 12）上测试，详见[兼容性列表](/zh/compatibility)。
+Android 6.0 及以上的安卓设备都可以接收：电视、电视盒子、车机和平板，用遥控器或触摸屏操作。它们可以接收来自 iPhone、iPad、Mac（AirPlay）、App 自带投屏按钮（DLNA）和 Windows、Linux 电脑（映湾桌面端）的内容。已在小米（Android 6）、TCL（Android 9）和索尼（Android 12）电视、Google TV Streamer 以及比亚迪 DiLink 5.0 车机（Android 12）上测试，详见[兼容性列表](/zh/compatibility)。
+
+### 可以从 Windows 或 Linux 电脑投屏吗？
+
+可以，用**映湾桌面端**：一个单独的程序，适用于 Windows 10/11 和 Ubuntu、Debian。它把整个屏幕或某个窗口连同声音投到运行映湾的设备上；先在那台设备的映湾设置里打开**电脑投屏**。它用映湾自己的加密连接，不是 AirPlay、DLNA 或 Miracast，所以只能投到映湾接收端，延迟很低：家庭网络里约四分之一秒。在<a href="/zh/download">下载页</a>获取，其余见<a href="/zh/desktop-guide">桌面端使用说明</a>。Mac 不需要额外安装：它用 AirPlay 投屏。
 
 ### 如何把 APK 安装到电视上？
 
@@ -26,7 +30,7 @@ Android 6.0 及以上的安卓设备：电视、电视盒子、车机和平板�
 
 ### 在哪里可以下载映湾？不同渠道之间能互相升级吗？
 
-有两个渠道：
+所有版本都在<a href="/zh/download">下载页</a>，来自两个渠道：
 
 - **本网站或 GitHub**（[CastBay.apk](/apk)、[所有版本](https://github.com/weenas/castbay/releases)）：使用映湾自己的签名。映湾会自动检查新版本，在"关于"页里就能下载安装。也可以用 [Obtainium](https://github.com/ImranR98/Obtainium) 跟踪 GitHub 上的新版本（同一个签名，可以互相升级）。
 - **F-Droid**（已提交，审核中）：由 F-Droid 自己从源码编译并用 F-Droid 的签名发布；通过 F-Droid 客户端更新，映湾本身不会检查更新。

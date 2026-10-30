@@ -3,13 +3,13 @@ layout: ../../layouts/Doc.astro
 lang: zh
 toc: true
 page: desktop-guide
-title: '电脑端使用说明 – 映湾 CastBay'
-description: '映湾电脑端的使用说明：把 Windows 或 Linux 电脑的屏幕或某个窗口投到映湾接收端、托盘菜单、每一个设置、更新，以及它会往网络上发送什么。'
-heading: '映湾电脑端使用说明'
-intro: '映湾电脑端把电脑的屏幕或某个窗口连同声音投到运行映湾的设备上。在<a href="/zh/download">下载页</a>获取。接收端一侧的用法见<a href="/zh/guide">使用说明</a>。'
+title: '桌面端使用说明 – 映湾 CastBay'
+description: '映湾桌面端的使用说明：把 Windows 或 Linux 电脑的屏幕或某个窗口投到映湾接收端、托盘菜单、每一个设置、更新，以及它会往网络上发送什么。'
+heading: '映湾桌面端使用说明'
+intro: '映湾桌面端把电脑的屏幕或某个窗口连同声音投到运行映湾的设备上。在<a href="/zh/download">下载页</a>获取。接收端一侧的用法见<a href="/zh/guide">使用说明</a>。'
 ---
 
-映湾电脑端使用自己的加密连接，不是 AirPlay 或 DLNA，所以延迟很低：家庭网络里约四分之一秒。
+映湾桌面端使用自己的加密连接，不是 AirPlay 或 DLNA，所以延迟很低：家庭网络里约四分之一秒。
 
 ## 准备
 
@@ -81,7 +81,7 @@ intro: '映湾电脑端把电脑的屏幕或某个窗口连同声音投到运行
 
 ## Linux 说明
 
-- **投什么**：窗口里没有屏幕和窗口的列表，点**开始投屏**时由系统询问要共享哪个。勾选“记住此选择”后不再询问。记住的选择失效时，映湾电脑端会在 15 秒后忘掉它，系统的对话框重新出现，再选一次即可。（保存在 `~/.local/share/castbay-desktop/screencast-token`，删除该文件效果相同。）
+- **投什么**：窗口里没有屏幕和窗口的列表，点**开始投屏**时由系统询问要共享哪个。勾选“记住此选择”后不再询问。记住的选择失效时，映湾桌面端会在 15 秒后忘掉它，系统的对话框重新出现，再选一次即可。（保存在 `~/.local/share/castbay-desktop/screencast-token`，删除该文件效果相同。）
 - **托盘**：投屏中关闭窗口，投屏会继续在托盘里运行。GNOME 默认不显示托盘图标（安装 AppIndicator 扩展即可）；没有扩展时，再次从应用程序菜单打开 **CastBay Desktop**，正在运行的窗口会回到前台。
 - **登录后自动启动**会写入 `~/.config/autostart/castbay-desktop.desktop`。
 - **编码**：NVIDIA 显卡用 NVENC，其他用 CPU 的 x264（AMD、Intel 硬件编码暂未支持）。

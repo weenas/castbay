@@ -11,12 +11,12 @@ const entries = await Promise.all(
 );
 const intro =
   lang === 'zh'
-    ? '电脑端映湾 Desktop（Windows 和 Linux）的更新内容。程序里有新版本时，点"更新"即可安装；也可以在<a href="https://github.com/weenas/castbay/releases">发布页</a>下载。'
-    : 'What changed in CastBay Desktop (Windows and Linux). When a new version is out, the Update button in the program installs it; the installers are also on the <a href="https://github.com/weenas/castbay/releases">releases page</a>.';
+    ? '映湾桌面端（Windows 和 Linux）的更新内容。程序里有新版本时，点"更新"即可安装；也可以在<a href="/zh/download">下载页</a>下载。'
+    : 'What changed in CastBay Desktop (Windows and Linux). When a new version is out, the Update button in the program installs it; the installers are on the <a href="/download">download page</a>.';
 const page = lang === 'zh' ? '发布页' : 'Release page';
 ---
 <section id="desktop">
-  <h2>CastBay Desktop</h2>
+  <h2>{lang === 'zh' ? '映湾桌面端' : 'CastBay Desktop'}</h2>
   <p set:html={intro} />
   {entries.map(({ entry, Content }) => (
     <section class="release" id={`desktop-v${entry.data.version}`}>

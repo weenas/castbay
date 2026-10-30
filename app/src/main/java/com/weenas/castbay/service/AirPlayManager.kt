@@ -124,6 +124,16 @@ class AirPlayManager private constructor(private val context: Context) {
     private val displayManager = context.getSystemService(android.hardware.display.DisplayManager::class.java)
     private val hevcSupport by lazy { HevcSupport.detect() }
 
+    /** The hardware H.265 decoder decoded the self-test picture: false until the test has run (a moment after the receiver starts) and when it failed. */
+    @Volatile private var desktopH265Works = false
+    private val hevcSelfTestStarted = java.util.concurrent.atomic.AtomicBoolean(false)
+
+    /** Tests the H.265 decoder once, in the background, so that `videoFormats` can say so truthfully. */
+    private fun testDesktopH265() {
+        if (!hevcSelfTestStarted.compareAndSet(false, true) || !hevcSupport.hardware) return
+        Thread({ desktopH265Works = HevcSelfTest.run(context) }, "HevcSelfTest").apply { isDaemon = true }.start()
+    }
+
     /** The mirroring profile offered by the running receiver; decoders are sized to it. */
     /**
      * Set when the TV ends a cast, until a sender connects again: frames still on their way
@@ -450,6 +460,7 @@ class AirPlayManager private constructor(private val context: Context) {
             return true
         }
         logMirroringCapabilities(settings)
+        testDesktopH265()
         activeSettings = settings
         currentError = null
         val protocolPort = nativeBridge.start(
@@ -962,7 +973,8 @@ class AirPlayManager private constructor(private val context: Context) {
             if (_deviceRequest.value?.deviceId == deviceId) _deviceRequest.value = null
         }
 
-        override fun videoFormats() = if (hevcSupport.hardware) listOf("h264", "h265") else listOf("h264")
+        // H.265 only for a TV with a hardware decoder that has also shown it can decode a picture (see HevcSelfTest).
+        override fun videoFormats() = if (desktopH265Works) listOf("h264", "h265") else listOf("h264")
 
         override fun sessionStarted(session: Any, deviceId: String, name: String, width: Int, height: Int, fps: Int, h265: Boolean) {
             Log.i(TAG, "Desktop sender: ${Log.personal(name)}, ${width}x$height, ${if (h265) "H.265" else "H.264"}")

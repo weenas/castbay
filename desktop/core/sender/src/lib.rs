@@ -49,11 +49,12 @@ pub struct Options {
 }
 
 /// What the person at the keyboard sees while casting.
-/// What the person asked for: Auto uses H.265 whenever both sides can, H.264 and H.265 ask for one.
+/// What the person asked for: H.264 (the default: every receiver decodes it, and the CPU encoder makes
+/// it), or H.265 where both sides can (`Auto`, and `H265`, which is the same: when it cannot be, H.264).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum FormatChoice {
-    #[default]
     Auto,
+    #[default]
     H264,
     H265,
 }

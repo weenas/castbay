@@ -7,7 +7,7 @@ use windows::core::{implement, Interface};
 use windows::Win32::Media::Audio::{
     eConsole, eRender, ActivateAudioInterfaceAsync, IActivateAudioInterfaceAsyncOperation, IActivateAudioInterfaceCompletionHandler,
     IActivateAudioInterfaceCompletionHandler_Impl, AUDIOCLIENT_ACTIVATION_PARAMS, AUDIOCLIENT_ACTIVATION_PARAMS_0,
-    AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK, AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS, PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE,
+    AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK, AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS, PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE, PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE,
     VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, IAudioCaptureClient, IAudioClient, IMMDeviceEnumerator, MMDeviceEnumerator, AUDCLNT_BUFFERFLAGS_SILENT,
     AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM, AUDCLNT_STREAMFLAGS_LOOPBACK, AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
     WAVEFORMATEX,
@@ -44,6 +44,27 @@ pub fn run_loopback(process: Option<u32>, stop: &dyn Fn() -> bool, mut on_sample
     }
 }
 
+/// What the default output mixes in (its sample rate, channels and bits), for diagnosing.
+pub fn device_format() -> String {
+    unsafe {
+        let initialised = CoInitializeEx(None, COINIT_MULTITHREADED).is_ok();
+        let text = (|| -> windows::core::Result<String> {
+            let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+            let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole)?;
+            let client: IAudioClient = device.Activate(CLSCTX_ALL, None)?;
+            let format = client.GetMixFormat()?;
+            let f = std::ptr::read_unaligned(format);
+            let text = format!("{} Hz, {} channels, {} bits, tag {}", { f.nSamplesPerSec }, { f.nChannels }, { f.wBitsPerSample }, { f.wFormatTag });
+            windows::Win32::System::Com::CoTaskMemFree(Some(format as *const _));
+            Ok(text)
+        })();
+        if initialised {
+            CoUninitialize();
+        }
+        text.unwrap_or_else(|e| format!("unknown ({e})"))
+    }
+}
+
 /// Tells the thread waiting in [process_client] that the activation is over.
 #[implement(IActivateAudioInterfaceCompletionHandler)]
 struct Done(std::sync::mpsc::Sender<()>);
@@ -56,13 +77,13 @@ impl IActivateAudioInterfaceCompletionHandler_Impl for Done_Impl {
 }
 
 /// An audio client that hears one process (and the ones it started) instead of a device.
-unsafe fn process_client(process: u32) -> Result<IAudioClient, Error> {
+unsafe fn process_client(process: u32, only_it: bool) -> Result<IAudioClient, Error> {
     let mut params = AUDIOCLIENT_ACTIVATION_PARAMS {
         ActivationType: AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK,
         Anonymous: AUDIOCLIENT_ACTIVATION_PARAMS_0 {
             ProcessLoopbackParams: AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS {
                 TargetProcessId: process,
-                ProcessLoopbackMode: PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE,
+                ProcessLoopbackMode: if only_it { PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE } else { PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE },
             },
         },
     };
@@ -91,10 +112,17 @@ unsafe fn process_client(process: u32) -> Result<IAudioClient, Error> {
 }
 
 unsafe fn capture(process: Option<u32>, stop: &dyn Fn() -> bool, on_samples: &mut dyn FnMut(&[f32])) -> Result<(), Error> {
-    let client: IAudioClient = match process.map(|p| process_client(p)) {
-        Some(Ok(client)) => client,
+    // The whole output is taken the same way, as everything but this program's own sound: the level
+    // and the character of the sound then do not change when what is cast goes from a window to a screen
+    // (the device's own loopback is quieter by a good deal than a process's).
+    let wanted = match process {
+        Some(p) => process_client(p, true),
+        None => process_client(std::process::id(), false),
+    };
+    let client: IAudioClient = match wanted {
+        Ok(client) => client,
         // Not possible here: the sound of the whole output, as before.
-        _ => {
+        Err(_) => {
             let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL).map_err(platform)?;
             let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole).map_err(platform)?;
             device.Activate(CLSCTX_ALL, None).map_err(platform)?

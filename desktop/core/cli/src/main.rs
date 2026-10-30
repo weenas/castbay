@@ -26,14 +26,18 @@ fn main() {
 fn audio_test(args: &[String]) {
     let process = option(args, "--window").map(|title| castbay_capture::window_process(title).unwrap_or_else(|| panic!("no window named {title}")));
     let seconds: u64 = option(args, "--seconds").and_then(|v| v.parse().ok()).unwrap_or(5);
+    #[cfg(windows)]
+    println!("the output mixes {}", castbay_capture::audio::device_format());
     println!("listening for {seconds} s to {}", process.map(|p| format!("process {p} and what it started")).unwrap_or("everything played".into()));
-    let (started, mut peak, mut second) = (Instant::now(), 0f32, 0u64);
+    let (started, mut peak, mut second, mut count, mut sq) = (Instant::now(), 0f32, 0u64, 0usize, 0f64);
     let result = castbay_capture::audio::run_loopback(process, &|| started.elapsed() >= Duration::from_secs(seconds), |samples| {
         peak = samples.iter().fold(peak, |m, s| m.max(s.abs()));
+        count += samples.len() / 2;
+        sq += samples.iter().map(|s| (*s as f64) * (*s as f64)).sum::<f64>();
         let now = started.elapsed().as_secs();
         if now > second {
-            println!("second {second}: peak {peak:.3}");
-            (second, peak) = (now, 0.0);
+            println!("second {second}: peak {peak:.3}, rms {:.3}, {count} sample pairs", (sq / (count.max(1) * 2) as f64).sqrt());
+            (second, peak, count, sq) = (now, 0.0, 0, 0.0);
         }
     });
     println!("{}", result.map(|_| "done".to_string()).unwrap_or_else(|e| format!("failed: {e}")));

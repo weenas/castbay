@@ -41,7 +41,7 @@ const [desktop] = await desktopReleases('en');
       The installer needs no administrator rights; the .zip runs from any folder without installing. It needs the Microsoft Edge WebView2 runtime, which comes with Windows 11 and recent Windows 10. The first time, Windows may ask to let it use the network: allow it on private networks, or receivers cannot be found.
     </p>
     <p class="note">
-      <strong>Not code-signed yet.</strong> Windows SmartScreen may say it protected your PC: choose <em>More info</em>, then <em>Run anyway</em>. The source and every build are public, and the checksums are on the <a href="{desktop ? 'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version : 'https://github.com/weenas/castbay/releases'}">release page</a>.
+      <strong>Not code-signed yet.</strong> Windows SmartScreen may say it protected your PC: choose <em>More info</em>, then <em>Run anyway</em>. The source and every build are public, and the checksums are on the <a href={'https://github.com/weenas/castbay/releases/tag/desktop-v' + desktop.data.version}>release page</a>.
     </p>
   </section>
 

@@ -146,7 +146,14 @@ struct State {
     last_key: Option<Instant>,
     nv12: Vec<u8>,
     have_picture: bool,
+    /// When a picture was last sent (as it was taken: not when the encoder was done with it).
     last: Instant,
+    /// That picture was a repeat of an older one: a new picture then does not wait for its turn.
+    last_was_repeat: bool,
+    /// When the last new picture arrived from the capture. It is this, not the time it was sent
+    /// (after its colours were converted: ten milliseconds later), that the next one is measured
+    /// against: from the send time a picture 33 ms after it looks 23 ms late and was dropped.
+    last_taken: Instant,
     captured: VecDeque<Instant>,
     lags_ms: Vec<f64>,
     sent: u64,
@@ -191,8 +198,15 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
             return false;
         }
         st.frames_seen += 1;
-        if st.last.elapsed() + interval / 4 >= interval || !st.have_picture {
+        let arrived = Instant::now();
+        // A new picture is taken when its turn has come (three quarters of an interval after the last
+        // one, so that a screen that changes faster than the cast does not set the pace) and at once
+        // after a repeat: a repeat only stands in where nothing new came, and must not make the new
+        // picture that follows it wait (that was the case: most new pictures were dropped, and
+        // old ones repeated in their place).
+        if takes_new_picture(st.have_picture, st.last_was_repeat, arrived.duration_since(st.last_taken), interval) {
             if frame.width >= 2 && frame.height >= 2 {
+                st.last_taken = arrived;
                 let mut nv12 = std::mem::take(&mut st.nv12);
                 bgra_to_nv12_fit(frame.data, frame.stride, frame.width as usize, frame.height as usize, width as usize, height as usize, &mut nv12);
                 st.nv12 = nv12;
@@ -208,6 +222,13 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
         }
         true
     }
+}
+
+/// Whether a picture that has just come from the capture is sent. A screen that changes faster than
+/// the cast does not set the pace (not before three quarters of an interval since the last one was
+/// taken), and a picture is always taken after a repeat, which only stood in where nothing new came.
+fn takes_new_picture(have_picture: bool, last_was_repeat: bool, since_last_taken: Duration, interval: Duration) -> bool {
+    !have_picture || last_was_repeat || since_last_taken + interval / 4 >= interval
 }
 
 /// The AMD encoder ignores its own key frame interval (a measured cast sent one key frame in two
@@ -254,7 +275,8 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
     st.want_key = false;
     st.nv12 = nv12;
     st.captured.push_back(captured);
-    st.last = Instant::now();
+    st.last = captured;
+    st.last_was_repeat = repeat;
     if repeat {
         st.repeats += 1;
     }
@@ -384,6 +406,8 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
         nv12: vec![0; (width * height * 3 / 2) as usize],
         have_picture: false,
         last: Instant::now(),
+        last_was_repeat: false,
+        last_taken: Instant::now(),
         captured: VecDeque::new(),
         lags_ms: Vec::new(),
         sent: 0,
@@ -454,6 +478,8 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                     Event::KeyFrameRequested => st.want_key = true,
                 }
             }
+            // A repeat stands in where nothing new came for an interval, so a still screen is sent at the
+            // rate that was asked for.
             if st.have_picture && st.last.elapsed() >= interval {
                 push(&mut st, link, Instant::now(), started, &config, codec, true);
                 if let Some(bps) = st.announce_bitrate.take() {
@@ -681,6 +707,17 @@ fn report(state: &Arc<Mutex<State>>, started: Instant, stop: &Arc<AtomicBool>, o
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_new_picture_is_taken_at_its_turn_not_early_and_always_after_a_repeat() {
+        let interval = Duration::from_micros(33_333);
+        let ms = Duration::from_millis;
+        assert!(takes_new_picture(false, false, ms(1), interval), "the first picture");
+        assert!(takes_new_picture(true, false, ms(33), interval), "a picture a frame after the last: 30 pictures a second stay 30");
+        assert!(takes_new_picture(true, false, ms(26), interval));
+        assert!(!takes_new_picture(true, false, ms(16), interval), "a screen at 60 Hz sends every other one");
+        assert!(takes_new_picture(true, true, ms(2), interval), "after a repeat");
+    }
 
     #[test]
     fn the_amd_encoder_is_asked_for_a_key_frame_every_two_seconds() {

@@ -74,7 +74,7 @@ Press the sliders icon at the top right. Changes apply to the next cast.
 
 **About** (Settings, or the tray menu) is a window with the version and whether a newer one is out, with **What's new** (this site's changelog) and **Update**, then:
 
-- **Check for updates**, **Diagnostics**, **Report a problem**, **Open log folder** and **Licence and source code**.
+- **Check for updates**, **Diagnostics**, **Report a problem**, **Open log folder**, **Licence** (the text of the GPL-3.0) and **Source code** (the repository).
 - **Diagnostics** shows facts about this computer and the end of the log. **Upload log** asks first, then gives a report ID to put in your problem report. Network addresses, receivers' names and your user folder are taken out before anything is sent, and only you pressing Upload sends it.
 
 **Updating**: the notice on the main page, and About, have **Update**. On Windows it downloads the new installer, checks its SHA-256 against the one the website publishes, installs it and starts the program again. On Linux it asks for your password in the system's own box and installs the new .deb. The portable version opens the release page instead. **Skip this version** on the notice keeps that version's notice away; a newer version brings it back.

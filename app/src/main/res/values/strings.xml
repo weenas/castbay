@@ -130,6 +130,7 @@
     <string name="setting_open_on_cast">Open When Casting</string>
     <string name="setting_open_on_cast_note">Opens CastBay when a device starts mirroring or playing a video while another app, the home screen or the screen saver is showing (the TV is woken up). Needs "Display over other apps" for CastBay (this opens its settings page). If your TV has no such page, a computer can grant it: adb shell appops set com.weenas.castbay SYSTEM_ALERT_WINDOW allow</string>
     <string name="open_on_cast_toast">Open CastBay on the TV to see the cast</string>
+    <string name="open_on_cast_off_toast">A device is casting, but CastBay is not on screen. Turn on Settings → Playback → Open When Casting to open it automatically</string>
     <string name="setting_append_tv_name">Add the TV\'s name after it</string>
     <string name="setting_append_tv_name_note">Phones see: %1$s</string>
     <string name="frame_rate_fps">%1$d FPS</string>

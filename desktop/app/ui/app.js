@@ -622,6 +622,14 @@ async function init() {
   window.__TAURI__.app.getVersion().then((v) => { $("version").textContent = v; }).catch(() => {});
   // The program ended badly last time: say so, and offer a report (unless it was sent by itself).
   invoke("crash_pending").then((kind) => { if (kind) { $("crash-text").textContent = t("crash_text"); $("crash").hidden = false; } }).catch(() => {});
+  // The program stays open for days (tray, start at login), and the check at start goes stale: look
+  // again when the window is brought back, at most once an hour (GitHub allows 60 requests an hour).
+  let lastUpdateCheck = Date.now();
+  window.addEventListener("focus", async () => {
+    if (settings.check_updates === false || Date.now() - lastUpdateCheck < 3600 * 1000) return;
+    lastUpdateCheck = Date.now();
+    showUpdateResult(await checkUpdate(), false);
+  });
   if (settings.check_updates !== false) showUpdateResult(await checkUpdate(), false);
 }
 init();

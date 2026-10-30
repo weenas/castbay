@@ -1,0 +1,1 @@
+• With Open When Casting on, a cast that starts while the TV is in its screen saver now wakes the TV and opens CastBay by itself.

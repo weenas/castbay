@@ -159,6 +159,12 @@ struct State {
     sent: u64,
     dropped: u64,
     repeats: u64,
+    /// Repeats sent one after the other, since the last new picture.
+    repeats_in_a_row: u32,
+    /// The usual time between new pictures from the capture (a smoothed average, at most 100 ms).
+    gap: Duration,
+    /// The frame rate was lowered because the screen is still (told with `Status::Still`).
+    still: bool,
     bytes: u64,
     reconnects: u64,
     /// The cast cannot go on; the text says why.
@@ -206,7 +212,15 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
         // old ones repeated in their place).
         if takes_new_picture(st.have_picture, st.last_was_repeat, arrived.duration_since(st.last_taken), interval) {
             if frame.width >= 2 && frame.height >= 2 {
+                // The usual gap follows the screen: a gap longer than 100 ms is a pause, not the pace.
+                let gap = arrived.duration_since(st.last_taken).min(STILL_REPEAT);
+                st.gap = (st.gap * 3 + gap) / 4;
                 st.last_taken = arrived;
+                st.repeats_in_a_row = 0;
+                if st.still {
+                    st.still = false;
+                    capture_status(Status::Still(false));
+                }
                 let mut nv12 = std::mem::take(&mut st.nv12);
                 bgra_to_nv12_fit(frame.data, frame.stride, frame.width as usize, frame.height as usize, width as usize, height as usize, &mut nv12);
                 st.nv12 = nv12;
@@ -221,6 +235,32 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
             }
         }
         true
+    }
+}
+
+/// Repeats at the full rate after a new picture, so that the encoder can bring a still picture to its
+/// best (a picture is sharper after a few passes), then the rate is lowered.
+const REFINE_REPEATS: u32 = 8;
+/// How often the picture is repeated on a still screen: only to keep the stream alive.
+const STILL_REPEAT: Duration = Duration::from_millis(100);
+
+/// How long to wait before repeating the last picture, with `in_a_row` repeats since the last new one
+/// and `gap` the usual time between new pictures (the screen's own pace):
+/// - the first repeat comes when a picture is overdue: one and a half of the usual gap, and not before an
+///   interval of the asked-for rate. A screen that changes 30 times a second needs no repeats in a cast
+///   of 60, and one that changes 60 times needs none at all: the cast follows the screen;
+/// - a few more repeats at the asked-for rate, so that the encoder can bring a still picture to its best
+///   (it is sharper after a few passes);
+/// - then ten a second, only to keep the stream alive (never faster than the asked-for rate: a cast of
+///   5 pictures a second stays at 5).
+/// A new picture is sent as soon as it comes, whatever this says, so a screen that moves again is not delayed.
+fn repeat_wait(interval: Duration, in_a_row: u32, gap: Duration) -> Duration {
+    if in_a_row == 0 {
+        interval.max(gap + gap / 2)
+    } else if in_a_row < REFINE_REPEATS {
+        interval
+    } else {
+        interval.max(STILL_REPEAT)
     }
 }
 
@@ -413,6 +453,9 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
         sent: 0,
         dropped: 0,
         repeats: 0,
+        repeats_in_a_row: 0,
+        gap: interval,
+        still: false,
         bytes: 0,
         reconnects: 0,
         failed: None,
@@ -463,9 +506,9 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
             // 60 repeats a second came out as 50.
             let due = {
                 let st = state.lock().unwrap();
-                if st.have_picture { interval.saturating_sub(st.last.elapsed()) } else { interval / 4 }
+                if st.have_picture { repeat_wait(interval, st.repeats_in_a_row, st.gap).saturating_sub(st.last.elapsed()) } else { interval / 4 }
             };
-            std::thread::sleep(due.clamp(Duration::from_millis(1), interval));
+            std::thread::sleep(due.clamp(Duration::from_millis(1), interval.max(STILL_REPEAT).min(Duration::from_millis(100))));
             let mut st = state.lock().unwrap();
             if over() || st.failed.is_some() || st.ended.is_some() {
                 return;
@@ -485,10 +528,14 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                     Event::KeyFrameRequested => st.want_key = true,
                 }
             }
-            // A repeat stands in where nothing new came for an interval, so a still screen is sent at the
-            // rate that was asked for.
-            if st.have_picture && st.last.elapsed() >= interval {
+            // A repeat stands in where nothing new came for as long as `repeat_wait` says.
+            if st.have_picture && st.last.elapsed() >= repeat_wait(interval, st.repeats_in_a_row, st.gap) {
                 push(&mut st, link, Instant::now(), started, &config, codec, true);
+                st.repeats_in_a_row = st.repeats_in_a_row.saturating_add(1);
+                if st.repeats_in_a_row >= REFINE_REPEATS && !st.still && interval < STILL_REPEAT {
+                    st.still = true;
+                    on_status(Status::Still(true));
+                }
                 if let Some(bps) = st.announce_bitrate.take() {
                     on_status(Status::Bitrate(bps));
                 }
@@ -714,6 +761,24 @@ fn report(state: &Arc<Mutex<State>>, started: Instant, stop: &Arc<AtomicBool>, o
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_cast_follows_the_screen_then_repeats_for_a_while_then_slows_down() {
+        let ms = Duration::from_millis;
+        let sixty = Duration::from_micros(16_667);
+        // A screen that changes 30 times a second, a cast of 60: the first repeat is overdue only after 50 ms.
+        assert_eq!(repeat_wait(sixty, 0, ms(33)), ms(33) + ms(33) / 2);
+        // A screen that changes 60 times a second: after an interval, not before.
+        assert_eq!(repeat_wait(sixty, 0, sixty), sixty + sixty / 2);
+        // A screen with no pace of its own yet: the asked-for rate.
+        assert_eq!(repeat_wait(sixty, 0, Duration::ZERO), sixty);
+        // A few repeats at the asked-for rate, then ten a second.
+        assert_eq!(repeat_wait(sixty, 1, ms(33)), sixty);
+        assert_eq!(repeat_wait(sixty, REFINE_REPEATS - 1, ms(33)), sixty);
+        assert_eq!(repeat_wait(sixty, REFINE_REPEATS, ms(33)), ms(100));
+        // A cast slower than that stays as slow as it was asked to be.
+        assert_eq!(repeat_wait(ms(200), 1000, ms(33)), ms(200));
+    }
 
     #[test]
     fn a_new_picture_is_taken_at_its_turn_not_early_and_always_after_a_repeat() {

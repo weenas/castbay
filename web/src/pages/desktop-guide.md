@@ -57,7 +57,7 @@ Press the sliders icon at the top right. Changes apply to the next cast.
 | Setting | What it does |
 | --- | --- |
 | Bitrate | A slider from 2 to 20 Mbit/s (8 by default). A higher bitrate means a sharper picture and more network use. |
-| Frame rate | 30 or 60 fps. 60 makes games and dragged windows follow more closely and wants 8 Mbit/s or more. |
+| Frame rate | 30 or 60 fps, the most that is sent. The cast follows the screen: pictures go out as fast as the screen changes, up to this rate, and a screen that stays still is sent at about 10 a second (the casting page says so under Details) until it moves again. 60 makes games and dragged windows follow more closely and wants 8 Mbit/s or more. |
 | Send sound too | The sound the PC plays is sent as well (and still plays on the PC). |
 | Encoder | Automatic tries AMD, then NVIDIA, then the CPU (x264). The list shows only what works on this computer. A graphics card encodes with its own video unit and hardly uses the CPU. |
 | Start with Windows / Start at login | Starts with the computer and waits in the tray. |

@@ -141,6 +141,7 @@ class VideoRenderer(
                 }
             }
 
+            noteKeyFrameInterval(nal.hasRandomAccess)
             if (awaitingKeyFrame) Log.i(TAG, "Key frame accepted after ${droppedFrames} dropped frames (${accessUnit.size} bytes, NAL types ${nalTypes(accessUnit)})")
             awaitingKeyFrame = false
             if (arrivals.size >= MAX_PENDING_FRAMES) arrivals.clear()
@@ -152,6 +153,18 @@ class VideoRenderer(
     }
 
     private var lastWaitingLogMs = 0L
+    private var framesSinceKey = 0
+    private var longestKeyGap = 0
+    private var keyFramesSeen = 0
+
+    /** How far apart the sender's key frames are, in frames: a sender that rarely sends one leaves any damage on screen. */
+    private fun noteKeyFrameInterval(isKey: Boolean) {
+        framesSinceKey++
+        if (!isKey) return
+        keyFramesSeen++
+        if (keyFramesSeen > 1) longestKeyGap = maxOf(longestKeyGap, framesSinceKey)
+        framesSinceKey = 0
+    }
 
     /** While frames are dropped for want of a key frame: once every few seconds, what the dropped frame looks like. */
     private fun noteWaiting(accessUnit: ByteArray, nal: NalSummary) {
@@ -208,6 +221,9 @@ class VideoRenderer(
             decodeLatencyMs = null
             inputRate.reset()
             droppedFrames = 0
+            framesSinceKey = 0
+            longestKeyGap = 0
+            keyFramesSeen = 0
         }
     }
 
@@ -382,7 +398,7 @@ class VideoRenderer(
         val ms = (SystemClock.elapsedRealtimeNanos() - arrivedNanos) / 1_000_000.0
         val previous = decodeLatencyMs
         decodeLatencyMs = if (previous == null) ms else previous + (ms - previous) * 0.1
-        if (renderedFrames % 300 == 1L) Log.i(TAG, "Decode latency about ${decodeLatencyMs?.toInt()} ms")
+        if (renderedFrames % 300 == 1L) Log.i(TAG, "Decode latency about ${decodeLatencyMs?.toInt()} ms; key frames $keyFramesSeen, longest gap $longestKeyGap frames, ${framesSinceKey} since the last")
     }
 
     private class NalSummary(

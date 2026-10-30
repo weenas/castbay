@@ -1,6 +1,7 @@
 // A flat C interface to FFmpeg's libavcodec for the Rust side, so no struct layouts are
 // mirrored there. One encoder instance turns NV12 pictures into Annex B access units.
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
@@ -74,6 +75,9 @@ CbEnc *cb_enc_open(const char *name, int width, int height, int fps, int bitrate
         av_dict_set(&o, "zerolatency", "1", 0);
         av_dict_set(&o, "delay", "0", 0);
     }
+    /* For trying encoder options on a real machine without a build each time: CASTBAY_ENC_OPTS="usage=lowlatency,intra_refresh_mb=30" */
+    const char *extra = getenv("CASTBAY_ENC_OPTS");
+    if (extra && *extra) av_dict_parse_string(&o, extra, "=", ",", 0);
     int r = avcodec_open2(c, codec, &o);
     av_dict_free(&o);
     if (r < 0) { fail(err, errlen, "open", r); cb_enc_close(e); return NULL; }

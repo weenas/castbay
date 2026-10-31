@@ -8,6 +8,15 @@ heading: 'Compatibility'
 intro: 'What CastBay has been tested with so far. Tried it on something not listed, or found something that doesn''t work? <a href="/feedback">Tell us</a>.'
 ---
 
+## How to read the status
+
+- ✅ **Tested**: we tried it ourselves, on the device, with the features named.
+- ⚠️ **Works with a limit**: it plays, and the limit is written next to it.
+- ❔ **Not yet confirmed**: expected to work, nobody has checked.
+- ❌ **Not supported**.
+
+Everything below is what we tested ourselves. A model that only shows up in the optional anonymous statistics is not listed on that basis alone: it needs at least five devices of that model, so no single person's device can be picked out.
+
 ## Supported casting features
 
 CastBay supports **AirPlay screen mirroring, music and video casting from compatible apps, and DLNA/UPnP media playback**. Support is described by the features tested below, not a blanket “AirPlay 2” claim. Full AirPlay 2 support, including multi-room synchronized audio, is not claimed.
@@ -30,7 +39,7 @@ CastBay supports **AirPlay screen mirroring, music and video casting from compat
 | Google TV Streamer | 14 | ✅ Installed and running; hardware HEVC (4K mirroring on a 4K screen) |
 | BYD car display, DiLink 5.0 (touch screen) | 12 | ✅ Tested: mirroring, music, video, steering-wheel buttons (pause, change tracks); force-stopped when switched off, so open CastBay after starting the car |
 
-CastBay needs an Android device on Android 6.0 or later. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
+CastBay needs an Android device on Android 6.0 or later. A few TV boxes (an operator-supplied IPTV box was one) have a system whose local-network discovery service fails (Android reports an internal error when CastBay registers its name). Since 1.8.4 CastBay announces itself on the network when that happens, so phones find it again; if your box was on an earlier version and the phone never saw it, update first. Other brands of TVs, TV boxes, car displays and tablets should work, with a remote or a touch screen; 4K H.265 mirroring needs a TV with a hardware HEVC decoder (the home screen says what it offers).
 
 ## Phones and computers
 

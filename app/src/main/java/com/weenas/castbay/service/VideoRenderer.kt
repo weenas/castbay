@@ -23,6 +23,10 @@ import java.util.ArrayDeque
  * RPiPlay delivers SPS/PPS as a separate buffer only once per session, so that codec config is
  * cached and replayed whenever the decoder is (re)created, e.g. when the Surface appears late.
  */
+private fun panasonicCropQuirk() = MirroringDeviceQuirks.needsTextureView(
+    android.os.Build.MANUFACTURER, android.os.Build.MODEL, android.os.Build.VERSION.SDK_INT
+)
+
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 class VideoRenderer(
     context: Context,
@@ -77,6 +81,7 @@ class VideoRenderer(
                 // Swap outputs without tearing down the decoder, so no new IDR frame is needed.
                 try {
                     decoder.setOutputSurface(output)
+                    if (panasonicCropQuirk()) decoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
                     if (output === value) releasePlaceholderLocked()
                     return
                 } catch (error: Exception) {
@@ -276,6 +281,7 @@ class VideoRenderer(
             renderedFrames = 0
             codecConfig?.let { pendingFrames.addFirst(Frame(it, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG)) }
             decoder.start()
+            if (panasonicCropQuirk()) decoder.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
             decoderName = decoder.name
         } catch (error: Exception) {
             Log.e(TAG, "Unable to start $mimeType decoder", error)
@@ -301,7 +307,8 @@ class VideoRenderer(
                     .isFeatureSupported(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency)
             }.getOrDefault(false)
             Log.i(TAG, "${decoder.name} low-latency mode ${if (supported) "supported" else "not advertised"}")
-            format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
+            // Some decoders reject the key when low latency is not advertised.
+            if (supported) format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
         }
         return format
     }
@@ -363,6 +370,11 @@ class VideoRenderer(
         }
 
         override fun onOutputFormatChanged(mc: MediaCodec, format: MediaFormat) {
+            if (panasonicCropQuirk()) synchronized(lock) {
+                if (codec !== owner) return
+                // Rotation changes decoder output format; reapply the tested scaling mode.
+                mc.setVideoScalingMode(MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT)
+            }
             Log.i(TAG, "Decoder output format: $format")
             // The buffer is padded (e.g. 1920x1088 for a 448x972 portrait stream); the crop
             // rect is the part the sender actually drew.

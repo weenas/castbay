@@ -1,6 +1,11 @@
 package com.weenas.castbay.ui.screen
 
 import com.weenas.castbay.ui.usingKeys
+import android.content.Context
+import android.graphics.SurfaceTexture
+import android.view.Surface
+import android.view.TextureView
+import com.weenas.castbay.service.MirroringDeviceQuirks
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import androidx.compose.ui.viewinterop.AndroidView
@@ -1292,25 +1297,65 @@ fun MirroringVideo(
         val (width, height) = PictureLayout.size(
             pictureMode, maxWidth.value, maxHeight.value, streamInfo.frameWidth, streamInfo.frameHeight
         )
+        val affected = MirroringDeviceQuirks.needsTextureView(android.os.Build.MANUFACTURER, android.os.Build.MODEL, android.os.Build.VERSION.SDK_INT)
         val videoModifier = Modifier.requiredSize(width.dp, height.dp)
-        AndroidView(
-            factory = { context ->
-                SurfaceView(context).apply {
-                    holder.addCallback(object : SurfaceHolder.Callback {
-                        override fun surfaceCreated(holder: SurfaceHolder) {
-                            viewModel.setVideoSurface(holder.surface)
-                        }
+        if (affected) {
+            // A new texture consumer on orientation changes avoids stale crop on 4KTV-JUP.
+            val activeSurface = remember { java.util.concurrent.atomic.AtomicReference<Surface?>(null) }
+            key(streamInfo.frameHeight > streamInfo.frameWidth) {
+                AndroidView(
+                    factory = { context ->
+                        MirroringTextureView(context,
+                            attachSurface = { output -> activeSurface.set(output); viewModel.setVideoSurface(output) },
+                            detachSurface = { output -> if (activeSurface.compareAndSet(output, null)) viewModel.setVideoSurface(null) }
+                        )
+                    },
+                    onRelease = { it.releaseVideoSurface() },
+                    modifier = videoModifier.clipToBounds()
+                )
+            }
+        } else {
+            AndroidView(
+                factory = { context ->
+                    SurfaceView(context).apply {
+                        holder.addCallback(object : SurfaceHolder.Callback {
+                            override fun surfaceCreated(holder: SurfaceHolder) {
+                                viewModel.setVideoSurface(holder.surface)
+                            }
 
-                        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
+                            override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) = Unit
 
-                        override fun surfaceDestroyed(holder: SurfaceHolder) {
-                            viewModel.setVideoSurface(null)
-                        }
-                    })
-                }
-            },
-            modifier = videoModifier
-        )
+                            override fun surfaceDestroyed(holder: SurfaceHolder) {
+                                viewModel.setVideoSurface(null)
+                            }
+                        })
+                    }
+                },
+                modifier = videoModifier
+            )
+        }
+    }
+}
+
+/** TextureView is limited to the tested Panasonic decoder path; other devices use SurfaceView. */
+private class MirroringTextureView(
+    context: Context,
+    private val attachSurface: (Surface) -> Unit,
+    private val detachSurface: (Surface) -> Unit
+) : TextureView(context), TextureView.SurfaceTextureListener {
+    private var videoSurface: Surface? = null
+    init { surfaceTextureListener = this; isOpaque = true }
+    override fun onSurfaceTextureAvailable(texture: SurfaceTexture, width: Int, height: Int) {
+        videoSurface = Surface(texture).also(attachSurface)
+    }
+    override fun onSurfaceTextureSizeChanged(texture: SurfaceTexture, width: Int, height: Int) = Unit
+    override fun onSurfaceTextureUpdated(texture: SurfaceTexture) = Unit
+    override fun onSurfaceTextureDestroyed(texture: SurfaceTexture): Boolean { releaseVideoSurface(); return true }
+    fun releaseVideoSurface() {
+        val output = videoSurface ?: return
+        detachSurface(output)
+        output.release()
+        videoSurface = null
     }
 }
 

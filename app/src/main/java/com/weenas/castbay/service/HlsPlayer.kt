@@ -8,6 +8,7 @@ import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
 import androidx.media3.common.PlaybackException
+import androidx.media3.common.Timeline
 import androidx.media3.common.Player
 import androidx.media3.common.Format
 import androidx.media3.exoplayer.ExoPlayer
@@ -43,6 +44,8 @@ class HlsPlayer(
         private set
 
     @Volatile private var snapshot = Snapshot()
+    /** Where a live stream's window started when it was first told to the sender (main thread only). */
+    private var liveOrigin: Long? = null
     /** Linear gain from the sender's volume slider; applied to each new player. */
     @Volatile private var volume = 1f
 
@@ -347,6 +350,7 @@ class HlsPlayer(
             it.release()
         }
         player = null
+        liveOrigin = null
         videoDecoder = null
         audioDecoder = null
         bandwidthBps = 0
@@ -356,10 +360,14 @@ class HlsPlayer(
 
     private fun updateSnapshot() {
         val exo = player ?: return
-        val duration = exo.duration.takeIf { it != C.TIME_UNSET }?.div(1000.0) ?: 0.0
+        // A live stream's duration is only the window it keeps (12 s for six 2 s segments) and its
+        // position runs back by a segment each time the window slides, so the sender saw a short
+        // video that kept jumping backwards. Told instead: no duration, and a position that only grows.
+        val live = exo.isCurrentMediaItemLive
+        val duration = if (live) 0.0 else exo.duration.takeIf { it != C.TIME_UNSET }?.div(1000.0) ?: 0.0
         snapshot = Snapshot(
             durationSec = duration,
-            positionSec = exo.currentPosition / 1000.0,
+            positionSec = if (live) livePositionSec(exo) else exo.currentPosition / 1000.0,
             rate = if (exo.isPlaying) 1.0 else 0.0,
             state = if (exo.playbackState == Player.STATE_ENDED) {
                 AirPlayNative.PLAYBACK_FINISHED
@@ -368,6 +376,15 @@ class HlsPlayer(
             },
             buffering = exo.playbackState == Player.STATE_BUFFERING
         )
+    }
+
+    private fun livePositionSec(exo: ExoPlayer): Double {
+        val timeline = exo.currentTimeline
+        if (timeline.isEmpty) return exo.currentPosition / 1000.0
+        val window = timeline.getWindow(exo.currentMediaItemIndex, Timeline.Window())
+        val absoluteMs = exo.currentPosition + window.positionInFirstPeriodUs / 1000
+        val origin = liveOrigin ?: absoluteMs.also { liveOrigin = it }
+        return (absoluteMs - origin) / 1000.0
     }
 
     private companion object {

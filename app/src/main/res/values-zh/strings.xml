@@ -100,6 +100,11 @@
     <string name="setting_screen_saver_note">防烧屏：10 分钟没有按键或点击时，音乐界面逐渐调暗并轻微移动。关屏：2 分钟后画面变黑（电视能显示的最暗状态），音乐继续播放。按任意键、点屏幕或有新的投屏都会恢复；媒体键（切歌、暂停）照常可用。显示歌词时不会进入。</string>
     <string name="screen_saver_burn_in">防烧屏</string>
     <string name="screen_saver_music_off">关屏</string>
+    <string name="consent_title">愿意帮映湾变得更好吗？</string>
+    <string name="consent_note">默认关闭，打开才会发送，不含名称、歌名、网址或地址。详见“关于 → 隐私政策”，随时可在设置中修改。</string>
+    <string name="consent_stats">匿名统计：%1$s</string>
+    <string name="consent_errors">错误报告：%1$s</string>
+    <string name="consent_done">完成</string>
     <string name="crash_ask">映湾上次意外退出了。发送问题报告帮助我们修复吗？</string>
     <string name="crash_send">发送</string>
     <string name="crash_dismiss">忽略</string>

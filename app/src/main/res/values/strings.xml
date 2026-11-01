@@ -98,6 +98,11 @@
     <string name="setting_screen_saver_note">Against burn-in: after 10 minutes without a key or tap, the music screen dims and shifts a little. Screen off: after 2 minutes it goes black (the dimmest a TV can show) while the music plays on. Any key, tap or new cast wakes it; media keys keep working. Not while lyrics are showing.</string>
     <string name="screen_saver_burn_in">Against burn-in</string>
     <string name="screen_saver_music_off">Screen off</string>
+    <string name="consent_title">Help improve CastBay?</string>
+    <string name="consent_note">Off unless you turn them on. Never names, titles, links or addresses. See About → Privacy; change any time in Settings.</string>
+    <string name="consent_stats">Stats: %1$s</string>
+    <string name="consent_errors">Error reports: %1$s</string>
+    <string name="consent_done">Done</string>
     <string name="crash_ask">CastBay stopped unexpectedly last time. Send a problem report to help fix it?</string>
     <string name="crash_send">Send</string>
     <string name="crash_dismiss">Dismiss</string>

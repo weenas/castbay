@@ -12,6 +12,7 @@ import com.weenas.castbay.service.UpdateInstall
 import com.weenas.castbay.service.UpdateInstaller
 import com.weenas.castbay.BuildConfig
 import com.weenas.castbay.util.AppVersion
+import com.weenas.castbay.util.ConsentPrompt
 import com.weenas.castbay.util.CrashReports
 import com.weenas.castbay.util.Diagnostics
 import com.weenas.castbay.util.Log
@@ -312,6 +313,20 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     fun setUsageStats(on: Boolean) {
         UsageStats.setOn(getApplication(), on)
         _usageStatsOn.value = on
+    }
+
+    private val _consentNeeded = MutableStateFlow(
+        ConsentPrompt.shouldAsk(ConsentPrompt.asked(application), UsageStats.isOn(application), _settings.value.sendErrorReports)
+    )
+    /** Whether the home screen's one-time card about statistics and error reports is due. */
+    val consentNeeded: StateFlow<Boolean> = _consentNeeded.asStateFlow()
+
+    /** The card was answered: apply the two choices (both off unless turned on) and never ask again. */
+    fun answerConsent(statistics: Boolean, errorReports: Boolean) {
+        if (statistics) setUsageStats(true)
+        if (errorReports) setSendErrorReports(true)
+        ConsentPrompt.markAsked(getApplication())
+        _consentNeeded.value = false
     }
 
     fun setSendErrorReports(enabled: Boolean) {

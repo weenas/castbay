@@ -327,7 +327,7 @@ fun MirrorScreen(viewModel: AirPlayViewModel) {
                 AirPlayConnectionState.AdvertisingOnly -> AdvertisingOnlyScreen(
                     onStop = { viewModel.stopServer() }
                 )
-                AirPlayConnectionState.Connecting -> ConnectingScreen()
+                AirPlayConnectionState.Connecting -> ConnectingScreen(viewModel, state.streamInfo.sender)
                 AirPlayConnectionState.Connected -> ConnectedScreen(
                     viewModel = viewModel,
                     streamInfo = state.streamInfo
@@ -391,7 +391,7 @@ private val SHORT_HOME_HEIGHT = 500.dp
  * move when the receiver starts, stops or waits.
  */
 @Composable
-private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnScope.() -> Unit) {
+private fun HomeScreen(viewModel: AirPlayViewModel, showNotice: Boolean = true, status: @Composable ColumnScope.() -> Unit) {
     val crashNotice by viewModel.crashNotice.collectAsState()
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         BrandTitle()
@@ -409,7 +409,7 @@ private fun HomeScreen(viewModel: AirPlayViewModel, status: @Composable ColumnSc
         ) {
             // A crash to ask about takes the status's place for a moment, so nothing moves.
             val notice = crashNotice
-            if (notice != null) CrashNoticeCard(notice, viewModel) else status()
+            if (notice != null && showNotice) CrashNoticeCard(notice, viewModel) else status()
         }
         Spacer(modifier = Modifier.height(16.dp))
         HomeButtons(viewModel)
@@ -658,13 +658,16 @@ fun AdvertisingOnlyScreen(onStop: () -> Unit) {
 }
 
 @Composable
-fun ConnectingScreen() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(stringResource(R.string.connecting), color = Color.White)
+fun ConnectingScreen(viewModel: AirPlayViewModel, sender: String) {
+    // The home screen stays, with the status saying who is connecting, so nothing flashes in between.
+    HomeScreen(viewModel, showNotice = false) {
+        Text(
+            if (sender.isEmpty()) stringResource(R.string.connecting) else stringResource(R.string.connecting_from, sender),
+            color = Color.White, fontSize = 28.sp, lineHeight = 36.sp,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            // A very long device name must not push the buttons off the screen.
+            maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+        )
     }
 }
 

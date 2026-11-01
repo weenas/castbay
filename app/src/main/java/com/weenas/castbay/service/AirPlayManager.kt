@@ -629,6 +629,8 @@ class AirPlayManager private constructor(private val context: Context) {
         hlsPlayer.forgetFinished()
         // DLNA video stays on screen until the AirPlay sender actually streams something.
         if (dlnaOnScreen()) return
+        // The sender's name arrives a moment later (see the admission above).
+        currentStreamInfo = StreamInfo()
         currentState = AirPlayConnectionState.Connecting
     }
 
@@ -904,6 +906,11 @@ class AirPlayManager private constructor(private val context: Context) {
         val previous = airPlaySenderId
         airPlaySender = label
         airPlaySenderId = deviceId
+        // Connecting is on screen: say who is connecting.
+        if (currentState == AirPlayConnectionState.Connecting) {
+            currentStreamInfo = StreamInfo(sender = label)
+            notifyStateChange(currentState)
+        }
         if (previous.isNotEmpty() && deviceId != previous) onSenderTakeover()
         return true
     }

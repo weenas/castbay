@@ -22,6 +22,7 @@
     <string name="advertising_only_title">映湾已在局域网中可见</string>
     <string name="advertising_only_detail">仅可被发现，暂不支持 AirPlay 投屏。</string>
     <string name="connecting">正在连接…</string>
+    <string name="connecting_from">正在连接 %1$s…</string>
     <string name="connected">已连接</string>
     <string name="connected_from">来自：%1$s</string>
     <string name="streaming">正在投屏</string>

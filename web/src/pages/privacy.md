@@ -12,7 +12,7 @@ CastBay is an open-source casting receiver app for Android TVs, car displays and
 
 ## What we collect
 
-Nothing, unless you choose to. CastBay does not collect personal information, and does not send your usage to us or anyone else on its own. Only two things can reach us from the app, both off until you choose them: a [problem report](#problem-reports-only-when-you-send-one), with personal details taken out first, and [anonymous usage statistics](#usage-statistics-only-if-you-turn-them-on).
+Nothing, unless you choose to. CastBay does not collect personal information, and does not send your usage to us or anyone else on its own. Only two things can reach us from the app, both off until you choose them: a [problem report](#problem-reports-only-when-you-send-one), with personal details taken out first, and [anonymous usage statistics](#usage-statistics-only-if-you-turn-them-on). The first time you open the app, a card on the home screen asks once whether to send anonymous statistics and error reports; both stay off unless you turn them on there, and Settings, under General, changes them at any time.
 
 ## What you cast
 
@@ -79,7 +79,7 @@ It is kept and read as the TV app's reports are (see above): over HTTPS to this 
 
 ## Usage statistics (only if you turn them on)
 
-**Send Anonymous Usage Statistics** (Settings → General) is off by default; nothing is counted while it is off. When you turn it on, CastBay makes a random installation ID (it says nothing about the device or you) and counts, on the device, what happens each day. Once a day it sends the previous day's summary to this website:
+**Send Anonymous Usage Statistics** (Settings → General) is off by default; nothing is counted while it is off. The home screen asks about it once, in a card with both switches off; it only turns on if you turn it on there. When you turn it on, CastBay makes a random installation ID (it says nothing about the device or you) and counts, on the device, what happens each day. Once a day it sends the previous day's summary to this website:
 
 | Sent | Example |
 | --- | --- |

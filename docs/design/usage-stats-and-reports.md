@@ -6,8 +6,10 @@ released app does; each part's section is added to it when that part ships.
 
 ## Principles
 
-- Nothing is sent unless the person chooses to. Both switches below are off by default, and
-  CastBay never asks to turn them on outside Settings.
+- Nothing is sent unless the person chooses to. Both switches below are off by default. The
+  home screen asks once, in a card with both switches off (answering with both off is a "no", and
+  the card is not shown again, nor when either is already on); outside that card and Settings
+  CastBay never asks to turn them on.
 - Nothing that identifies the person or what they watched: no account, no device name, no
   sender names, no titles or links, no Wi-Fi name, no location, no hardware addresses.
 - What is sent is described on the privacy page, field by field, and visible in this

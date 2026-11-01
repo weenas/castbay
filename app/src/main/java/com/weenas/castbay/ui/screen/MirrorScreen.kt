@@ -393,6 +393,7 @@ private val SHORT_HOME_HEIGHT = 500.dp
 @Composable
 private fun HomeScreen(viewModel: AirPlayViewModel, showNotice: Boolean = true, status: @Composable ColumnScope.() -> Unit) {
     val crashNotice by viewModel.crashNotice.collectAsState()
+    val consentNeeded by viewModel.consentNeeded.collectAsState()
     HomeLayout(info = { ReceiverInfo(viewModel = viewModel) }) {
         BrandTitle()
         Spacer(modifier = Modifier.height(12.dp))
@@ -409,10 +410,12 @@ private fun HomeScreen(viewModel: AirPlayViewModel, showNotice: Boolean = true, 
         ) {
             // A crash to ask about takes the status's place for a moment, so nothing moves.
             val notice = crashNotice
-            if (notice != null && showNotice) CrashNoticeCard(notice, viewModel) else status()
+            if (notice != null && showNotice) CrashNoticeCard(notice, viewModel)
+            else if (consentNeeded && showNotice) ConsentCard(viewModel)
+            else status()
         }
         Spacer(modifier = Modifier.height(16.dp))
-        HomeButtons(viewModel)
+        HomeButtons(viewModel, focusFirst = !(consentNeeded && showNotice))
     }
 }
 
@@ -457,10 +460,42 @@ private fun CrashNoticeCard(notice: AirPlayViewModel.CrashNotice, viewModel: Air
     }
 }
 
+/**
+ * Asked once, in the status's place: whether to send anonymous statistics and error reports. Both
+ * start off, and each button turns its own choice on or off; Done applies them (all off is a no).
+ */
+@Composable
+private fun ConsentCard(viewModel: AirPlayViewModel) {
+    var statistics by remember { mutableStateOf(false) }
+    var errorReports by remember { mutableStateOf(false) }
+    val on = stringResource(R.string.on)
+    val off = stringResource(R.string.off)
+    fun state(enabled: Boolean) = if (enabled) on else off
+    Column(
+        modifier = Modifier
+            .widthIn(max = 460.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .background(Color.White.copy(alpha = 0.08f))
+            .padding(horizontal = 20.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(stringResource(R.string.consent_title), fontSize = 18.sp, color = Color.White, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Text(stringResource(R.string.consent_note), fontSize = 14.sp, color = Color.Gray, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        CompositionLocalProvider(LocalHomeButtonMinWidth provides 96.dp) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HomeButton(stringResource(R.string.consent_stats, state(statistics)), Modifier.initialFocus(), muted = !statistics, onClick = { statistics = !statistics })
+                HomeButton(stringResource(R.string.consent_errors, state(errorReports)), muted = !errorReports, onClick = { errorReports = !errorReports })
+            }
+            HomeButton(stringResource(R.string.consent_done), onClick = { viewModel.answerConsent(statistics, errorReports) })
+        }
+    }
+}
+
 /** The home screen's buttons: Settings, Help and About; the one last opened has the focus. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun HomeButtons(viewModel: AirPlayViewModel) {
+private fun HomeButtons(viewModel: AirPlayViewModel, focusFirst: Boolean = true) {
     // Narrower than elsewhere so three fit beside the info panel; they wrap if they still don't.
     CompositionLocalProvider(LocalHomeButtonMinWidth provides 120.dp) {
         FlowRow(
@@ -470,18 +505,18 @@ private fun HomeButtons(viewModel: AirPlayViewModel) {
             val focused = viewModel.homeFocus
             HomeButton(
                 stringResource(R.string.settings),
-                if (focused == "settings") Modifier.initialFocus() else Modifier,
+                if (focusFirst && focused == "settings") Modifier.initialFocus() else Modifier,
                 onClick = { viewModel.navigateToSettings() }
             )
             HomeButton(
                 stringResource(R.string.help),
-                if (focused == "help") Modifier.initialFocus() else Modifier,
+                if (focusFirst && focused == "help") Modifier.initialFocus() else Modifier,
                 onClick = { viewModel.navigateToHelp() }
             )
             val update by viewModel.update.collectAsState()
             HomeButton(
                 stringResource(R.string.about),
-                if (focused == "about") Modifier.initialFocus() else Modifier,
+                if (focusFirst && focused == "about") Modifier.initialFocus() else Modifier,
                 badge = update != null,
                 onClick = { viewModel.navigateToAbout() }
             )

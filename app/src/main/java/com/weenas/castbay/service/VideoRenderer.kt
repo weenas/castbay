@@ -315,7 +315,8 @@ class VideoRenderer(
                     .isFeatureSupported(MediaCodecInfo.CodecCapabilities.FEATURE_LowLatency)
             }.getOrDefault(false)
             Log.i(TAG, "${decoder.name} low-latency mode ${if (supported) "supported" else "not advertised"}")
-            format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
+            // Some decoders reject the key when low latency is not advertised.
+            if (supported) format.setInteger(MediaFormat.KEY_LOW_LATENCY, 1)
         }
         return format
     }

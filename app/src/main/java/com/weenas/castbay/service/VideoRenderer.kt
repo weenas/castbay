@@ -49,6 +49,8 @@ class VideoRenderer(
     /** Latest parameter-set buffer (SPS/PPS, or VPS/SPS/PPS for HEVC). */
     private var codecConfig: ByteArray? = null
     private var awaitingKeyFrame = true
+    /** The decoder would not start with the low-latency settings, so they are left out. */
+    private var lowLatencyRefused = false
     private val pendingFrames = ArrayDeque<Frame>()
     private val freeInputs = ArrayDeque<Int>()
     private var droppedFrames = 0L
@@ -263,36 +265,48 @@ class VideoRenderer(
     private fun startCodecIfReadyLocked() {
         val target = surface ?: return
         if (!target.isValid || width <= 0 || height <= 0 || codec != null) return
-        val decoder = try {
-            MediaCodec.createDecoderByType(mimeType)
-        } catch (error: Exception) {
-            Log.e(TAG, "Unable to create $mimeType decoder", error)
-            return
-        }
-        try {
-            decoder.setCallback(DecoderCallback(decoder), handler)
-            decoder.configure(lowLatencyFormat(decoder), target, null, 0)
-            codec = decoder
-            renderedFrames = 0
-            codecConfig?.let { pendingFrames.addFirst(Frame(it, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG)) }
-            decoder.start()
-            decoderName = decoder.name
-        } catch (error: Exception) {
-            Log.e(TAG, "Unable to start $mimeType decoder", error)
-            codec = null
-            pendingFrames.clear()
-            awaitingKeyFrame = true
-            decoder.release()
+        // Some decoders refuse the low-latency settings at configure (a Rockchip one does, on Android 11):
+        // then the same decoder is tried without them, and they are not offered again.
+        for (lowLatency in if (lowLatencyRefused) listOf(false) else listOf(true, false)) {
+            val decoder = try {
+                MediaCodec.createDecoderByType(mimeType)
+            } catch (error: Exception) {
+                Log.e(TAG, "Unable to create $mimeType decoder", error)
+                return
+            }
+            try {
+                decoder.setCallback(DecoderCallback(decoder), handler)
+                decoder.configure(decoderFormat(decoder, lowLatency), target, null, 0)
+                codec = decoder
+                renderedFrames = 0
+                decoder.start()
+                codecConfig?.let { pendingFrames.addFirst(Frame(it, 0, MediaCodec.BUFFER_FLAG_CODEC_CONFIG)) }
+                decoderName = decoder.name
+                return
+            } catch (error: Exception) {
+                codec = null
+                val name = runCatching { decoder.name }.getOrDefault(mimeType)
+                decoder.release()
+                if (lowLatency) {
+                    Log.w(TAG, "$name would not start with the low-latency settings, trying without them", error)
+                    lowLatencyRefused = true
+                    continue
+                }
+                Log.e(TAG, "Unable to start $mimeType decoder", error)
+                pendingFrames.clear()
+                awaitingKeyFrame = true
+            }
         }
     }
 
     /**
-     * Asks the decoder to output each frame as soon as it is decoded. Without this, TV decoders
-     * (MediaTek's among them) hold several frames back as if for smooth film playback, which
-     * mirroring feels as lag.
+     * Asks the decoder to output each frame as soon as it is decoded ([lowLatency]). Without this,
+     * TV decoders (MediaTek's among them) hold several frames back as if for smooth film playback,
+     * which mirroring feels as lag.
      */
-    private fun lowLatencyFormat(decoder: MediaCodec): MediaFormat {
+    private fun decoderFormat(decoder: MediaCodec, lowLatency: Boolean): MediaFormat {
         val format = MediaFormat.createVideoFormat(mimeType, width, height)
+        if (!lowLatency) return format
         // Real-time priority: decode frames as they come rather than at a relaxed pace.
         format.setInteger(MediaFormat.KEY_PRIORITY, 0)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

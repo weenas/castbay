@@ -21,6 +21,7 @@
     <string name="advertising_only_title">CastBay is visible on the local network</string>
     <string name="advertising_only_detail">Discovery preview only — AirPlay streaming is not available yet.</string>
     <string name="connecting">Connecting…</string>
+    <string name="connecting_from">Connecting to %1$s…</string>
     <string name="connected">Connected</string>
     <string name="connected_from">From: %1$s</string>
     <string name="streaming">Streaming</string>

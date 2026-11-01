@@ -9,6 +9,7 @@ import android.os.Build
 import android.os.Handler
 import android.os.SystemClock
 import android.os.HandlerThread
+import com.weenas.castbay.util.Diagnostics
 import com.weenas.castbay.util.Log
 import android.view.Surface
 import java.util.ArrayDeque
@@ -290,6 +291,7 @@ class VideoRenderer(
                 if (lowLatency) {
                     Log.w(TAG, "$name would not start with the low-latency settings, trying without them", error)
                     lowLatencyRefused = true
+                    Diagnostics.record("video", "$name refused the low-latency settings, started without them")
                     continue
                 }
                 Log.e(TAG, "Unable to start $mimeType decoder", error)

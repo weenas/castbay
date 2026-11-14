@@ -75,7 +75,10 @@ impl std::error::Error for Error {}
 pub fn bgra_to_nv12(src: &[u8], stride: usize, width: usize, height: usize, out: &mut [u8]) {
     assert!(width % 2 == 0 && height % 2 == 0 && out.len() >= width * height * 3 / 2);
     let (luma, chroma) = out.split_at_mut(width * height);
-    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(2).min(8);
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(2)
+        .min(8);
     let pairs = height / 2;
     let per = pairs.div_ceil(threads);
     std::thread::scope(|scope| {
@@ -103,15 +106,18 @@ pub fn bgra_to_nv12(src: &[u8], stride: usize, width: usize, height: usize, out:
                             for dx in 0..2 {
                                 let p = &row[(x + dx) * 4..][..4];
                                 let (pb, pg, pr) = (p[0] as i32, p[1] as i32, p[2] as i32);
-                                ly[x + dx] = (((47 * pr + 157 * pg + 16 * pb + 128) >> 8) + 16) as u8;
+                                ly[x + dx] =
+                                    (((47 * pr + 157 * pg + 16 * pb + 128) >> 8) + 16) as u8;
                                 r += pr;
                                 g += pg;
                                 b += pb;
                             }
                         }
                         let (r, g, b) = ((r + 2) >> 2, (g + 2) >> 2, (b + 2) >> 2);
-                        cuv[x] = ((((-26 * r - 87 * g + 112 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
-                        cuv[x + 1] = ((((112 * r - 102 * g - 10 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
+                        cuv[x] =
+                            ((((-26 * r - 87 * g + 112 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
+                        cuv[x + 1] =
+                            ((((112 * r - 102 * g - 10 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
                     }
                 }
             });

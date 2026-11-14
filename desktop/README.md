@@ -20,10 +20,14 @@ picker (the system asks what to share), takes the sound from PipeWire, keeps the
 logind and starts with the session through an autostart entry. Tested on Ubuntu 26.04 (GNOME,
 Wayland, an NVIDIA GPU); see docs/limitations.md.
 
-Building on Linux: `tools/build-ffmpeg-linux.sh` (gcc, make, nasm, pkg-config), then `cargo build --release -p castbay-desktop --features ffmpeg-lib`; `installer/linux/build-deb.sh BINARY VERSION OUTDIR` makes the package.
+The shared UI uses the pinned `gpui-unofficial` and `gpui-platform-gpui-unofficial` crates, the
+stable crates.io distribution of GPUI. Windows and Linux compile the same application module and
+render the same pages and controls; only the screen-capture picker is supplied by each OS.
+
+Building on Linux: `tools/build-ffmpeg-linux.sh` (gcc, make, nasm, pkg-config), then `cargo build --release -p castbay-desktop-gpui --features ffmpeg-lib`; `installer/linux/build-deb.sh BINARY VERSION OUTDIR` makes the package.
 
 Building on Windows: `tools/build-ffmpeg.cmd` builds FFmpeg from the submodules (needs MSYS2 and
-Visual Studio's C++ tools); then `cargo build --release -p castbay-desktop --features ffmpeg-lib`
+Visual Studio's C++ tools); the GPUI application does not require WebView2. Then `cargo build --release -p castbay-desktop-gpui --features ffmpeg-lib`
 with `FFMPEG_DIR` pointing at its output (default `desktop/build/ffmpeg`). Without the feature the
 encoders run as an `ffmpeg.exe` child process (`CASTBAY_FFMPEG`).
 

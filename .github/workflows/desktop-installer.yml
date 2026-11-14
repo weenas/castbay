@@ -27,16 +27,15 @@ jobs:
       - name: Get WiX
         run: dotnet tool install --global wix --version 4.0.5
 
-      # The released program stands in for a fresh build.
-      - name: Get the released program
-        env:
-          GH_TOKEN: ${{ github.token }}
+      # Build the current PR so installer testing does not depend on a published release asset.
+      - name: Build the current program
+        working-directory: desktop
+        run: cargo build --release --locked -p castbay-desktop-gpui
+
+      - name: Prepare installer inputs
         run: |
-          gh release download desktop-v0.1.0 --repo $env:GITHUB_REPOSITORY --pattern '*windows-x64.zip' --dir "$env:RUNNER_TEMP\release"
-          Expand-Archive "$env:RUNNER_TEMP\release\*.zip" -DestinationPath "$env:RUNNER_TEMP\release\unzipped"
-          $dir = Get-ChildItem "$env:RUNNER_TEMP\release\unzipped" -Directory | Select-Object -First 1
-          Copy-Item "$($dir.FullName)\CastBay Desktop.exe" "$env:RUNNER_TEMP\app.exe"
-          Copy-Item "$($dir.FullName)\LICENSE" "$env:RUNNER_TEMP\LICENSE"
+          Copy-Item "desktop\target\release\castbay-desktop.exe" "$env:RUNNER_TEMP\app.exe"
+          Copy-Item "LICENSE" "$env:RUNNER_TEMP\LICENSE"
 
       - name: Build the installers
         run: ./desktop/installer/build-msi.ps1 -Version 0.1.0 -AppExe "$env:RUNNER_TEMP\app.exe" -LicenseTxt "$env:RUNNER_TEMP\LICENSE" -OutDir "$env:RUNNER_TEMP\msi" -NameStem CastBay-Desktop-0.1.0-windows-x64

@@ -5,15 +5,23 @@ use std::time::Duration;
 
 use windows::core::{implement, Interface};
 use windows::Win32::Media::Audio::{
-    eConsole, eRender, ActivateAudioInterfaceAsync, IActivateAudioInterfaceAsyncOperation, IActivateAudioInterfaceCompletionHandler,
-    IActivateAudioInterfaceCompletionHandler_Impl, AUDIOCLIENT_ACTIVATION_PARAMS, AUDIOCLIENT_ACTIVATION_PARAMS_0,
-    AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK, AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS, PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE, PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE,
-    VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, IAudioCaptureClient, IAudioClient, IMMDeviceEnumerator, MMDeviceEnumerator, AUDCLNT_BUFFERFLAGS_SILENT,
-    AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM, AUDCLNT_STREAMFLAGS_LOOPBACK, AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+    eConsole, eRender, ActivateAudioInterfaceAsync, IActivateAudioInterfaceAsyncOperation,
+    IActivateAudioInterfaceCompletionHandler, IActivateAudioInterfaceCompletionHandler_Impl,
+    IAudioCaptureClient, IAudioClient, IMMDeviceEnumerator, MMDeviceEnumerator,
+    AUDCLNT_BUFFERFLAGS_SILENT, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM,
+    AUDCLNT_STREAMFLAGS_LOOPBACK, AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+    AUDIOCLIENT_ACTIVATION_PARAMS, AUDIOCLIENT_ACTIVATION_PARAMS_0,
+    AUDIOCLIENT_ACTIVATION_TYPE_PROCESS_LOOPBACK, AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS,
+    PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE,
+    PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE, VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK,
     WAVEFORMATEX,
 };
-use windows::Win32::System::Com::StructuredStorage::{PROPVARIANT, PROPVARIANT_0, PROPVARIANT_0_0, PROPVARIANT_0_0_0};
-use windows::Win32::System::Com::{BLOB, CoCreateInstance, CoInitializeEx, CoUninitialize, CLSCTX_ALL, COINIT_MULTITHREADED};
+use windows::Win32::System::Com::StructuredStorage::{
+    PROPVARIANT, PROPVARIANT_0, PROPVARIANT_0_0, PROPVARIANT_0_0_0,
+};
+use windows::Win32::System::Com::{
+    CoCreateInstance, CoInitializeEx, CoUninitialize, BLOB, CLSCTX_ALL, COINIT_MULTITHREADED,
+};
 use windows::Win32::System::Variant::VT_BLOB;
 
 use crate::Error;
@@ -33,7 +41,11 @@ fn platform(e: windows::core::Error) -> Error {
 /// With `process` (a process id) only what that process and the ones it started play is
 /// delivered (a window's own sound, a browser's included); where Windows cannot do that (before
 /// Windows 10 version 2004) the whole output is delivered, as without it.
-pub fn run_loopback(process: Option<u32>, stop: &dyn Fn() -> bool, mut on_samples: impl FnMut(&[f32])) -> Result<(), Error> {
+pub fn run_loopback(
+    process: Option<u32>,
+    stop: &dyn Fn() -> bool,
+    mut on_samples: impl FnMut(&[f32]),
+) -> Result<(), Error> {
     unsafe {
         let initialised = CoInitializeEx(None, COINIT_MULTITHREADED).is_ok();
         let result = capture(process, stop, &mut on_samples);
@@ -49,12 +61,19 @@ pub fn device_format() -> String {
     unsafe {
         let initialised = CoInitializeEx(None, COINIT_MULTITHREADED).is_ok();
         let text = (|| -> windows::core::Result<String> {
-            let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
+            let enumerator: IMMDeviceEnumerator =
+                CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL)?;
             let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole)?;
             let client: IAudioClient = device.Activate(CLSCTX_ALL, None)?;
             let format = client.GetMixFormat()?;
             let f = std::ptr::read_unaligned(format);
-            let text = format!("{} Hz, {} channels, {} bits, tag {}", { f.nSamplesPerSec }, { f.nChannels }, { f.wBitsPerSample }, { f.wFormatTag });
+            let text = format!(
+                "{} Hz, {} channels, {} bits, tag {}",
+                { f.nSamplesPerSec },
+                { f.nChannels },
+                { f.wBitsPerSample },
+                { f.wFormatTag }
+            );
             windows::Win32::System::Com::CoTaskMemFree(Some(format as *const _));
             Ok(text)
         })();
@@ -70,7 +89,10 @@ pub fn device_format() -> String {
 struct Done(std::sync::mpsc::Sender<()>);
 
 impl IActivateAudioInterfaceCompletionHandler_Impl for Done_Impl {
-    fn ActivateCompleted(&self, _operation: windows::core::Ref<'_, IActivateAudioInterfaceAsyncOperation>) -> windows::core::Result<()> {
+    fn ActivateCompleted(
+        &self,
+        _operation: windows::core::Ref<'_, IActivateAudioInterfaceAsyncOperation>,
+    ) -> windows::core::Result<()> {
         let _ = self.0.send(());
         Ok(())
     }
@@ -83,7 +105,11 @@ unsafe fn process_client(process: u32, only_it: bool) -> Result<IAudioClient, Er
         Anonymous: AUDIOCLIENT_ACTIVATION_PARAMS_0 {
             ProcessLoopbackParams: AUDIOCLIENT_PROCESS_LOOPBACK_PARAMS {
                 TargetProcessId: process,
-                ProcessLoopbackMode: if only_it { PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE } else { PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE },
+                ProcessLoopbackMode: if only_it {
+                    PROCESS_LOOPBACK_MODE_INCLUDE_TARGET_PROCESS_TREE
+                } else {
+                    PROCESS_LOOPBACK_MODE_EXCLUDE_TARGET_PROCESS_TREE
+                },
             },
         },
     };
@@ -96,22 +122,41 @@ unsafe fn process_client(process: u32, only_it: bool) -> Result<IAudioClient, Er
                 wReserved2: 0,
                 wReserved3: 0,
                 Anonymous: PROPVARIANT_0_0_0 {
-                    blob: BLOB { cbSize: std::mem::size_of::<AUDIOCLIENT_ACTIVATION_PARAMS>() as u32, pBlobData: &mut params as *mut _ as *mut u8 },
+                    blob: BLOB {
+                        cbSize: std::mem::size_of::<AUDIOCLIENT_ACTIVATION_PARAMS>() as u32,
+                        pBlobData: &mut params as *mut _ as *mut u8,
+                    },
                 },
             }),
         },
     });
     let (tx, rx) = std::sync::mpsc::channel();
     let handler: IActivateAudioInterfaceCompletionHandler = Done(tx).into();
-    let operation = ActivateAudioInterfaceAsync(VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK, &IAudioClient::IID, Some(&*variant), &handler).map_err(platform)?;
-    rx.recv_timeout(Duration::from_secs(5)).map_err(|_| Error::Platform("the audio of the window did not answer".into()))?;
+    let operation = ActivateAudioInterfaceAsync(
+        VIRTUAL_AUDIO_DEVICE_PROCESS_LOOPBACK,
+        &IAudioClient::IID,
+        Some(&*variant),
+        &handler,
+    )
+    .map_err(platform)?;
+    rx.recv_timeout(Duration::from_secs(5))
+        .map_err(|_| Error::Platform("the audio of the window did not answer".into()))?;
     let (mut result, mut client) = (windows::core::HRESULT(0), None);
-    operation.GetActivateResult(&mut result, &mut client).map_err(platform)?;
+    operation
+        .GetActivateResult(&mut result, &mut client)
+        .map_err(platform)?;
     result.ok().map_err(platform)?;
-    client.ok_or_else(|| Error::Platform("no audio client".into()))?.cast::<IAudioClient>().map_err(platform)
+    client
+        .ok_or_else(|| Error::Platform("no audio client".into()))?
+        .cast::<IAudioClient>()
+        .map_err(platform)
 }
 
-unsafe fn capture(process: Option<u32>, stop: &dyn Fn() -> bool, on_samples: &mut dyn FnMut(&[f32])) -> Result<(), Error> {
+unsafe fn capture(
+    process: Option<u32>,
+    stop: &dyn Fn() -> bool,
+    on_samples: &mut dyn FnMut(&[f32]),
+) -> Result<(), Error> {
     // The whole output is taken the same way, as everything but this program's own sound: the level
     // and the character of the sound then do not change when what is cast goes from a window to a screen
     // (the device's own loopback is quieter by a good deal than a process's).
@@ -123,8 +168,11 @@ unsafe fn capture(process: Option<u32>, stop: &dyn Fn() -> bool, on_samples: &mu
         Ok(client) => client,
         // Not possible here: the sound of the whole output, as before.
         Err(_) => {
-            let enumerator: IMMDeviceEnumerator = CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL).map_err(platform)?;
-            let device = enumerator.GetDefaultAudioEndpoint(eRender, eConsole).map_err(platform)?;
+            let enumerator: IMMDeviceEnumerator =
+                CoCreateInstance(&MMDeviceEnumerator, None, CLSCTX_ALL).map_err(platform)?;
+            let device = enumerator
+                .GetDefaultAudioEndpoint(eRender, eConsole)
+                .map_err(platform)?;
             device.Activate(CLSCTX_ALL, None).map_err(platform)?
         }
     };
@@ -140,7 +188,9 @@ unsafe fn capture(process: Option<u32>, stop: &dyn Fn() -> bool, on_samples: &mu
     client
         .Initialize(
             AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_LOOPBACK | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
+            AUDCLNT_STREAMFLAGS_LOOPBACK
+                | AUDCLNT_STREAMFLAGS_AUTOCONVERTPCM
+                | AUDCLNT_STREAMFLAGS_SRC_DEFAULT_QUALITY,
             2_000_000, // 200 ms
             0,
             &format,
@@ -156,7 +206,9 @@ unsafe fn capture(process: Option<u32>, stop: &dyn Fn() -> bool, on_samples: &mu
             std::thread::sleep(Duration::from_millis(5));
             while capture.GetNextPacketSize().map_err(platform)? > 0 {
                 let (mut data, mut frames, mut flags) = (std::ptr::null_mut::<u8>(), 0u32, 0u32);
-                capture.GetBuffer(&mut data, &mut frames, &mut flags, None, None).map_err(platform)?;
+                capture
+                    .GetBuffer(&mut data, &mut frames, &mut flags, None, None)
+                    .map_err(platform)?;
                 let samples = frames as usize * CHANNELS as usize;
                 if flags & (AUDCLNT_BUFFERFLAGS_SILENT.0 as u32) != 0 || data.is_null() {
                     silence.clear();

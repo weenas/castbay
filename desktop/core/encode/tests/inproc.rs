@@ -20,13 +20,21 @@ fn picture(i: usize) -> Vec<u8> {
 }
 
 fn config() -> Config {
-    Config { width: W as u32, height: H as u32, fps: 30, bitrate_bps: 2_000_000, gop: 60, format: VideoFormat::H264 }
+    Config {
+        width: W as u32,
+        height: H as u32,
+        fps: 30,
+        bitrate_bps: 2_000_000,
+        gop: 60,
+        format: VideoFormat::H264,
+    }
 }
 
 /// 60 pictures, a key frame forced at 20 and 40: every picture comes out at once, the first
 /// carries the parameter sets, the forced ones are key frames.
 fn check(codec: Codec) {
-    let mut encoder = InProcessEncoder::new(&config(), codec).unwrap_or_else(|e| panic!("{codec:?}: {e}"));
+    let mut encoder =
+        InProcessEncoder::new(&config(), codec).unwrap_or_else(|e| panic!("{codec:?}: {e}"));
     let mut keys = Vec::new();
     for i in 0..60 {
         let unit = encoder
@@ -35,23 +43,33 @@ fn check(codec: Codec) {
             .unwrap_or_else(|| panic!("{codec:?} held picture {i} back"));
         if i == 0 {
             let types = nal_types(&unit.data);
-            assert!(types.contains(&7) && types.contains(&8) && types.contains(&5), "{codec:?}: the first unit lacks SPS, PPS or IDR: {types:?}");
+            assert!(
+                types.contains(&7) && types.contains(&8) && types.contains(&5),
+                "{codec:?}: the first unit lacks SPS, PPS or IDR: {types:?}"
+            );
         }
         if unit.key {
             keys.push(i);
         }
     }
-    assert!(keys.contains(&0) && keys.contains(&20) && keys.contains(&40), "{codec:?}: key frames at {keys:?}");
+    assert!(
+        keys.contains(&0) && keys.contains(&20) && keys.contains(&40),
+        "{codec:?}: key frames at {keys:?}"
+    );
 }
 
 fn config_h265() -> Config {
-    Config { format: VideoFormat::H265, ..config() }
+    Config {
+        format: VideoFormat::H265,
+        ..config()
+    }
 }
 
 /// The same for H.265: the first unit carries the parameter sets (VPS, SPS, PPS) and an IDR picture,
 /// and the pictures forced to be key frames are IDR pictures with the parameter sets in front.
 fn check_h265(codec: Codec) {
-    let mut encoder = InProcessEncoder::new(&config_h265(), codec).unwrap_or_else(|e| panic!("{codec:?}: {e}"));
+    let mut encoder =
+        InProcessEncoder::new(&config_h265(), codec).unwrap_or_else(|e| panic!("{codec:?}: {e}"));
     let mut keys = Vec::new();
     for i in 0..60 {
         let unit = encoder
@@ -60,14 +78,23 @@ fn check_h265(codec: Codec) {
             .unwrap_or_else(|| panic!("{codec:?} held picture {i} back"));
         let types = nal_types_h265(&unit.data);
         if i == 0 || unit.key {
-            assert!(types.contains(&32) && types.contains(&33) && types.contains(&34), "{codec:?}: picture {i} lacks VPS, SPS or PPS: {types:?}");
-            assert!(types.contains(&19) || types.contains(&20), "{codec:?}: picture {i} is no IDR picture: {types:?}");
+            assert!(
+                types.contains(&32) && types.contains(&33) && types.contains(&34),
+                "{codec:?}: picture {i} lacks VPS, SPS or PPS: {types:?}"
+            );
+            assert!(
+                types.contains(&19) || types.contains(&20),
+                "{codec:?}: picture {i} is no IDR picture: {types:?}"
+            );
         }
         if unit.key {
             keys.push(i);
         }
     }
-    assert!(keys.contains(&0) && keys.contains(&20) && keys.contains(&40), "{codec:?}: key frames at {keys:?}");
+    assert!(
+        keys.contains(&0) && keys.contains(&20) && keys.contains(&40),
+        "{codec:?}: key frames at {keys:?}"
+    );
 }
 
 #[test]
@@ -102,9 +129,14 @@ fn aac_gives_frames_and_the_config_a_decoder_needs() {
     // AAC-LC, 48 kHz, stereo: the two bytes 0x11 0x90. FFmpeg's encoder appends a three byte
     // "no SBR" marker after them, which decoders (and the receiver, up to five bytes) accept.
     let config = aac.config();
-    assert!(config.starts_with(&[0x11, 0x90]) && config.len() <= 5, "config {config:02x?}");
+    assert!(
+        config.starts_with(&[0x11, 0x90]) && config.len() <= 5,
+        "config {config:02x?}"
+    );
     assert_eq!(aac.frame_samples(), 1024);
-    let samples: Vec<f32> = (0..1024 * 2).map(|i| ((i / 2) as f32 * 0.05).sin() * 0.5).collect();
+    let samples: Vec<f32> = (0..1024 * 2)
+        .map(|i| ((i / 2) as f32 * 0.05).sin() * 0.5)
+        .collect();
     let mut frames = 0;
     for _ in 0..20 {
         if let Some(frame) = aac.encode(&samples).expect("encode") {
@@ -113,5 +145,8 @@ fn aac_gives_frames_and_the_config_a_decoder_needs() {
         }
     }
     assert!(frames >= 18, "{frames} frames out of 20 inputs");
-    assert!(aac.encode(&samples[..100]).is_err(), "a wrong sample count is refused");
+    assert!(
+        aac.encode(&samples[..100]).is_err(),
+        "a wrong sample count is refused"
+    );
 }

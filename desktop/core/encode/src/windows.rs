@@ -6,14 +6,14 @@ use std::time::{Duration, Instant};
 
 use windows::core::{Interface, GUID};
 use windows::Win32::Foundation::HMODULE;
-use windows::Win32::System::Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_UI4};
-use windows::Win32::Media::MediaFoundation::*;
-use windows::Win32::Graphics::Direct3D::{D3D_DRIVER_TYPE_HARDWARE};
+use windows::Win32::Graphics::Direct3D::D3D_DRIVER_TYPE_HARDWARE;
 use windows::Win32::Graphics::Direct3D11::{
-    D3D11CreateDevice, ID3D11Device, ID3D11Multithread, D3D11_CREATE_DEVICE_BGRA_SUPPORT, D3D11_CREATE_DEVICE_VIDEO_SUPPORT,
-    D3D11_SDK_VERSION,
+    D3D11CreateDevice, ID3D11Device, ID3D11Multithread, D3D11_CREATE_DEVICE_BGRA_SUPPORT,
+    D3D11_CREATE_DEVICE_VIDEO_SUPPORT, D3D11_SDK_VERSION,
 };
+use windows::Win32::Media::MediaFoundation::*;
 use windows::Win32::System::Com::{CoInitializeEx, CoTaskMemFree, COINIT_MULTITHREADED};
+use windows::Win32::System::Variant::{VARIANT, VARIANT_0, VARIANT_0_0, VARIANT_0_0_0, VT_UI4};
 
 use crate::{nal_types, Config, Encoded, Error};
 
@@ -70,7 +70,12 @@ fn set_u32(codec: &ICodecAPI, api: &GUID, value: u32) {
 }
 
 /// Two 32-bit values packed in one 64-bit attribute (frame size, frame rate, aspect ratio).
-fn set_pair(attributes: &IMFMediaType, key: &GUID, high: u32, low: u32) -> windows::core::Result<()> {
+fn set_pair(
+    attributes: &IMFMediaType,
+    key: &GUID,
+    high: u32,
+    low: u32,
+) -> windows::core::Result<()> {
     unsafe { attributes.SetUINT64(key, ((high as u64) << 32) | low as u64) }
 }
 
@@ -82,15 +87,25 @@ impl MfEncoder {
             MFStartup(MF_VERSION, MFSTARTUP_FULL).map_err(|e| err("MFStartup", e))?;
             trace("enumerate");
 
-            let output = MFT_REGISTER_TYPE_INFO { guidMajorType: MFMediaType_Video, guidSubtype: MFVideoFormat_H264 };
+            let output = MFT_REGISTER_TYPE_INFO {
+                guidMajorType: MFMediaType_Video,
+                guidSubtype: MFVideoFormat_H264,
+            };
             let flags = match kind {
                 Kind::Hardware => MFT_ENUM_FLAG_HARDWARE | MFT_ENUM_FLAG_SORTANDFILTER,
                 Kind::Software => MFT_ENUM_FLAG_SYNCMFT | MFT_ENUM_FLAG_SORTANDFILTER,
             };
             let mut list: *mut Option<IMFActivate> = std::ptr::null_mut();
             let mut count = 0u32;
-            MFTEnumEx(MFT_CATEGORY_VIDEO_ENCODER, flags, None, Some(&output), &mut list, &mut count)
-                .map_err(|e| err("MFTEnumEx", e))?;
+            MFTEnumEx(
+                MFT_CATEGORY_VIDEO_ENCODER,
+                flags,
+                None,
+                Some(&output),
+                &mut list,
+                &mut count,
+            )
+            .map_err(|e| err("MFTEnumEx", e))?;
             if count == 0 || list.is_null() {
                 return Err(Error(format!("no {kind:?} H.264 encoder found")));
             }
@@ -100,7 +115,10 @@ impl MfEncoder {
                 let mut name = String::new();
                 let mut buffer = [0u16; 256];
                 let mut length = 0u32;
-                if activate.GetString(&MFT_FRIENDLY_NAME_Attribute, &mut buffer, Some(&mut length)).is_ok() {
+                if activate
+                    .GetString(&MFT_FRIENDLY_NAME_Attribute, &mut buffer, Some(&mut length))
+                    .is_ok()
+                {
                     name = String::from_utf16_lossy(&buffer[..length as usize]);
                 }
                 match activate.ActivateObject::<IMFTransform>() {
@@ -116,7 +134,8 @@ impl MfEncoder {
             }
             CoTaskMemFree(Some(list as *const _));
             trace("activated");
-            let (transform, name) = chosen.ok_or_else(|| Error("no encoder could be created".into()))?;
+            let (transform, name) =
+                chosen.ok_or_else(|| Error("no encoder could be created".into()))?;
 
             let attributes = transform.GetAttributes().ok();
             let is_async = attributes
@@ -125,59 +144,103 @@ impl MfEncoder {
                 .unwrap_or(false);
             if is_async {
                 if let Some(a) = &attributes {
-                    a.SetUINT32(&MF_TRANSFORM_ASYNC_UNLOCK, 1).map_err(|e| err("async unlock", e))?;
+                    a.SetUINT32(&MF_TRANSFORM_ASYNC_UNLOCK, 1)
+                        .map_err(|e| err("async unlock", e))?;
                 }
             }
             if let Some(a) = &attributes {
                 let _ = a.SetUINT32(&MF_LOW_LATENCY, 1);
             }
-            let events = if is_async { transform.cast::<IMFMediaEventGenerator>().ok() } else { None };
+            let events = if is_async {
+                transform.cast::<IMFMediaEventGenerator>().ok()
+            } else {
+                None
+            };
 
             trace(&format!("async={is_async}"));
             // Hardware encoders want a Direct3D device to work on; AMD's one crashes without it.
             let knobs = std::env::var("CASTBAY_KNOBS").unwrap_or_default();
-            let device = if kind == Kind::Hardware && !knobs.contains('d') { Some(Self::attach_device(&transform)?) } else { None };
+            let device = if kind == Kind::Hardware && !knobs.contains('d') {
+                Some(Self::attach_device(&transform)?)
+            } else {
+                None
+            };
             trace("device attached");
             // The output type first: encoders choose their input types from it.
             let out_type = MFCreateMediaType().map_err(|e| err("output type", e))?;
-            out_type.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video).map_err(|e| err("major", e))?;
-            out_type.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_H264).map_err(|e| err("subtype", e))?;
-            out_type.SetUINT32(&MF_MT_AVG_BITRATE, config.bitrate_bps).map_err(|e| err("bitrate", e))?;
-            set_pair(&out_type, &MF_MT_FRAME_SIZE, config.width, config.height).map_err(|e| err("size", e))?;
+            out_type
+                .SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video)
+                .map_err(|e| err("major", e))?;
+            out_type
+                .SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_H264)
+                .map_err(|e| err("subtype", e))?;
+            out_type
+                .SetUINT32(&MF_MT_AVG_BITRATE, config.bitrate_bps)
+                .map_err(|e| err("bitrate", e))?;
+            set_pair(&out_type, &MF_MT_FRAME_SIZE, config.width, config.height)
+                .map_err(|e| err("size", e))?;
             set_pair(&out_type, &MF_MT_FRAME_RATE, config.fps, 1).map_err(|e| err("rate", e))?;
             set_pair(&out_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1).map_err(|e| err("aspect", e))?;
-            out_type.SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32).map_err(|e| err("interlace", e))?;
-            out_type.SetUINT32(&MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_High.0 as u32).map_err(|e| err("profile", e))?;
-            transform.SetOutputType(0, &out_type, 0).map_err(|e| err("SetOutputType", e))?;
+            out_type
+                .SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)
+                .map_err(|e| err("interlace", e))?;
+            out_type
+                .SetUINT32(&MF_MT_MPEG2_PROFILE, eAVEncH264VProfile_High.0 as u32)
+                .map_err(|e| err("profile", e))?;
+            transform
+                .SetOutputType(0, &out_type, 0)
+                .map_err(|e| err("SetOutputType", e))?;
 
             let in_type = MFCreateMediaType().map_err(|e| err("input type", e))?;
-            in_type.SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video).map_err(|e| err("major", e))?;
-            in_type.SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_NV12).map_err(|e| err("subtype", e))?;
-            set_pair(&in_type, &MF_MT_FRAME_SIZE, config.width, config.height).map_err(|e| err("size", e))?;
+            in_type
+                .SetGUID(&MF_MT_MAJOR_TYPE, &MFMediaType_Video)
+                .map_err(|e| err("major", e))?;
+            in_type
+                .SetGUID(&MF_MT_SUBTYPE, &MFVideoFormat_NV12)
+                .map_err(|e| err("subtype", e))?;
+            set_pair(&in_type, &MF_MT_FRAME_SIZE, config.width, config.height)
+                .map_err(|e| err("size", e))?;
             set_pair(&in_type, &MF_MT_FRAME_RATE, config.fps, 1).map_err(|e| err("rate", e))?;
             set_pair(&in_type, &MF_MT_PIXEL_ASPECT_RATIO, 1, 1).map_err(|e| err("aspect", e))?;
-            in_type.SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32).map_err(|e| err("interlace", e))?;
-            in_type.SetUINT32(&MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709.0 as u32).ok();
-            in_type.SetUINT32(&MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235.0 as u32).ok();
+            in_type
+                .SetUINT32(&MF_MT_INTERLACE_MODE, MFVideoInterlace_Progressive.0 as u32)
+                .map_err(|e| err("interlace", e))?;
+            in_type
+                .SetUINT32(&MF_MT_YUV_MATRIX, MFVideoTransferMatrix_BT709.0 as u32)
+                .ok();
+            in_type
+                .SetUINT32(&MF_MT_VIDEO_NOMINAL_RANGE, MFNominalRange_16_235.0 as u32)
+                .ok();
             trace("output type set");
-            transform.SetInputType(0, &in_type, 0).map_err(|e| err("SetInputType", e))?;
+            transform
+                .SetInputType(0, &in_type, 0)
+                .map_err(|e| err("SetInputType", e))?;
 
             trace("input type set");
             let codec = transform.cast::<ICodecAPI>().ok();
             if let Some(codec) = &codec {
                 set_u32(codec, &CODECAPI_AVLowLatencyMode, 1);
-                set_u32(codec, &CODECAPI_AVEncCommonRateControlMode, eAVEncCommonRateControlMode_CBR.0 as u32);
+                set_u32(
+                    codec,
+                    &CODECAPI_AVEncCommonRateControlMode,
+                    eAVEncCommonRateControlMode_CBR.0 as u32,
+                );
                 set_u32(codec, &CODECAPI_AVEncCommonMeanBitRate, config.bitrate_bps);
                 set_u32(codec, &CODECAPI_AVEncMPVGOPSize, config.gop);
                 set_u32(codec, &CODECAPI_AVEncMPVDefaultBPictureCount, 0);
                 set_u32(codec, &CODECAPI_AVEncCommonRealTime, 1);
             }
 
-
-            let info = transform.GetOutputStreamInfo(0).map_err(|e| err("output info", e))?;
-            trace(&format!("stream info flags={:#x} size={}", info.dwFlags, info.cbSize));
+            let info = transform
+                .GetOutputStreamInfo(0)
+                .map_err(|e| err("output info", e))?;
+            trace(&format!(
+                "stream info flags={:#x} size={}",
+                info.dwFlags, info.cbSize
+            ));
             let provides_samples = info.dwFlags
-                & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES.0 as u32 | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES.0 as u32)
+                & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES.0 as u32
+                    | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES.0 as u32)
                 != 0;
 
             trace("flush");
@@ -185,10 +248,14 @@ impl MfEncoder {
                 transform.ProcessMessage(MFT_MESSAGE_COMMAND_FLUSH, 0).ok();
             }
             trace("begin");
-            transform.ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0).map_err(|e| err("begin streaming", e))?;
+            transform
+                .ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0)
+                .map_err(|e| err("begin streaming", e))?;
             trace("start of stream");
             if !knobs.contains('s') {
-                transform.ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0).map_err(|e| err("start of stream", e))?;
+                transform
+                    .ProcessMessage(MFT_MESSAGE_NOTIFY_START_OF_STREAM, 0)
+                    .map_err(|e| err("start of stream", e))?;
             }
 
             trace("streaming");
@@ -210,7 +277,9 @@ impl MfEncoder {
         }
     }
 
-    unsafe fn attach_device(transform: &IMFTransform) -> Result<(ID3D11Device, IMFDXGIDeviceManager), Error> {
+    unsafe fn attach_device(
+        transform: &IMFTransform,
+    ) -> Result<(ID3D11Device, IMFDXGIDeviceManager), Error> {
         let mut device: Option<ID3D11Device> = None;
         D3D11CreateDevice(
             None,
@@ -230,9 +299,12 @@ impl MfEncoder {
         }
         let mut token = 0u32;
         let mut manager: Option<IMFDXGIDeviceManager> = None;
-        MFCreateDXGIDeviceManager(&mut token, &mut manager).map_err(|e| err("MFCreateDXGIDeviceManager", e))?;
+        MFCreateDXGIDeviceManager(&mut token, &mut manager)
+            .map_err(|e| err("MFCreateDXGIDeviceManager", e))?;
         let manager = manager.ok_or_else(|| Error("no device manager".into()))?;
-        manager.ResetDevice(&device, token).map_err(|e| err("ResetDevice", e))?;
+        manager
+            .ResetDevice(&device, token)
+            .map_err(|e| err("ResetDevice", e))?;
         transform
             .ProcessMessage(MFT_MESSAGE_SET_D3D_MANAGER, manager.as_raw() as usize)
             .map_err(|e| err("SET_D3D_MANAGER", e))?;
@@ -253,14 +325,24 @@ impl MfEncoder {
             let length = nv12.len() as u32;
             let buffer = MFCreateMemoryBuffer(length).map_err(|e| err("buffer", e))?;
             let mut data = std::ptr::null_mut();
-            buffer.Lock(&mut data, None, None).map_err(|e| err("lock", e))?;
+            buffer
+                .Lock(&mut data, None, None)
+                .map_err(|e| err("lock", e))?;
             std::ptr::copy_nonoverlapping(nv12.as_ptr(), data, nv12.len());
             buffer.Unlock().map_err(|e| err("unlock", e))?;
-            buffer.SetCurrentLength(length).map_err(|e| err("length", e))?;
+            buffer
+                .SetCurrentLength(length)
+                .map_err(|e| err("length", e))?;
             let sample = MFCreateSample().map_err(|e| err("sample", e))?;
-            sample.AddBuffer(&buffer).map_err(|e| err("add buffer", e))?;
-            sample.SetSampleTime(pts_us * 10).map_err(|e| err("time", e))?;
-            sample.SetSampleDuration(10_000_000 / self.config.fps as i64).map_err(|e| err("duration", e))?;
+            sample
+                .AddBuffer(&buffer)
+                .map_err(|e| err("add buffer", e))?;
+            sample
+                .SetSampleTime(pts_us * 10)
+                .map_err(|e| err("time", e))?;
+            sample
+                .SetSampleDuration(10_000_000 / self.config.fps as i64)
+                .map_err(|e| err("duration", e))?;
 
             if self.events.is_some() {
                 // Asynchronous (hardware) transform: feed it when it asks, collect what it hands out.
@@ -269,13 +351,17 @@ impl MfEncoder {
                     return Err(Error("encoder did not ask for input".into()));
                 }
                 self.need_input -= 1;
-                self.transform.ProcessInput(0, &sample, 0).map_err(|e| err("ProcessInput", e))?;
+                self.transform
+                    .ProcessInput(0, &sample, 0)
+                    .map_err(|e| err("ProcessInput", e))?;
                 self.pending_pts.push_back(pts_us);
                 self.frame_index += 1;
                 // Low-latency encoders answer each picture with one unit: wait briefly for it.
                 self.pump(&mut out, Duration::from_millis(60), false)?;
             } else {
-                self.transform.ProcessInput(0, &sample, 0).map_err(|e| err("ProcessInput", e))?;
+                self.transform
+                    .ProcessInput(0, &sample, 0)
+                    .map_err(|e| err("ProcessInput", e))?;
                 self.pending_pts.push_back(pts_us);
                 self.frame_index += 1;
                 self.drain_sync(&mut out)?;
@@ -286,7 +372,12 @@ impl MfEncoder {
 
     /// Handles transform events until `deadline`; with `until_input` it stops once the
     /// transform wants input, otherwise once an output came out.
-    unsafe fn pump(&mut self, out: &mut Vec<Encoded>, limit: Duration, until_input: bool) -> Result<(), Error> {
+    unsafe fn pump(
+        &mut self,
+        out: &mut Vec<Encoded>,
+        limit: Duration,
+        until_input: bool,
+    ) -> Result<(), Error> {
         let started = Instant::now();
         let events = self.events.clone().unwrap();
         loop {
@@ -348,11 +439,17 @@ impl MfEncoder {
         }
         let sample = ManuallyDrop::take(&mut buffers[0].pSample);
         let _events = ManuallyDrop::take(&mut buffers[0].pEvents);
-        let Some(sample) = sample else { return Ok(None) };
-        let buffer = sample.ConvertToContiguousBuffer().map_err(|e| err("contiguous", e))?;
+        let Some(sample) = sample else {
+            return Ok(None);
+        };
+        let buffer = sample
+            .ConvertToContiguousBuffer()
+            .map_err(|e| err("contiguous", e))?;
         let mut data = std::ptr::null_mut();
         let mut length = 0u32;
-        buffer.Lock(&mut data, None, Some(&mut length)).map_err(|e| err("lock out", e))?;
+        buffer
+            .Lock(&mut data, None, Some(&mut length))
+            .map_err(|e| err("lock out", e))?;
         let mut bytes = std::slice::from_raw_parts(data, length as usize).to_vec();
         buffer.Unlock().ok();
 
@@ -369,7 +466,11 @@ impl MfEncoder {
             bytes = with;
         }
         let pts_us = self.pending_pts.pop_front().unwrap_or(0);
-        Ok(Some(Encoded { data: bytes, key, pts_us }))
+        Ok(Some(Encoded {
+            data: bytes,
+            key,
+            pts_us,
+        }))
     }
 }
 
@@ -388,8 +489,12 @@ fn find_nal(data: &[u8], nal_type: u8) -> Option<usize> {
 impl Drop for MfEncoder {
     fn drop(&mut self) {
         unsafe {
-            let _ = self.transform.ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
-            let _ = self.transform.ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
+            let _ = self
+                .transform
+                .ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
+            let _ = self
+                .transform
+                .ProcessMessage(MFT_MESSAGE_NOTIFY_END_STREAMING, 0);
             let _ = MFShutdown();
         }
     }

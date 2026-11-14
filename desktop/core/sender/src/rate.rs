@@ -25,7 +25,14 @@ impl RateControl {
     /// `target` is what the person asked for; it is also the most that is ever used.
     pub fn new(target: u32, now: Instant) -> RateControl {
         let floor = (target / 6).max(1_500_000).min(target);
-        RateControl { target, current: target, floor, drops: VecDeque::new(), last_drop: None, last_change: now }
+        RateControl {
+            target,
+            current: target,
+            floor,
+            drops: VecDeque::new(),
+            last_drop: None,
+            last_change: now,
+        }
     }
 
     pub fn current(&self) -> u32 {
@@ -40,7 +47,11 @@ impl RateControl {
 
     /// Call every now and then; the new bitrate when it should change.
     pub fn adjust(&mut self, now: Instant) -> Option<u32> {
-        while self.drops.front().is_some_and(|&t| now.duration_since(t) > WINDOW) {
+        while self
+            .drops
+            .front()
+            .is_some_and(|&t| now.duration_since(t) > WINDOW)
+        {
             self.drops.pop_front();
         }
         if now.duration_since(self.last_change) < COOLDOWN {
@@ -52,7 +63,9 @@ impl RateControl {
             self.last_change = now;
             return Some(self.current);
         }
-        let calm = self.last_drop.map_or(true, |t| now.duration_since(t) >= CALM);
+        let calm = self
+            .last_drop
+            .map_or(true, |t| now.duration_since(t) >= CALM);
         if self.current < self.target && calm && now.duration_since(self.last_change) >= CALM {
             self.current = (self.current as u64 * 115 / 100).min(self.target as u64) as u32;
             self.last_change = now;

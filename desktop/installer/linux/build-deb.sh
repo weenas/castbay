@@ -21,7 +21,7 @@ Version: $version
 Section: video
 Priority: optional
 Architecture: $arch
-Depends: libgtk-3-0, libxdo3, libayatana-appindicator3-1 | libappindicator3-1, libpipewire-0.3-0, xdg-desktop-portal, xdg-utils, curl
+Depends: libgtk-3-0, libxdo3, libxkbcommon-x11-0, libayatana-appindicator3-1 | libappindicator3-1, libpipewire-0.3-0, xdg-desktop-portal, xdg-utils, curl
 Recommends: gnome-shell-extension-appindicator | xfce4-statusnotifier-plugin
 Maintainer: CastBay <noreply@weenas.com>
 Homepage: https://castbay.weenas.com

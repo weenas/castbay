@@ -26,15 +26,22 @@ const MAX_BYTES: u64 = 300_000_000;
 pub fn valid_version(v: &str) -> bool {
     let (core, suffix) = v.split_once('-').map_or((v, ""), |(a, b)| (a, b));
     !core.is_empty()
-        && core.split('.').all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
-        && suffix.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'.')
+        && core
+            .split('.')
+            .all(|p| !p.is_empty() && p.bytes().all(|b| b.is_ascii_digit()))
+        && suffix
+            .bytes()
+            .all(|b| b.is_ascii_alphanumeric() || b == b'.')
 }
 
 /// The release file this system installs: the .msi in the person's language on Windows, the .deb
 /// of this architecture on Linux.
 pub fn asset_name(version: &str, windows: bool, zh: bool, arch: &str) -> String {
     if windows {
-        format!("CastBay-Desktop-{version}-windows-x64-{}.msi", if zh { "zh-CN" } else { "en-US" })
+        format!(
+            "CastBay-Desktop-{version}-windows-x64-{}.msi",
+            if zh { "zh-CN" } else { "en-US" }
+        )
     } else {
         format!("castbay-desktop_{version}_{arch}.deb")
     }
@@ -51,7 +58,11 @@ pub fn find_asset(release: &Value, name: &str, version: &str) -> Result<(String,
     if url != format!("{DOWNLOADS}{version}/{name}") {
         return Err("the download address is not this project's".into());
     }
-    let digest = asset["digest"].as_str().and_then(|d| d.strip_prefix("sha256:")).unwrap_or_default().to_ascii_lowercase();
+    let digest = asset["digest"]
+        .as_str()
+        .and_then(|d| d.strip_prefix("sha256:"))
+        .unwrap_or_default()
+        .to_ascii_lowercase();
     if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
         return Err("the release lists no SHA-256 for the file".into());
     }
@@ -70,12 +81,19 @@ fn sha256_file(path: &Path) -> Result<String, String> {
         }
         hasher.update(&buf[..n]);
     }
-    Ok(hasher.finalize().iter().map(|b| format!("{b:02x}")).collect())
+    Ok(hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect())
 }
 
 /// Where a release file can be had: the website, then GitHub.
 fn file_urls(version: &str, name: &str) -> [String; 2] {
-    [format!("{SITE}{version}/{name}"), format!("{DOWNLOADS}{version}/{name}")]
+    [
+        format!("{SITE}{version}/{name}"),
+        format!("{DOWNLOADS}{version}/{name}"),
+    ]
 }
 
 /// The SHA-256 (lower case hex) of the file `name` in the website's description of the release
@@ -84,7 +102,10 @@ pub fn site_digest(description: &Value, name: &str, version: &str) -> Result<Str
     if description["version"].as_str() != Some(version) {
         return Err("the website holds another version".into());
     }
-    let digest = description["files"][name].as_str().unwrap_or_default().to_ascii_lowercase();
+    let digest = description["files"][name]
+        .as_str()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
     if digest.len() != 64 || !digest.bytes().all(|b| b.is_ascii_hexdigit()) {
         return Err("the website lists no SHA-256 for the file".into());
     }
@@ -93,7 +114,20 @@ pub fn site_digest(description: &Value, name: &str, version: &str) -> Result<Str
 
 fn curl() -> Command {
     let mut c = Command::new("curl");
-    c.args(["--fail", "--silent", "--show-error", "--location", "--proto", "=https", "--proto-redir", "=https", "--connect-timeout", "10", "--max-time", "900"]);
+    c.args([
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--proto",
+        "=https",
+        "--proto-redir",
+        "=https",
+        "--connect-timeout",
+        "10",
+        "--max-time",
+        "900",
+    ]);
     #[cfg(windows)]
     {
         use std::os::windows::process::CommandExt;
@@ -105,7 +139,14 @@ fn curl() -> Command {
 fn describe(output: &std::process::Output) -> String {
     let text = String::from_utf8_lossy(&output.stderr);
     let line = text.lines().last().unwrap_or("").trim();
-    format!("curl: {}", if line.is_empty() { output.status.to_string() } else { line.to_string() })
+    format!(
+        "curl: {}",
+        if line.is_empty() {
+            output.status.to_string()
+        } else {
+            line.to_string()
+        }
+    )
 }
 
 /// The file's SHA-256 from GitHub's description of the release, else the website's, else its relay's.
@@ -117,7 +158,10 @@ fn digest_of(name: &str, version: &str) -> Result<String, String> {
     ];
     let mut failure = String::new();
     for (url, site) in sources {
-        let out = curl().args(["--header", "Accept: application/vnd.github+json", &url]).output().map_err(|e| format!("curl: {e}"))?;
+        let out = curl()
+            .args(["--header", "Accept: application/vnd.github+json", &url])
+            .output()
+            .map_err(|e| format!("curl: {e}"))?;
         if !out.status.success() {
             failure = describe(&out);
             continue;
@@ -126,7 +170,11 @@ fn digest_of(name: &str, version: &str) -> Result<String, String> {
             failure = "the release description is not JSON".into();
             continue;
         };
-        match if site { site_digest(&json, name, version) } else { find_asset(&json, name, version).map(|(_, d)| d) } {
+        match if site {
+            site_digest(&json, name, version)
+        } else {
+            find_asset(&json, name, version).map(|(_, d)| d)
+        } {
             Ok(digest) => return Ok(digest),
             Err(e) => failure = e,
         }
@@ -139,7 +187,11 @@ pub fn fetch(version: &str, windows: bool, zh: bool, dir: &Path) -> Result<PathB
     if !valid_version(version) {
         return Err("not a version".into());
     }
-    let arch = if cfg!(target_arch = "aarch64") { "arm64" } else { "amd64" };
+    let arch = if cfg!(target_arch = "aarch64") {
+        "arm64"
+    } else {
+        "amd64"
+    };
     let name = asset_name(version, windows, zh, arch);
 
     let digest = digest_of(&name, version)?;
@@ -150,7 +202,12 @@ pub fn fetch(version: &str, windows: bool, zh: bool, dir: &Path) -> Result<PathB
     let mut failure = String::new();
     let mut got = false;
     for url in file_urls(version, &name) {
-        let out = curl().args(["--max-filesize", &MAX_BYTES.to_string(), "--output"]).arg(&file).arg(&url).output().map_err(|e| format!("curl: {e}"))?;
+        let out = curl()
+            .args(["--max-filesize", &MAX_BYTES.to_string(), "--output"])
+            .arg(&file)
+            .arg(&url)
+            .output()
+            .map_err(|e| format!("curl: {e}"))?;
         if out.status.success() {
             got = true;
             break;
@@ -175,12 +232,18 @@ pub fn install(msi: &Path, exe: &Path) -> Result<(), String> {
     use std::os::windows::process::CommandExt;
     let (msi, exe) = (msi.to_string_lossy(), exe.to_string_lossy());
     // The two paths go into one command line of cmd.exe, where these would mean something else.
-    if msi.chars().chain(exe.chars()).any(|c| matches!(c, '"' | '%' | '&' | '^' | '!' | '\r' | '\n')) {
+    if msi
+        .chars()
+        .chain(exe.chars())
+        .any(|c| matches!(c, '"' | '%' | '&' | '^' | '!' | '\r' | '\n'))
+    {
         return Err("a path holds a character the installer line cannot carry".into());
     }
     // 0x08 DETACHED_PROCESS | 0x200 CREATE_NEW_PROCESS_GROUP | 0x0800_0000 CREATE_NO_WINDOW: it outlives this program.
     Command::new("cmd")
-        .raw_arg(format!("/c msiexec /i \"{msi}\" /passive /norestart & start \"\" \"{exe}\""))
+        .raw_arg(format!(
+            "/c msiexec /i \"{msi}\" /passive /norestart & start \"\" \"{exe}\""
+        ))
         .creation_flags(0x08 | 0x200 | 0x0800_0000)
         .spawn()
         .map_err(|e| e.to_string())?;
@@ -203,7 +266,14 @@ pub enum Installed {
 #[cfg(not(windows))]
 fn install_command(deb: &Path) -> Command {
     let mut c = Command::new("pkexec");
-    c.args(["/usr/bin/env", "DEBIAN_FRONTEND=noninteractive", "/usr/bin/apt-get", "install", "-y"]).arg(deb);
+    c.args([
+        "/usr/bin/env",
+        "DEBIAN_FRONTEND=noninteractive",
+        "/usr/bin/apt-get",
+        "install",
+        "-y",
+    ])
+    .arg(deb);
     c
 }
 
@@ -223,8 +293,20 @@ pub fn install(deb: &Path) -> Result<Installed, String> {
         Some(127) => Ok(Installed::NoPrompt),
         _ => {
             let text = String::from_utf8_lossy(&out.stderr);
-            let line = text.lines().rev().find(|l| !l.trim().is_empty()).unwrap_or("").trim();
-            Err(format!("apt-get: {}", if line.is_empty() { out.status.to_string() } else { line.to_string() }))
+            let line = text
+                .lines()
+                .rev()
+                .find(|l| !l.trim().is_empty())
+                .unwrap_or("")
+                .trim();
+            Err(format!(
+                "apt-get: {}",
+                if line.is_empty() {
+                    out.status.to_string()
+                } else {
+                    line.to_string()
+                }
+            ))
         }
     }
 }
@@ -256,16 +338,35 @@ mod tests {
     fn versions_are_plain() {
         assert!(valid_version("0.1.3"));
         assert!(valid_version("1.0.0-beta.1"));
-        for bad in ["", ".", "1..2", "1.2/../3", "1.2.3 ", "1.2.3?x=1", "a.b", "1.2.3-é", "-1"] {
+        for bad in [
+            "",
+            ".",
+            "1..2",
+            "1.2/../3",
+            "1.2.3 ",
+            "1.2.3?x=1",
+            "a.b",
+            "1.2.3-é",
+            "-1",
+        ] {
             assert!(!valid_version(bad), "{bad}");
         }
     }
 
     #[test]
     fn asset_names_follow_the_release_workflow() {
-        assert_eq!(asset_name("0.1.3", true, true, "amd64"), "CastBay-Desktop-0.1.3-windows-x64-zh-CN.msi");
-        assert_eq!(asset_name("0.1.3", true, false, "amd64"), "CastBay-Desktop-0.1.3-windows-x64-en-US.msi");
-        assert_eq!(asset_name("0.1.3", false, true, "amd64"), "castbay-desktop_0.1.3_amd64.deb");
+        assert_eq!(
+            asset_name("0.1.3", true, true, "amd64"),
+            "CastBay-Desktop-0.1.3-windows-x64-zh-CN.msi"
+        );
+        assert_eq!(
+            asset_name("0.1.3", true, false, "amd64"),
+            "CastBay-Desktop-0.1.3-windows-x64-en-US.msi"
+        );
+        assert_eq!(
+            asset_name("0.1.3", false, true, "amd64"),
+            "castbay-desktop_0.1.3_amd64.deb"
+        );
     }
 
     fn release(url: &str, digest: Value) -> Value {
@@ -279,7 +380,12 @@ mod tests {
     #[test]
     fn finds_the_asset_and_its_digest() {
         let hex = "AB".repeat(32);
-        let (url, digest) = find_asset(&release(DEB, json!(format!("sha256:{hex}"))), "castbay-desktop_0.1.3_amd64.deb", "0.1.3").unwrap();
+        let (url, digest) = find_asset(
+            &release(DEB, json!(format!("sha256:{hex}"))),
+            "castbay-desktop_0.1.3_amd64.deb",
+            "0.1.3",
+        )
+        .unwrap();
         assert_eq!(url, DEB);
         assert_eq!(digest, "ab".repeat(32));
     }
@@ -289,16 +395,49 @@ mod tests {
         let name = "castbay-desktop_0.1.3_amd64.deb";
         assert!(find_asset(&release(DEB, Value::Null), name, "0.1.3").is_err());
         assert!(find_asset(&release(DEB, json!("sha256:abc")), name, "0.1.3").is_err());
-        assert!(find_asset(&release(DEB, json!(format!("md5:{}", "a".repeat(64)))), name, "0.1.3").is_err());
-        assert!(find_asset(&release(DEB, json!(format!("sha256:{}", "g".repeat(64)))), name, "0.1.3").is_err());
-        assert!(find_asset(&release(DEB, json!(format!("sha256:{}", "a".repeat(64)))), "missing.deb", "0.1.3").is_err());
+        assert!(
+            find_asset(
+                &release(DEB, json!(format!("md5:{}", "a".repeat(64)))),
+                name,
+                "0.1.3"
+            )
+            .is_err()
+        );
+        assert!(
+            find_asset(
+                &release(DEB, json!(format!("sha256:{}", "g".repeat(64)))),
+                name,
+                "0.1.3"
+            )
+            .is_err()
+        );
+        assert!(
+            find_asset(
+                &release(DEB, json!(format!("sha256:{}", "a".repeat(64)))),
+                "missing.deb",
+                "0.1.3"
+            )
+            .is_err()
+        );
     }
 
     #[test]
     fn refuses_a_foreign_address() {
         let digest = json!(format!("sha256:{}", "a".repeat(64)));
-        for url in ["https://evil.example/castbay-desktop_0.1.3_amd64.deb", "http://github.com/weenas/castbay/releases/download/desktop-v0.1.3/castbay-desktop_0.1.3_amd64.deb", "https://github.com/weenas/castbay/releases/download/desktop-v0.1.4/castbay-desktop_0.1.3_amd64.deb"] {
-            assert!(find_asset(&release(url, digest.clone()), "castbay-desktop_0.1.3_amd64.deb", "0.1.3").is_err(), "{url}");
+        for url in [
+            "https://evil.example/castbay-desktop_0.1.3_amd64.deb",
+            "http://github.com/weenas/castbay/releases/download/desktop-v0.1.3/castbay-desktop_0.1.3_amd64.deb",
+            "https://github.com/weenas/castbay/releases/download/desktop-v0.1.4/castbay-desktop_0.1.3_amd64.deb",
+        ] {
+            assert!(
+                find_asset(
+                    &release(url, digest.clone()),
+                    "castbay-desktop_0.1.3_amd64.deb",
+                    "0.1.3"
+                )
+                .is_err(),
+                "{url}"
+            );
         }
     }
 
@@ -306,17 +445,36 @@ mod tests {
     fn files_come_from_the_website_then_github() {
         let [site, github] = file_urls("0.1.3", "a.deb");
         assert_eq!(site, "https://castbay.weenas.com/desktop/0.1.3/a.deb");
-        assert_eq!(github, "https://github.com/weenas/castbay/releases/download/desktop-v0.1.3/a.deb");
+        assert_eq!(
+            github,
+            "https://github.com/weenas/castbay/releases/download/desktop-v0.1.3/a.deb"
+        );
     }
 
     #[test]
     fn the_websites_description_is_checked() {
         let hex = "Cd".repeat(32);
         let site = json!({"version": "0.1.3", "files": {"a.deb": hex}});
-        assert_eq!(site_digest(&site, "a.deb", "0.1.3").unwrap(), "cd".repeat(32));
-        assert!(site_digest(&site, "a.deb", "0.1.4").is_err(), "another version");
-        assert!(site_digest(&site, "b.deb", "0.1.3").is_err(), "no such file");
-        assert!(site_digest(&json!({"version": "0.1.3", "files": {"a.deb": "abc"}}), "a.deb", "0.1.3").is_err());
+        assert_eq!(
+            site_digest(&site, "a.deb", "0.1.3").unwrap(),
+            "cd".repeat(32)
+        );
+        assert!(
+            site_digest(&site, "a.deb", "0.1.4").is_err(),
+            "another version"
+        );
+        assert!(
+            site_digest(&site, "b.deb", "0.1.3").is_err(),
+            "no such file"
+        );
+        assert!(
+            site_digest(
+                &json!({"version": "0.1.3", "files": {"a.deb": "abc"}}),
+                "a.deb",
+                "0.1.3"
+            )
+            .is_err()
+        );
     }
 
     #[cfg(not(windows))]
@@ -324,8 +482,20 @@ mod tests {
     fn the_install_runs_apt_get_as_an_administrator_on_that_file() {
         let c = install_command(Path::new("/home/a b/castbay-desktop_0.1.3_amd64.deb"));
         assert_eq!(c.get_program(), "pkexec");
-        let args: Vec<_> = c.get_args().map(|a| a.to_string_lossy().into_owned()).collect();
-        assert_eq!(args[..5], ["/usr/bin/env", "DEBIAN_FRONTEND=noninteractive", "/usr/bin/apt-get", "install", "-y"]);
+        let args: Vec<_> = c
+            .get_args()
+            .map(|a| a.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(
+            args[..5],
+            [
+                "/usr/bin/env",
+                "DEBIAN_FRONTEND=noninteractive",
+                "/usr/bin/apt-get",
+                "install",
+                "-y"
+            ]
+        );
         // One argument, a path: a space in it does not split it.
         assert_eq!(args[5], "/home/a b/castbay-desktop_0.1.3_amd64.deb");
         assert_eq!(args.len(), 6);
@@ -335,7 +505,10 @@ mod tests {
     fn hashes_a_file() {
         let path = std::env::temp_dir().join("castbay-update-test.bin");
         std::fs::write(&path, b"abc").unwrap();
-        assert_eq!(sha256_file(&path).unwrap(), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
+        assert_eq!(
+            sha256_file(&path).unwrap(),
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
+        );
         let _ = std::fs::remove_file(path);
     }
 

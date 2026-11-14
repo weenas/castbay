@@ -75,7 +75,10 @@ async fn open_portal(target: &Target) -> Result<Share, Error> {
 
 async fn open_portal_with(target: &Target, use_token: bool) -> Result<Share, Error> {
     let proxy = Screencast::new().await.map_err(platform)?;
-    let session = proxy.create_session(Default::default()).await.map_err(platform)?;
+    let session = proxy
+        .create_session(Default::default())
+        .await
+        .map_err(platform)?;
     let token = token_file()
         .filter(|_| use_token)
         .and_then(|f| std::fs::read_to_string(f).ok())
@@ -99,9 +102,14 @@ async fn open_portal_with(target: &Target, use_token: bool) -> Result<Share, Err
         .map_err(platform)?;
     let started = proxy.start(&session, None, Default::default());
     let request = if token.is_some() {
-        match tokio::time::timeout(REMEMBERED_CHOICE_WAIT, started).await {
+        match smol::future::race(async { Ok(started.await) }, async {
+            smol::Timer::after(REMEMBERED_CHOICE_WAIT).await;
+            Err(())
+        })
+        .await
+        {
             Ok(result) => result,
-            Err(_) => {
+            Err(()) => {
                 let _ = session.close().await;
                 return Err(Error::Platform(STALE.into()));
             }
@@ -119,8 +127,15 @@ async fn open_portal_with(target: &Target, use_token: bool) -> Result<Share, Err
         }
         let _ = std::fs::write(file, token);
     }
-    let node = response.streams().first().ok_or_else(|| Error::NotFound("nothing was shared".into()))?.pipe_wire_node_id();
-    let fd = proxy.open_pipe_wire_remote(&session, Default::default()).await.map_err(platform)?;
+    let node = response
+        .streams()
+        .first()
+        .ok_or_else(|| Error::NotFound("nothing was shared".into()))?
+        .pipe_wire_node_id();
+    let fd = proxy
+        .open_pipe_wire_remote(&session, Default::default())
+        .await
+        .map_err(platform)?;
     let close = Box::new(move || {
         Box::pin(async move {
             let _ = session.close().await;
@@ -159,27 +174,21 @@ pub fn run(
     stop: impl Fn() -> bool + Send + 'static,
     on_frame: impl FnMut(Frame<'_>) -> bool + Send + 'static,
 ) -> Result<Ended, Error> {
-    // One runtime for the whole process: the portal's D-Bus connection is shared and lives on the
-    // runtime that first used it, so a second capture (the engine opens one to learn the picture
-    // size) would hang if that runtime were gone.
-    let runtime = runtime()?;
-    let share = runtime.block_on(open_portal(target))?;
+    // Keep the portal futures on the async-io executor used by GPUI as well, so the desktop host and
+    // the capture backend never enable conflicting D-Bus runtimes.
+    let share = smol::block_on(open_portal(target))?;
     let close = share.close;
     let result = stream(share.node, share.fd, stop, Box::new(on_frame));
-    runtime.block_on(close());
+    smol::block_on(close());
     result
 }
 
-fn runtime() -> Result<&'static tokio::runtime::Runtime, Error> {
-    static RUNTIME: OnceLock<tokio::runtime::Runtime> = OnceLock::new();
-    if let Some(runtime) = RUNTIME.get() {
-        return Ok(runtime);
-    }
-    let built = tokio::runtime::Builder::new_multi_thread().worker_threads(1).enable_all().build().map_err(platform)?;
-    Ok(RUNTIME.get_or_init(|| built))
-}
-
-fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: Box<dyn FnMut(Frame<'_>) -> bool + Send>) -> Result<Ended, Error> {
+fn stream(
+    node: u32,
+    fd: OwnedFd,
+    stop: impl Fn() -> bool + 'static,
+    on_frame: Box<dyn FnMut(Frame<'_>) -> bool + Send>,
+) -> Result<Ended, Error> {
     pw::init();
     let mainloop = pw::main_loop::MainLoopRc::new(None).map_err(platform)?;
     let context = pw::context::ContextRc::new(&mainloop, None).map_err(platform)?;
@@ -230,21 +239,34 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
             if id != spa::param::ParamType::Format.as_raw() {
                 return;
             }
-            let Ok((media_type, media_subtype)) = spa::param::format_utils::parse_format(param) else { return };
-            if media_type != spa::param::format::MediaType::Video || media_subtype != spa::param::format::MediaSubtype::Raw {
+            let Ok((media_type, media_subtype)) = spa::param::format_utils::parse_format(param)
+            else {
+                return;
+            };
+            if media_type != spa::param::format::MediaType::Video
+                || media_subtype != spa::param::format::MediaSubtype::Raw
+            {
                 return;
             }
             let _ = state.format.parse(param);
         })
         .process(|stream, state| {
-            let Some(mut buffer) = stream.dequeue_buffer() else { return };
-            let Some(data) = buffer.datas_mut().first_mut() else { return };
+            let Some(mut buffer) = stream.dequeue_buffer() else {
+                return;
+            };
+            let Some(data) = buffer.datas_mut().first_mut() else {
+                return;
+            };
             let (stride, chunk_size) = (data.chunk().stride(), data.chunk().size() as usize);
             let size = state.format.size();
             if size.width == 0 || size.height == 0 {
                 return;
             }
-            let stride = if stride > 0 { stride as usize } else { size.width as usize * 4 };
+            let stride = if stride > 0 {
+                stride as usize
+            } else {
+                size.width as usize * 4
+            };
             let Some(bytes) = data.data() else { return };
             // A picture may arrive without new content (a bare buffer): there is nothing to send.
             if chunk_size == 0 {
@@ -264,7 +286,13 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
                 saved.data.extend_from_slice(&bytes[..wanted]);
                 saved.at = Some(Instant::now());
             }
-            let frame = Frame { width: size.width, height: size.height, stride, data: &bytes[..wanted], timestamp: state.started.elapsed() };
+            let frame = Frame {
+                width: size.width,
+                height: size.height,
+                stride,
+                data: &bytes[..wanted],
+                timestamp: state.started.elapsed(),
+            };
             if !(state.on_frame.borrow_mut())(frame) {
                 state.ended.set(Some(Ended::Stopped));
                 state.mainloop.quit();
@@ -279,8 +307,16 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
     let object = spa::pod::object!(
         spa::utils::SpaTypes::ObjectParamFormat,
         spa::param::ParamType::EnumFormat,
-        spa::pod::property!(spa::param::format::FormatProperties::MediaType, Id, spa::param::format::MediaType::Video),
-        spa::pod::property!(spa::param::format::FormatProperties::MediaSubtype, Id, spa::param::format::MediaSubtype::Raw),
+        spa::pod::property!(
+            spa::param::format::FormatProperties::MediaType,
+            Id,
+            spa::param::format::MediaType::Video
+        ),
+        spa::pod::property!(
+            spa::param::format::FormatProperties::MediaSubtype,
+            Id,
+            spa::param::format::MediaSubtype::Raw
+        ),
         spa::pod::property!(
             spa::param::format::FormatProperties::VideoFormat,
             Choice,
@@ -295,9 +331,18 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
             Choice,
             Range,
             Rectangle,
-            spa::utils::Rectangle { width: 1920, height: 1080 },
-            spa::utils::Rectangle { width: 16, height: 16 },
-            spa::utils::Rectangle { width: 8192, height: 8192 }
+            spa::utils::Rectangle {
+                width: 1920,
+                height: 1080
+            },
+            spa::utils::Rectangle {
+                width: 16,
+                height: 16
+            },
+            spa::utils::Rectangle {
+                width: 8192,
+                height: 8192
+            }
         ),
         spa::pod::property!(
             spa::param::format::FormatProperties::VideoFramerate,
@@ -306,16 +351,28 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
             Fraction,
             spa::utils::Fraction { num: 60, denom: 1 },
             spa::utils::Fraction { num: 0, denom: 1 },
-            spa::utils::Fraction { num: 1000, denom: 1 }
+            spa::utils::Fraction {
+                num: 1000,
+                denom: 1
+            }
         ),
     );
-    let bytes: Vec<u8> = spa::pod::serialize::PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &spa::pod::Value::Object(object))
-        .map_err(|e| platform(format!("{e:?}")))?
-        .0
-        .into_inner();
-    let mut params = [spa::pod::Pod::from_bytes(&bytes).ok_or_else(|| platform("the format request is not valid"))?];
+    let bytes: Vec<u8> = spa::pod::serialize::PodSerializer::serialize(
+        std::io::Cursor::new(Vec::new()),
+        &spa::pod::Value::Object(object),
+    )
+    .map_err(|e| platform(format!("{e:?}")))?
+    .0
+    .into_inner();
+    let mut params = [spa::pod::Pod::from_bytes(&bytes)
+        .ok_or_else(|| platform("the format request is not valid"))?];
     stream
-        .connect(spa::utils::Direction::Input, Some(node), pw::stream::StreamFlags::AUTOCONNECT | pw::stream::StreamFlags::MAP_BUFFERS, &mut params)
+        .connect(
+            spa::utils::Direction::Input,
+            Some(node),
+            pw::stream::StreamFlags::AUTOCONNECT | pw::stream::StreamFlags::MAP_BUFFERS,
+            &mut params,
+        )
         .map_err(platform)?;
 
     // A static desktop sends no pictures, but the person may still stop: look every 100 ms.
@@ -327,9 +384,18 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
         }
         // Nothing changed for a while: hand the last picture on again.
         let mut saved = saved.borrow_mut();
-        if saved.at.is_some_and(|at| at.elapsed() >= Duration::from_millis(500)) {
+        if saved
+            .at
+            .is_some_and(|at| at.elapsed() >= Duration::from_millis(500))
+        {
             saved.at = Some(Instant::now());
-            let frame = Frame { width: saved.width, height: saved.height, stride: saved.stride, data: &saved.data, timestamp: started.elapsed() };
+            let frame = Frame {
+                width: saved.width,
+                height: saved.height,
+                stride: saved.stride,
+                data: &saved.data,
+                timestamp: started.elapsed(),
+            };
             if !(on_frame.borrow_mut())(frame) {
                 idle_ended.set(Some(Ended::Stopped));
                 looper.quit();
@@ -337,7 +403,10 @@ fn stream(node: u32, fd: OwnedFd, stop: impl Fn() -> bool + 'static, on_frame: B
         }
     });
     timer
-        .update_timer(Some(Duration::from_millis(100)), Some(Duration::from_millis(100)))
+        .update_timer(
+            Some(Duration::from_millis(100)),
+            Some(Duration::from_millis(100)),
+        )
         .into_result()
         .map_err(|e| platform(format!("{e:?}")))?;
 

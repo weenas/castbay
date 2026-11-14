@@ -2,8 +2,12 @@
 //! screen (which Windows does not let anything capture) should be told to the person.
 
 use windows::Win32::Media::{timeBeginPeriod, timeEndPeriod};
-use windows::Win32::System::Power::{SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED};
-use windows::Win32::System::StationsAndDesktops::{CloseDesktop, OpenInputDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_SWITCHDESKTOP};
+use windows::Win32::System::Power::{
+    SetThreadExecutionState, ES_CONTINUOUS, ES_DISPLAY_REQUIRED, ES_SYSTEM_REQUIRED,
+};
+use windows::Win32::System::StationsAndDesktops::{
+    CloseDesktop, OpenInputDesktop, DESKTOP_CONTROL_FLAGS, DESKTOP_SWITCHDESKTOP,
+};
 
 /// Keeps the PC awake for as long as it lives, on the thread that made it (that is how Windows
 /// scopes the request); what Windows lists under `powercfg /requests`.

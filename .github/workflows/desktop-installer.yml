@@ -36,9 +36,10 @@ jobs:
         run: |
           Copy-Item "desktop\target\release\castbay-desktop.exe" "$env:RUNNER_TEMP\app.exe"
           Copy-Item "LICENSE" "$env:RUNNER_TEMP\LICENSE"
+          ./desktop/installer/collect-vc-runtime.ps1 -OutDir "$env:RUNNER_TEMP\windows-runtime"
 
       - name: Build the installers
-        run: ./desktop/installer/build-msi.ps1 -Version 0.1.0 -AppExe "$env:RUNNER_TEMP\app.exe" -LicenseTxt "$env:RUNNER_TEMP\LICENSE" -OutDir "$env:RUNNER_TEMP\msi" -NameStem CastBay-Desktop-0.1.0-windows-x64
+        run: ./desktop/installer/build-msi.ps1 -Version 0.1.0 -AppExe "$env:RUNNER_TEMP\app.exe" -VCRuntimeDll "$env:RUNNER_TEMP\windows-runtime\vcruntime140.dll" -LicenseTxt "$env:RUNNER_TEMP\LICENSE" -OutDir "$env:RUNNER_TEMP\msi" -NameStem CastBay-Desktop-0.1.0-windows-x64
 
       - name: Install, install over, start, uninstall (each language)
         run: |

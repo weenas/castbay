@@ -30,6 +30,7 @@ function Msiexec($arguments) {
 foreach ($round in 1, 2) {
   Msiexec "/i `"$Msi`" /qn /l*v `"$log`""
   Check (Test-Path $exe) "program installed (round $round)"
+  Check (Test-Path (Join-Path $dir 'vcruntime140.dll')) 'app-local Visual C++ runtime installed'
   Check (Test-Path $lnk) 'Start menu shortcut'
   $entry = Arp
   Check ($null -ne $entry) 'Settings > Apps entry'
@@ -49,6 +50,8 @@ Check ($null -ne (Get-ItemProperty $run -Name CastBayDesktop -ErrorAction Silent
 $app = Start-Process $exe -PassThru
 Start-Sleep 8
 Check (-not $app.HasExited) 'program keeps running after start'
+$runtime = (Get-Process -Id $app.Id).Modules | Where-Object ModuleName -IEQ 'vcruntime140.dll' | Select-Object -First 1
+Check ($runtime -and $runtime.FileName.StartsWith($dir, [StringComparison]::OrdinalIgnoreCase)) 'program loads the app-local Visual C++ runtime'
 
 # Uninstalling closes the running program, then removes everything.
 Msiexec "/x `"$Msi`" /qn /l*v `"$log`""

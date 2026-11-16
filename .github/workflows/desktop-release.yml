@@ -108,6 +108,12 @@ jobs:
             desktop/target
           key: ${{ steps.rust.outputs.cache-primary-key }}
 
+      # The MSVC Rust executable imports vcruntime140.dll. Ship the licensed, x64 app-local
+      # redistributable so the portable build also starts on clean Windows installations.
+      - name: Stage the app-local Visual C++ runtime
+        shell: pwsh
+        run: ./desktop/installer/collect-vc-runtime.ps1 -OutDir "$PWD\desktop\build\windows-runtime"
+
       - name: Package
         run: |
           case "$GITHUB_REF" in
@@ -118,6 +124,7 @@ jobs:
           dir="CastBay-Desktop-$VERSION-windows-x64"
           mkdir -p "dist/$dir"
           cp desktop/target/release/castbay-desktop.exe "dist/$dir/CastBay Desktop.exe"
+          cp desktop/build/windows-runtime/vcruntime140.dll "dist/$dir/"
           cp LICENSE* "dist/$dir/" 2>/dev/null || true
           {
             echo "CastBay Desktop $VERSION"
@@ -126,6 +133,7 @@ jobs:
             echo "release page install it instead, with a Start menu entry and uninstaller). Windows may ask to let it use the network: allow it"
             echo "on private networks so receivers can be found. It is not code-signed yet, so SmartScreen"
             echo "may warn: choose More info, then Run anyway."
+            echo "The required Microsoft Visual C++ runtime is included beside the executable."
             echo
             echo "Guide: https://github.com/${GITHUB_REPOSITORY}/blob/main/desktop/docs/user-guide.md"
             echo
@@ -153,7 +161,7 @@ jobs:
         run: |
           $appVersion = (Select-String -Path desktop\app\Cargo.toml -Pattern '^version = "(.*)"' | Select-Object -First 1).Matches[0].Groups[1].Value
           "APP_VERSION=$appVersion" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-          ./desktop/installer/build-msi.ps1 -Version $appVersion -AppExe "$PWD\desktop\target\release\castbay-desktop.exe" -LicenseTxt "$PWD\LICENSE" -OutDir "$PWD\dist" -NameStem "CastBay-Desktop-$env:VERSION-windows-x64"
+          ./desktop/installer/build-msi.ps1 -Version $appVersion -AppExe "$PWD\desktop\target\release\castbay-desktop.exe" -VCRuntimeDll "$PWD\desktop\build\windows-runtime\vcruntime140.dll" -LicenseTxt "$PWD\LICENSE" -OutDir "$PWD\dist" -NameStem "CastBay-Desktop-$env:VERSION-windows-x64"
 
       # Install, install over, start, uninstall on the runner, before anything is published.
       - name: Try the installers
@@ -163,6 +171,7 @@ jobs:
             "== $($m.Name)"
             ./desktop/installer/test-install.ps1 -Msi $m.FullName -Version $env:APP_VERSION
           }
+          ./desktop/installer/test-portable.ps1 -Zip (Get-ChildItem dist\CastBay-Desktop-*-windows-x64.zip | Select-Object -First 1).FullName
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

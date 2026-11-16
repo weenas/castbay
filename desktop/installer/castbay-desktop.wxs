@@ -10,6 +10,7 @@
 
   wix build -arch x64 -ext WixToolset.UI.wixext -culture <culture> -loc <culture>.wxl
             -d Version=0.1.0 -d AppExe=... -d AppIcon=... -d LicenseTxt=... -d LicenseRtf=...
+            -d VCRuntimeDll=...
             -o out.msi castbay-desktop.wxs
 -->
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs" xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
@@ -36,6 +37,7 @@
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="AppFiles" Guid="E0113738-E570-4822-B85F-55F2B5517F4E">
         <File Id="AppExe" Name="CastBay Desktop.exe" Source="$(AppExe)" />
+        <File Id="VCRuntime" Name="vcruntime140.dll" Source="$(VCRuntimeDll)" />
         <File Id="LicenseTxt" Name="LICENSE.txt" Source="$(LicenseTxt)" />
         <RegistryValue Root="HKCU" Key="Software\CastBay Desktop" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>

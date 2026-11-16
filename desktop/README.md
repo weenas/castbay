@@ -30,6 +30,10 @@ Building on Windows: `tools/build-ffmpeg.cmd` builds FFmpeg from the submodules 
 Visual Studio's C++ tools); the GPUI application does not require WebView2. Then `cargo build --release -p castbay-desktop-gpui --features ffmpeg-lib`
 with `FFMPEG_DIR` pointing at its output (default `desktop/build/ffmpeg`). Without the feature the
 encoders run as an `ffmpeg.exe` child process (`CASTBAY_FFMPEG`).
+Windows release packages include the required x64 `vcruntime140.dll` beside the application so the
+portable build and per-user MSI can start without a separately installed Visual C++ Redistributable.
+The release workflow sources this redistributable DLL from the Visual Studio installation and checks
+that the app loads the copy shipped with each package.
 
 - [docs/limitations.md](docs/limitations.md): what is not done, not tested or not possible
 - [docs/user-guide.md](docs/user-guide.md): installing and using it (English and 中文)

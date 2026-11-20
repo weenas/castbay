@@ -48,7 +48,12 @@ impl Enc {
         FfmpegEncoder::new(config, codec).map(Enc::Process)
     }
 
-    fn encode(&mut self, nv12: &[u8], pts: i64, key: bool) -> Result<Vec<Encoded>, castbay_encode::Error> {
+    fn encode(
+        &mut self,
+        nv12: &[u8],
+        pts: i64,
+        key: bool,
+    ) -> Result<Vec<Encoded>, castbay_encode::Error> {
         match self {
             // A child process cannot be told to make a key frame; it makes them on its own timer.
             Enc::Process(e) => {
@@ -70,7 +75,9 @@ fn wanted_formats(choice: FormatChoice, codec: Option<Codec>, h265: &Config) -> 
         return vec![h264];
     }
     match Enc::open(h265, codec) {
-        Ok((_, used)) if used != Codec::X264 => vec![VideoFormat::H265.protocol_name().to_string(), h264],
+        Ok((_, used)) if used != Codec::X264 => {
+            vec![VideoFormat::H265.protocol_name().to_string(), h264]
+        }
         _ => vec![h264],
     }
 }
@@ -78,8 +85,18 @@ fn wanted_formats(choice: FormatChoice, codec: Option<Codec>, h265: &Config) -> 
 /// The encoders that open on this computer, in the order "automatic" tries them. A hardware
 /// encoder is tried with a small picture and closed again at once, so this takes a moment.
 pub fn available_encoders() -> Vec<Codec> {
-    let config = Config { width: 640, height: 360, fps: 30, bitrate_bps: 2_000_000, gop: 60, format: Default::default() };
-    [Codec::Amf, Codec::Nvenc, Codec::X264].into_iter().filter(|codec| Enc::new(&config, *codec).is_ok()).collect()
+    let config = Config {
+        width: 640,
+        height: 360,
+        fps: 30,
+        bitrate_bps: 2_000_000,
+        gop: 60,
+        format: Default::default(),
+    };
+    [Codec::Amf, Codec::Nvenc, Codec::X264]
+        .into_iter()
+        .filter(|codec| Enc::new(&config, *codec).is_ok())
+        .collect()
 }
 
 /// AAC-LC encoding for the cast's audio; only the in-process encoder build has one.
@@ -98,16 +115,22 @@ impl Aac for castbay_encode::inproc::AacEncoder {
         castbay_encode::inproc::AacEncoder::frame_samples(self)
     }
     fn encode(&mut self, interleaved: &[f32]) -> Option<Vec<u8>> {
-        castbay_encode::inproc::AacEncoder::encode(self, interleaved).ok().flatten()
+        castbay_encode::inproc::AacEncoder::encode(self, interleaved)
+            .ok()
+            .flatten()
     }
 }
 
 fn open_aac() -> Option<Box<dyn Aac>> {
     #[cfg(feature = "ffmpeg-lib")]
     {
-        castbay_encode::inproc::AacEncoder::new(castbay_capture::audio::SAMPLE_RATE, castbay_capture::audio::CHANNELS, 128_000)
-            .ok()
-            .map(|e| Box::new(e) as Box<dyn Aac>)
+        castbay_encode::inproc::AacEncoder::new(
+            castbay_capture::audio::SAMPLE_RATE,
+            castbay_capture::audio::CHANNELS,
+            128_000,
+        )
+        .ok()
+        .map(|e| Box::new(e) as Box<dyn Aac>)
     }
     #[cfg(not(feature = "ffmpeg-lib"))]
     {
@@ -117,10 +140,18 @@ fn open_aac() -> Option<Box<dyn Aac>> {
 
 /// Captures what the PC plays, encodes it and sends it on the current connection until the end.
 /// A device that goes away (the default output changed) is picked up again a second later.
-fn run_audio(mut enc: Box<dyn Aac>, session_ref: Arc<Mutex<Option<Session>>>, over: impl Fn() -> bool, started: Instant, counter: Arc<std::sync::atomic::AtomicU64>, process: Arc<Mutex<Option<u32>>>) {
+fn run_audio(
+    mut enc: Box<dyn Aac>,
+    session_ref: Arc<Mutex<Option<Session>>>,
+    over: impl Fn() -> bool,
+    started: Instant,
+    counter: Arc<std::sync::atomic::AtomicU64>,
+    process: Arc<Mutex<Option<u32>>>,
+) {
     let samples_per_frame = enc.frame_samples();
     let frame_len = samples_per_frame * castbay_capture::audio::CHANNELS as usize;
-    let frame_us = samples_per_frame as u64 * 1_000_000 / castbay_capture::audio::SAMPLE_RATE as u64;
+    let frame_us =
+        samples_per_frame as u64 * 1_000_000 / castbay_capture::audio::SAMPLE_RATE as u64;
     let base_us = started.elapsed().as_micros() as u64;
     let mut pending: Vec<f32> = Vec::with_capacity(frame_len * 4);
     let mut sent: u64 = 0;
@@ -258,7 +289,14 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
     state: Arc<Mutex<State>>,
     session_ref: Arc<Mutex<Option<castbay_link::Session>>>,
     capture_status: OnStatus,
-    (width, height, interval, started, encoder_config, codec): (u32, u32, Duration, Instant, Config, Option<Codec>),
+    (width, height, interval, started, encoder_config, codec): (
+        u32,
+        u32,
+        Duration,
+        Instant,
+        Config,
+        Option<Codec>,
+    ),
 ) -> impl FnMut(castbay_capture::Frame<'_>) -> bool + Send + 'static {
     move |frame| {
         if over() {
@@ -275,7 +313,12 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
         // after a repeat: a repeat only stands in where nothing new came, and must not make the new
         // picture that follows it wait (that was the case: most new pictures were dropped, and
         // old ones repeated in their place).
-        if takes_new_picture(st.have_picture, st.last_was_repeat, arrived.duration_since(st.last_taken), interval) {
+        if takes_new_picture(
+            st.have_picture,
+            st.last_was_repeat,
+            arrived.duration_since(st.last_taken),
+            interval,
+        ) {
             if frame.width >= 2 && frame.height >= 2 {
                 // The usual gap follows the screen: a gap longer than 100 ms is a pause, not the pace.
                 let gap = arrived.duration_since(st.last_taken).min(STILL_REPEAT);
@@ -287,12 +330,28 @@ fn capture_callback<O: Fn() -> bool + Send + 'static>(
                     capture_status(Status::Still(false));
                 }
                 let mut nv12 = std::mem::take(&mut st.nv12);
-                bgra_to_nv12_fit(frame.data, frame.stride, frame.width as usize, frame.height as usize, width as usize, height as usize, &mut nv12);
+                bgra_to_nv12_fit(
+                    frame.data,
+                    frame.stride,
+                    frame.width as usize,
+                    frame.height as usize,
+                    width as usize,
+                    height as usize,
+                    &mut nv12,
+                );
                 st.nv12 = nv12;
                 st.have_picture = true;
                 st.frames_taken += 1;
                 if let Some(link) = session_ref.lock().unwrap().as_ref() {
-                    push(&mut st, link, Instant::now(), started, &encoder_config, codec, false);
+                    push(
+                        &mut st,
+                        link,
+                        Instant::now(),
+                        started,
+                        &encoder_config,
+                        codec,
+                        false,
+                    );
                     if let Some(bps) = st.announce_bitrate.take() {
                         capture_status(Status::Bitrate(bps));
                     }
@@ -335,7 +394,12 @@ fn repeat_wait(interval: Duration, in_a_row: u32, gap: Duration) -> Duration {
 /// Whether a picture that has just come from the capture is sent. A screen that changes faster than
 /// the cast does not set the pace (not before three quarters of an interval since the last one was
 /// taken), and a picture is always taken after a repeat, which only stood in where nothing new came.
-fn takes_new_picture(have_picture: bool, last_was_repeat: bool, since_last_taken: Duration, interval: Duration) -> bool {
+fn takes_new_picture(
+    have_picture: bool,
+    last_was_repeat: bool,
+    since_last_taken: Duration,
+    interval: Duration,
+) -> bool {
     !have_picture || last_was_repeat || since_last_taken + interval / 4 >= interval
 }
 
@@ -349,12 +413,24 @@ fn key_due(encoder: &str, since_key: Option<Duration>) -> bool {
 }
 
 /// Pushes the current picture into the encoder and sends what came out.
-fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, config: &Config, codec: Option<Codec>, repeat: bool) {
+fn push(
+    st: &mut State,
+    link: &Session,
+    captured: Instant,
+    started: Instant,
+    config: &Config,
+    codec: Option<Codec>,
+    repeat: bool,
+) {
     if st.lost.is_some() {
         return;
     }
     if st.encoder.is_none() {
-        let config = Config { bitrate_bps: st.rate.current(), format: st.format, ..config.clone() };
+        let config = Config {
+            bitrate_bps: st.rate.current(),
+            format: st.format,
+            ..config.clone()
+        };
         match Enc::open(&config, codec) {
             Ok((e, used)) => {
                 st.encoder = Some(e);
@@ -375,7 +451,9 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
     }
     let pts = captured.duration_since(started).as_micros() as i64;
     let nv12 = std::mem::take(&mut st.nv12);
-    let key = link.wants_key_frame() || st.want_key || key_due(st.encoder_name, st.last_key.map(|t| t.elapsed()));
+    let key = link.wants_key_frame()
+        || st.want_key
+        || key_due(st.encoder_name, st.last_key.map(|t| t.elapsed()));
     if key {
         st.last_key = Some(Instant::now());
     }
@@ -410,7 +488,10 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
         Err(e) => st.failed = Some(Failure::new("encoder", e.to_string())),
     }
     // For trying the response without a bad network: a burst of drops five seconds in.
-    if !st.simulated && std::env::var_os("CASTBAY_SIMULATE_CONGESTION").is_some() && started.elapsed() > Duration::from_secs(5) {
+    if !st.simulated
+        && std::env::var_os("CASTBAY_SIMULATE_CONGESTION").is_some()
+        && started.elapsed() > Duration::from_secs(5)
+    {
         st.simulated = true;
         for _ in 0..8 {
             st.rate.dropped(Instant::now());
@@ -427,27 +508,60 @@ fn push(st: &mut State, link: &Session, captured: Instant, started: Instant, con
 /// Runs the cast and delivers its result through `done`. The thread that calls this ends up
 /// running the capture itself (the capture library wants to own its thread's message loop), so
 /// a supervisor thread watches for the end and reports it.
-pub fn run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) -> Option<String> + Send>, stop: Arc<AtomicBool>, switch: Arc<Mutex<Option<Target>>>, done: std::sync::mpsc::Sender<Result<Report, Failure>>) {
+pub fn run(
+    options: Options,
+    on_status: OnStatus,
+    code: Box<dyn FnMut(&str) -> Option<String> + Send>,
+    stop: Arc<AtomicBool>,
+    switch: Arc<Mutex<Option<Target>>>,
+    done: std::sync::mpsc::Sender<Result<Report, Failure>>,
+) {
     if let Err(e) = setup_and_run(options, on_status, code, stop, switch, done.clone()) {
         let _ = done.send(Err(e));
     }
 }
 
-fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) -> Option<String> + Send>, stop: Arc<AtomicBool>, switch: Arc<Mutex<Option<Target>>>, done: std::sync::mpsc::Sender<Result<Report, Failure>>) -> Result<(), Failure> {
-    let Options { addr, receiver_id, name, password, target, fps, bitrate_bps, codec, video_format, audio, max_size, data_dir, max_duration } = options;
+fn setup_and_run(
+    options: Options,
+    on_status: OnStatus,
+    code: Box<dyn FnMut(&str) -> Option<String> + Send>,
+    stop: Arc<AtomicBool>,
+    switch: Arc<Mutex<Option<Target>>>,
+    done: std::sync::mpsc::Sender<Result<Report, Failure>>,
+) -> Result<(), Failure> {
+    let Options {
+        addr,
+        receiver_id,
+        name,
+        password,
+        target,
+        fps,
+        bitrate_bps,
+        codec,
+        video_format,
+        audio,
+        max_size,
+        data_dir,
+        max_duration,
+    } = options;
     castbay_capture::set_data_dir(&data_dir);
     on_status(Status::Connecting);
-    let runtime = tokio::runtime::Runtime::new().map_err(|e| Failure::new("other", e.to_string()))?;
+    let runtime =
+        tokio::runtime::Runtime::new().map_err(|e| Failure::new("other", e.to_string()))?;
 
     // The first picture fixes the size, so the offer waits for it.
     let first = Arc::new(Mutex::new(None::<(u32, u32)>));
     {
         let (first, target) = (first.clone(), target.clone());
         std::thread::spawn(move || {
-            let _ = castbay_capture::run(&target, || false, move |frame| {
-                *first.lock().unwrap() = Some((frame.width & !1, frame.height & !1));
-                false
-            });
+            let _ = castbay_capture::run(
+                &target,
+                || false,
+                move |frame| {
+                    *first.lock().unwrap() = Some((frame.width & !1, frame.height & !1));
+                    false
+                },
+            );
         });
     }
     let waited = Instant::now();
@@ -459,7 +573,10 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
             return Err(Failure::new("stopped", "stopped"));
         }
         if waited.elapsed() > Duration::from_secs(10) {
-            return Err(Failure::new("no_picture", "no picture from the screen (is it locked, or the window gone?)"));
+            return Err(Failure::new(
+                "no_picture",
+                "no picture from the screen (is it locked, or the window gone?)",
+            ));
         }
         std::thread::sleep(Duration::from_millis(50));
     };
@@ -474,7 +591,18 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     });
     // H.265 is offered only if a graphics card can encode it here: tried now, so that the offer is not
     // one the encoder then cannot keep.
-    let formats = wanted_formats(video_format, codec, &Config { width, height, fps, bitrate_bps, gop: fps * 2, format: VideoFormat::H265 });
+    let formats = wanted_formats(
+        video_format,
+        codec,
+        &Config {
+            width,
+            height,
+            fps,
+            bitrate_bps,
+            gop: fps * 2,
+            format: VideoFormat::H265,
+        },
+    );
     let link_config = castbay_link::Config {
         formats,
         name,
@@ -483,7 +611,12 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
         height,
         fps,
         bitrate_bps,
-        source: if matches!(target, Target::Window(_)) { "window" } else { "screen" }.into(),
+        source: if matches!(target, Target::Window(_)) {
+            "window"
+        } else {
+            "screen"
+        }
+        .into(),
         audio: audio_offer,
     };
     let mut ask = {
@@ -494,10 +627,22 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
         }
     };
     let session = runtime
-        .block_on(castbay_link::connect(addr, &identity, &mut pins, receiver_id.as_deref(), &link_config, &mut ask))
+        .block_on(castbay_link::connect(
+            addr,
+            &identity,
+            &mut pins,
+            receiver_id.as_deref(),
+            &link_config,
+            &mut ask,
+        ))
         .map_err(Failure::from)?;
     let format = VideoFormat::from_protocol_name(&session.format).unwrap_or_default();
-    on_status(Status::Casting { receiver: session.receiver_name.clone(), width, height, format: format.protocol_name() });
+    on_status(Status::Casting {
+        receiver: session.receiver_name.clone(),
+        width,
+        height,
+        format: format.protocol_name(),
+    });
     // Awake for as long as this thread (which ends up running the capture) casts.
     let _awake = crate::power::Awake::new();
     let audio_accepted = session.audio_accepted;
@@ -505,11 +650,22 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
 
     let started = Instant::now();
     let interval = Duration::from_micros(1_000_000 / fps as u64);
-    let encoder_config = Config { width, height, fps, bitrate_bps, gop: fps * 2, format };
+    let encoder_config = Config {
+        width,
+        height,
+        fps,
+        bitrate_bps,
+        gop: fps * 2,
+        format,
+    };
     let finish = Arc::new(AtomicBool::new(false));
     let over = {
         let (stop, finish) = (stop.clone(), finish.clone());
-        move || stop.load(Ordering::SeqCst) || finish.load(Ordering::SeqCst) || max_duration.is_some_and(|d| started.elapsed() > d)
+        move || {
+            stop.load(Ordering::SeqCst)
+                || finish.load(Ordering::SeqCst)
+                || max_duration.is_some_and(|d| started.elapsed() > d)
+        }
     };
     let session_ref = Arc::new(Mutex::new(Some(session)));
     let state = Arc::new(Mutex::new(State {
@@ -550,8 +706,15 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     let audio_process: Arc<Mutex<Option<u32>>> = Arc::new(Mutex::new(None));
     let audio_thread = match aac {
         Some(enc) if audio_accepted => {
-            let (session_ref, over, counter, process) = (session_ref.clone(), over.clone(), audio_frames.clone(), audio_process.clone());
-            Some(std::thread::spawn(move || run_audio(enc, session_ref, over, started, counter, process)))
+            let (session_ref, over, counter, process) = (
+                session_ref.clone(),
+                over.clone(),
+                audio_frames.clone(),
+                audio_process.clone(),
+            );
+            Some(std::thread::spawn(move || {
+                run_audio(enc, session_ref, over, started, counter, process)
+            }))
         }
         _ => None,
     };
@@ -575,16 +738,30 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     // Reads what the receiver says, and repeats the last picture on a static screen so the
     // stream stays alive.
     let repeater = {
-        let (state, session_ref, config, over, on_status) = (state.clone(), session_ref.clone(), encoder_config.clone(), over.clone(), on_status.clone());
+        let (state, session_ref, config, over, on_status) = (
+            state.clone(),
+            session_ref.clone(),
+            encoder_config.clone(),
+            over.clone(),
+            on_status.clone(),
+        );
         std::thread::spawn(move || loop {
             // Sleeps until the repeat is due (or a quarter interval, to hear the receiver and the end in
             // time): a fixed sleep of a quarter interval is rounded up to a whole millisecond or more, and
             // 60 repeats a second came out as 50.
             let due = {
                 let st = state.lock().unwrap();
-                if st.have_picture { repeat_wait(interval, st.repeats_in_a_row, st.gap).saturating_sub(st.last.elapsed()) } else { interval / 4 }
+                if st.have_picture {
+                    repeat_wait(interval, st.repeats_in_a_row, st.gap)
+                        .saturating_sub(st.last.elapsed())
+                } else {
+                    interval / 4
+                }
             };
-            std::thread::sleep(due.clamp(Duration::from_millis(1), interval.max(STILL_REPEAT).min(Duration::from_millis(100))));
+            std::thread::sleep(due.clamp(
+                Duration::from_millis(1),
+                interval.max(STILL_REPEAT).min(Duration::from_millis(100)),
+            ));
             let mut st = state.lock().unwrap();
             if over() || st.failed.is_some() || st.ended.is_some() {
                 return;
@@ -593,19 +770,36 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
             let Some(link) = guard.as_mut() else { continue };
             while let Some(event) = link.next_event() {
                 match event {
-                    Event::Closed(reason) if matches!(reason.as_str(), "stopped_by_receiver" | "replaced" | "receiver_stopped") => st.ended = Some(reason),
+                    Event::Closed(reason)
+                        if matches!(
+                            reason.as_str(),
+                            "stopped_by_receiver" | "replaced" | "receiver_stopped"
+                        ) =>
+                    {
+                        st.ended = Some(reason)
+                    }
                     Event::Closed(reason) => {
                         st.lost.get_or_insert(reason);
                     }
-                    Event::Stats { decode_ms, dropped, fps } => {
+                    Event::Stats {
+                        decode_ms,
+                        dropped,
+                        fps,
+                    } => {
                         st.last_report = Some((decode_ms, dropped, fps));
-                        on_status(Status::Receiver { decode_ms, dropped, fps });
+                        on_status(Status::Receiver {
+                            decode_ms,
+                            dropped,
+                            fps,
+                        });
                     }
                     Event::KeyFrameRequested => st.want_key = true,
                 }
             }
             // A repeat stands in where nothing new came for as long as `repeat_wait` says.
-            if st.have_picture && st.last.elapsed() >= repeat_wait(interval, st.repeats_in_a_row, st.gap) {
+            if st.have_picture
+                && st.last.elapsed() >= repeat_wait(interval, st.repeats_in_a_row, st.gap)
+            {
                 push(&mut st, link, Instant::now(), started, &config, codec, true);
                 st.repeats_in_a_row = st.repeats_in_a_row.saturating_add(1);
                 if st.repeats_in_a_row >= STILL_NOTE_AFTER && !st.still && interval < STILL_REPEAT {
@@ -622,7 +816,13 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     // A broken connection is replaced by a new one (the pairing is remembered, so no code is
     // needed); the encoder starts over, which begins the new stream with a key frame.
     let reconnector = {
-        let (state, session_ref, handle, over, on_status) = (state.clone(), session_ref.clone(), runtime.handle().clone(), over.clone(), on_status.clone());
+        let (state, session_ref, handle, over, on_status) = (
+            state.clone(),
+            session_ref.clone(),
+            runtime.handle().clone(),
+            over.clone(),
+            on_status.clone(),
+        );
         std::thread::spawn(move || {
             let mut pins = pins;
             loop {
@@ -650,7 +850,14 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                         }
                         std::thread::sleep(Duration::from_millis(100));
                     }
-                    match handle.block_on(castbay_link::connect(addr, &identity, &mut pins, receiver_id.as_deref(), &link_config, &mut none)) {
+                    match handle.block_on(castbay_link::connect(
+                        addr,
+                        &identity,
+                        &mut pins,
+                        receiver_id.as_deref(),
+                        &link_config,
+                        &mut none,
+                    )) {
                         Ok(session) => {
                             renewed = Some(session);
                             break;
@@ -662,7 +869,8 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                 match renewed {
                     Some(session) => {
                         // The same receiver, so the same format; but it is what was agreed, not what was assumed.
-                        st.format = VideoFormat::from_protocol_name(&session.format).unwrap_or_default();
+                        st.format =
+                            VideoFormat::from_protocol_name(&session.format).unwrap_or_default();
                         *session_ref.lock().unwrap() = Some(session);
                         st.encoder = None;
                         st.captured.clear();
@@ -671,7 +879,12 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                         st.reconnects += 1;
                         on_status(Status::Reconnected);
                     }
-                    None => st.failed = Some(Failure::new("network", "the receiver could not be reached again")),
+                    None => {
+                        st.failed = Some(Failure::new(
+                            "network",
+                            "the receiver could not be reached again",
+                        ))
+                    }
                 }
             }
         })
@@ -680,12 +893,24 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     // A supervisor waits for the end, tears down and reports; this thread runs the capture.
     let capture_done = Arc::new(AtomicBool::new(false));
     let supervisor = {
-        let (state, session_ref, over, capture_done, finish, on_status, stop) = (state.clone(), session_ref.clone(), over.clone(), capture_done.clone(), finish.clone(), on_status.clone(), stop.clone());
+        let (state, session_ref, over, capture_done, finish, on_status, stop) = (
+            state.clone(),
+            session_ref.clone(),
+            over.clone(),
+            capture_done.clone(),
+            finish.clone(),
+            on_status.clone(),
+            stop.clone(),
+        );
         std::thread::spawn(move || {
             loop {
                 std::thread::sleep(Duration::from_millis(100));
                 let st = state.lock().unwrap();
-                if over() || st.failed.is_some() || st.ended.is_some() || capture_done.load(Ordering::SeqCst) {
+                if over()
+                    || st.failed.is_some()
+                    || st.ended.is_some()
+                    || capture_done.load(Ordering::SeqCst)
+                {
                     break;
                 }
             }
@@ -706,7 +931,13 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
             if let Some(link) = session_ref.lock().unwrap().take() {
                 runtime.block_on(link.close());
             }
-            let _ = done.send(report(&state, started, &stop, &on_status, audio_frames.load(Ordering::Relaxed)));
+            let _ = done.send(report(
+                &state,
+                started,
+                &stop,
+                &on_status,
+                audio_frames.load(Ordering::Relaxed),
+            ));
         })
     };
     let result = {
@@ -756,7 +987,20 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
                         let (over, switch) = (over.clone(), switch.clone());
                         move || over() || switch.lock().unwrap().is_some()
                     };
-                    let callback = capture_callback(over.clone(), state.clone(), session_ref.clone(), on_status.clone(), (width, height, interval, started, encoder_config.clone(), codec));
+                    let callback = capture_callback(
+                        over.clone(),
+                        state.clone(),
+                        session_ref.clone(),
+                        on_status.clone(),
+                        (
+                            width,
+                            height,
+                            interval,
+                            started,
+                            encoder_config.clone(),
+                            codec,
+                        ),
+                    );
                     let outcome = castbay_capture::run(&current, stop_when, callback);
                     let requested = switch.lock().unwrap().take();
                     let got_picture = state.lock().unwrap().frames_seen > seen;
@@ -790,10 +1034,18 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
     };
     match result {
         Ok(castbay_capture::Ended::SourceClosed) => {
-            state.lock().unwrap().ended.get_or_insert_with(|| "the captured window or screen went away".into());
+            state
+                .lock()
+                .unwrap()
+                .ended
+                .get_or_insert_with(|| "the captured window or screen went away".into());
         }
         Err(e) => {
-            state.lock().unwrap().failed.get_or_insert_with(|| Failure::new("capture", e.to_string()));
+            state
+                .lock()
+                .unwrap()
+                .failed
+                .get_or_insert_with(|| Failure::new("capture", e.to_string()));
         }
         Ok(_) => {}
     }
@@ -803,7 +1055,13 @@ fn setup_and_run(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str
 }
 
 /// Builds the report of a finished cast and announces its end.
-fn report(state: &Arc<Mutex<State>>, started: Instant, stop: &Arc<AtomicBool>, on_status: &OnStatus, audio_frames: u64) -> Result<Report, Failure> {
+fn report(
+    state: &Arc<Mutex<State>>,
+    started: Instant,
+    stop: &Arc<AtomicBool>,
+    on_status: &OnStatus,
+    audio_frames: u64,
+) -> Result<Report, Failure> {
     let mut st = state.lock().unwrap();
     let ended = if let Some(failure) = st.failed.clone() {
         failure.detail
@@ -866,11 +1124,23 @@ mod tests {
     fn a_new_picture_is_taken_at_its_turn_not_early_and_always_after_a_repeat() {
         let interval = Duration::from_micros(33_333);
         let ms = Duration::from_millis;
-        assert!(takes_new_picture(false, false, ms(1), interval), "the first picture");
-        assert!(takes_new_picture(true, false, ms(33), interval), "a picture a frame after the last: 30 pictures a second stay 30");
+        assert!(
+            takes_new_picture(false, false, ms(1), interval),
+            "the first picture"
+        );
+        assert!(
+            takes_new_picture(true, false, ms(33), interval),
+            "a picture a frame after the last: 30 pictures a second stay 30"
+        );
         assert!(takes_new_picture(true, false, ms(26), interval));
-        assert!(!takes_new_picture(true, false, ms(16), interval), "a screen at 60 Hz sends every other one");
-        assert!(takes_new_picture(true, true, ms(2), interval), "after a repeat");
+        assert!(
+            !takes_new_picture(true, false, ms(16), interval),
+            "a screen at 60 Hz sends every other one"
+        );
+        assert!(
+            takes_new_picture(true, true, ms(2), interval),
+            "after a repeat"
+        );
     }
 
     #[test]

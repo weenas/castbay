@@ -50,8 +50,14 @@ impl InProcessEncoder {
             (Codec::Nvenc, VideoFormat::H264) => "h264_nvenc",
             (Codec::Nvenc, VideoFormat::H265) => "hevc_nvenc",
             (Codec::X264, VideoFormat::H264) => "libx264",
-            (Codec::X264, VideoFormat::H265) => return Err(Error("the CPU encoder makes H.264 only".into())),
-            (Codec::Qsv, _) => return Err(Error("Intel Quick Sync is not built into the in-process encoder yet".into())),
+            (Codec::X264, VideoFormat::H265) => {
+                return Err(Error("the CPU encoder makes H.264 only".into()))
+            }
+            (Codec::Qsv, _) => {
+                return Err(Error(
+                    "Intel Quick Sync is not built into the in-process encoder yet".into(),
+                ))
+            }
         };
         let cname = CString::new(name).unwrap();
         let mut err = [0 as c_char; 256];
@@ -68,21 +74,40 @@ impl InProcessEncoder {
             )
         };
         if enc.is_null() {
-            let text = unsafe { std::ffi::CStr::from_ptr(err.as_ptr()) }.to_string_lossy().into_owned();
+            let text = unsafe { std::ffi::CStr::from_ptr(err.as_ptr()) }
+                .to_string_lossy()
+                .into_owned();
             return Err(Error(format!("{name}: {text}")));
         }
-        Ok(Self { enc, frame_len: (config.width * config.height * 3 / 2) as usize })
+        Ok(Self {
+            enc,
+            frame_len: (config.width * config.height * 3 / 2) as usize,
+        })
     }
 
     /// Encodes one NV12 picture. `force_key` makes it an IDR picture. Returns the access unit
     /// that is ready, if any (none while the encoder is still filling).
-    pub fn encode(&mut self, nv12: &[u8], pts_us: i64, force_key: bool) -> Result<Option<Encoded>, Error> {
+    pub fn encode(
+        &mut self,
+        nv12: &[u8],
+        pts_us: i64,
+        force_key: bool,
+    ) -> Result<Option<Encoded>, Error> {
         if nv12.len() < self.frame_len {
             return Err(Error("picture is smaller than the configured size".into()));
         }
         let (mut out, mut len, mut key, mut out_pts) = (std::ptr::null(), 0, 0, 0i64);
         let r = unsafe {
-            cb_enc_encode(self.enc, nv12.as_ptr(), pts_us, force_key as c_int, &mut out, &mut len, &mut key, &mut out_pts)
+            cb_enc_encode(
+                self.enc,
+                nv12.as_ptr(),
+                pts_us,
+                force_key as c_int,
+                &mut out,
+                &mut len,
+                &mut key,
+                &mut out_pts,
+            )
         };
         match r {
             1 => Ok(Some(Encoded {
@@ -108,10 +133,21 @@ struct CbAac {
 }
 
 extern "C" {
-    fn cb_aac_open(sample_rate: c_int, channels: c_int, bitrate: c_int, err: *mut c_char, errlen: c_int) -> *mut CbAac;
+    fn cb_aac_open(
+        sample_rate: c_int,
+        channels: c_int,
+        bitrate: c_int,
+        err: *mut c_char,
+        errlen: c_int,
+    ) -> *mut CbAac;
     fn cb_aac_frame_size(e: *mut CbAac) -> c_int;
     fn cb_aac_config(e: *mut CbAac, out: *mut u8, cap: c_int) -> c_int;
-    fn cb_aac_encode(e: *mut CbAac, interleaved: *const f32, out: *mut *const u8, out_len: *mut c_int) -> c_int;
+    fn cb_aac_encode(
+        e: *mut CbAac,
+        interleaved: *const f32,
+        out: *mut *const u8,
+        out_len: *mut c_int,
+    ) -> c_int;
     fn cb_aac_close(e: *mut CbAac);
 }
 
@@ -127,13 +163,27 @@ unsafe impl Send for AacEncoder {}
 impl AacEncoder {
     pub fn new(sample_rate: u32, channels: u32, bitrate_bps: u32) -> Result<Self, Error> {
         let mut err = [0 as c_char; 256];
-        let enc = unsafe { cb_aac_open(sample_rate as c_int, channels as c_int, bitrate_bps as c_int, err.as_mut_ptr(), err.len() as c_int) };
+        let enc = unsafe {
+            cb_aac_open(
+                sample_rate as c_int,
+                channels as c_int,
+                bitrate_bps as c_int,
+                err.as_mut_ptr(),
+                err.len() as c_int,
+            )
+        };
         if enc.is_null() {
-            let text = unsafe { std::ffi::CStr::from_ptr(err.as_ptr()) }.to_string_lossy().into_owned();
+            let text = unsafe { std::ffi::CStr::from_ptr(err.as_ptr()) }
+                .to_string_lossy()
+                .into_owned();
             return Err(Error(format!("aac: {text}")));
         }
         let frame_samples = unsafe { cb_aac_frame_size(enc) } as usize;
-        Ok(Self { enc, channels: channels as usize, frame_samples })
+        Ok(Self {
+            enc,
+            channels: channels as usize,
+            frame_samples,
+        })
     }
 
     /// Samples per channel that go into each [`AacEncoder::encode`] call (1024).
@@ -155,7 +205,9 @@ impl AacEncoder {
         }
         let (mut out, mut len) = (std::ptr::null(), 0);
         match unsafe { cb_aac_encode(self.enc, interleaved.as_ptr(), &mut out, &mut len) } {
-            1 => Ok(Some(unsafe { std::slice::from_raw_parts(out, len as usize) }.to_vec())),
+            1 => Ok(Some(
+                unsafe { std::slice::from_raw_parts(out, len as usize) }.to_vec(),
+            )),
             0 => Ok(None),
             code => Err(Error(format!("aac encode failed ({code})"))),
         }

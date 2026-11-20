@@ -76,12 +76,21 @@ pub enum Status {
     /// The receiver asked for a pairing code (it shows one on its screen).
     NeedsCode,
     /// `format` is what is sent: `h264` or `h265`.
-    Casting { receiver: String, width: u32, height: u32, format: &'static str },
+    Casting {
+        receiver: String,
+        width: u32,
+        height: u32,
+        format: &'static str,
+    },
     /// The connection broke; a new one is being made.
     Reconnecting(String),
     Reconnected,
     /// The receiver's once-a-second report.
-    Receiver { decode_ms: i64, dropped: u64, fps: f64 },
+    Receiver {
+        decode_ms: i64,
+        dropped: u64,
+        fps: f64,
+    },
     /// The bitrate in use changed (the connection could not keep up, or has recovered), in bit/s.
     Bitrate(u32),
     /// The screen stopped changing and the frame rate was lowered (true), or it changed again and the
@@ -139,7 +148,10 @@ pub struct Failure {
 
 impl Failure {
     pub fn new(code: &str, detail: impl Into<String>) -> Failure {
-        Failure { code: code.into(), detail: detail.into() }
+        Failure {
+            code: code.into(),
+            detail: detail.into(),
+        }
     }
 }
 
@@ -159,7 +171,10 @@ impl From<castbay_link::Error> for Failure {
             E::Protocol(_) => "protocol".into(),
             E::Io(_) => "network".into(),
         };
-        Failure { code, detail: e.to_string() }
+        Failure {
+            code,
+            detail: e.to_string(),
+        }
     }
 }
 
@@ -215,7 +230,9 @@ impl Handle {
         if let Some(done) = self.finished.take() {
             return done;
         }
-        self.result.recv().unwrap_or_else(|_| Err(Failure::new("other", "the cast thread crashed")))
+        self.result
+            .recv()
+            .unwrap_or_else(|_| Err(Failure::new("other", "the cast thread crashed")))
     }
 
     /// Whether the cast has ended (without waiting).
@@ -234,7 +251,11 @@ impl Handle {
 /// Starts casting on its own threads. `code` is asked for the pairing code when the receiver
 /// needs one (the person reads it off the TV).
 #[cfg(any(windows, target_os = "linux"))]
-pub fn start(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) -> Option<String> + Send>) -> Handle {
+pub fn start(
+    options: Options,
+    on_status: OnStatus,
+    code: Box<dyn FnMut(&str) -> Option<String> + Send>,
+) -> Handle {
     let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
     let flag = stop.clone();
     let (tx, result) = std::sync::mpsc::channel();
@@ -244,14 +265,27 @@ pub fn start(options: Options, on_status: OnStatus, code: Box<dyn FnMut(&str) ->
         .name("castbay-cast".into())
         .spawn(move || engine::run(options, on_status, code, flag, switch_for_engine, tx))
         .expect("a thread");
-    Handle { stop, switch, result, finished: std::cell::Cell::new(None) }
+    Handle {
+        stop,
+        switch,
+        result,
+        finished: std::cell::Cell::new(None),
+    }
 }
 
 #[cfg(not(any(windows, target_os = "linux")))]
 pub fn start(_: Options, _: OnStatus, _: Box<dyn FnMut(&str) -> Option<String> + Send>) -> Handle {
     let (tx, result) = std::sync::mpsc::channel();
-    let _ = tx.send(Err(Failure::new("other", "casting is not implemented on this system")));
-    Handle { stop: Arc::new(std::sync::atomic::AtomicBool::new(true)), switch: Arc::new(std::sync::Mutex::new(None)), result, finished: std::cell::Cell::new(None) }
+    let _ = tx.send(Err(Failure::new(
+        "other",
+        "casting is not implemented on this system",
+    )));
+    Handle {
+        stop: Arc::new(std::sync::atomic::AtomicBool::new(true)),
+        switch: Arc::new(std::sync::Mutex::new(None)),
+        result,
+        finished: std::cell::Cell::new(None),
+    }
 }
 
 #[cfg(test)]
@@ -262,7 +296,10 @@ mod tests {
     fn link_errors_become_codes_the_app_can_word() {
         use castbay_link::Error as E;
         assert_eq!(Failure::from(E::Rejected("busy".into())).code, "busy");
-        assert_eq!(Failure::from(E::PairingFailed("wrong_code".into())).code, "wrong_code");
+        assert_eq!(
+            Failure::from(E::PairingFailed("wrong_code".into())).code,
+            "wrong_code"
+        );
         assert_eq!(Failure::from(E::CodeRequired).code, "code_required");
         assert_eq!(Failure::from(E::ReceiverChanged).code, "receiver_changed");
         assert_eq!(Failure::from(E::Io("x".into())).code, "network");

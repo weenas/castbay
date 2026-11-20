@@ -23,7 +23,11 @@ struct State<'a> {
 /// `stop` says so. PipeWire converts whatever the device uses to the format asked for.
 ///
 /// `process` is only for Windows (the sound of one window): here it is the whole output.
-pub fn run_loopback(_process: Option<u32>, stop: &dyn Fn() -> bool, mut on_samples: impl FnMut(&[f32])) -> Result<(), Error> {
+pub fn run_loopback(
+    _process: Option<u32>,
+    stop: &dyn Fn() -> bool,
+    mut on_samples: impl FnMut(&[f32]),
+) -> Result<(), Error> {
     pw::init();
     let mainloop = pw::main_loop::MainLoopRc::new(None).map_err(platform)?;
     let context = pw::context::ContextRc::new(&mainloop, None).map_err(platform)?;
@@ -43,17 +47,28 @@ pub fn run_loopback(_process: Option<u32>, stop: &dyn Fn() -> bool, mut on_sampl
     .map_err(platform)?;
 
     let _listener = stream
-        .add_local_listener_with_user_data(State { on_samples: &mut on_samples })
+        .add_local_listener_with_user_data(State {
+            on_samples: &mut on_samples,
+        })
         .process(|stream, state| {
-            let Some(mut buffer) = stream.dequeue_buffer() else { return };
-            let Some(data) = buffer.datas_mut().first_mut() else { return };
+            let Some(mut buffer) = stream.dequeue_buffer() else {
+                return;
+            };
+            let Some(data) = buffer.datas_mut().first_mut() else {
+                return;
+            };
             let (offset, size) = {
                 let chunk = data.chunk();
                 (chunk.offset() as usize, chunk.size() as usize)
             };
             let Some(bytes) = data.data() else { return };
-            let Some(bytes) = bytes.get(offset..offset + size) else { return };
-            let samples: Vec<f32> = bytes.chunks_exact(4).map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]])).collect();
+            let Some(bytes) = bytes.get(offset..offset + size) else {
+                return;
+            };
+            let samples: Vec<f32> = bytes
+                .chunks_exact(4)
+                .map(|b| f32::from_le_bytes([b[0], b[1], b[2], b[3]]))
+                .collect();
             if !samples.is_empty() {
                 (state.on_samples)(&samples);
             }
@@ -70,16 +85,22 @@ pub fn run_loopback(_process: Option<u32>, stop: &dyn Fn() -> bool, mut on_sampl
         id: spa::param::ParamType::EnumFormat.as_raw(),
         properties: info.into(),
     };
-    let bytes: Vec<u8> = spa::pod::serialize::PodSerializer::serialize(std::io::Cursor::new(Vec::new()), &spa::pod::Value::Object(object))
-        .map_err(|e| platform(format!("{e:?}")))?
-        .0
-        .into_inner();
-    let mut params = [spa::pod::Pod::from_bytes(&bytes).ok_or_else(|| platform("the format request is not valid"))?];
+    let bytes: Vec<u8> = spa::pod::serialize::PodSerializer::serialize(
+        std::io::Cursor::new(Vec::new()),
+        &spa::pod::Value::Object(object),
+    )
+    .map_err(|e| platform(format!("{e:?}")))?
+    .0
+    .into_inner();
+    let mut params = [spa::pod::Pod::from_bytes(&bytes)
+        .ok_or_else(|| platform("the format request is not valid"))?];
     stream
         .connect(
             spa::utils::Direction::Input,
             None,
-            pw::stream::StreamFlags::AUTOCONNECT | pw::stream::StreamFlags::MAP_BUFFERS | pw::stream::StreamFlags::RT_PROCESS,
+            pw::stream::StreamFlags::AUTOCONNECT
+                | pw::stream::StreamFlags::MAP_BUFFERS
+                | pw::stream::StreamFlags::RT_PROCESS,
             &mut params,
         )
         .map_err(platform)?;
@@ -93,7 +114,10 @@ pub fn run_loopback(_process: Option<u32>, stop: &dyn Fn() -> bool, mut on_sampl
         }
     });
     timer
-        .update_timer(Some(Duration::from_millis(100)), Some(Duration::from_millis(100)))
+        .update_timer(
+            Some(Duration::from_millis(100)),
+            Some(Duration::from_millis(100)),
+        )
         .into_result()
         .map_err(|e| platform(format!("{e:?}")))?;
 

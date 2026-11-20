@@ -35,7 +35,12 @@ impl GraphicsCaptureApiHandler for Handler {
     type Error = Box<dyn std::error::Error + Send + Sync>;
 
     fn new(ctx: Context<Self::Flags>) -> Result<Self, Self::Error> {
-        let flags = ctx.flags.lock().unwrap().take().ok_or("capture flags missing")?;
+        let flags = ctx
+            .flags
+            .lock()
+            .unwrap()
+            .take()
+            .ok_or("capture flags missing")?;
         Ok(Handler { flags })
     }
 
@@ -125,7 +130,11 @@ pub fn run(
     }
     let _ = control.stop();
 
-    Ok(if closed.load(Ordering::SeqCst) { Ended::SourceClosed } else { Ended::Stopped })
+    Ok(if closed.load(Ordering::SeqCst) {
+        Ended::SourceClosed
+    } else {
+        Ended::Stopped
+    })
 }
 
 /// Names of the monitors, for the picker and the CLI.
@@ -156,7 +165,12 @@ pub fn windows() -> Result<Vec<String>, Error> {
         .filter_map(|w| w.title().ok())
         .map(|t| t.trim().to_string())
         // Console windows are titled with their program's path, and the input method has a window of its own.
-        .filter(|t| !t.is_empty() && !t.to_lowercase().ends_with(".exe") && t != "Windows 输入体验" && t != "Program Manager")
+        .filter(|t| {
+            !t.is_empty()
+                && !t.to_lowercase().ends_with(".exe")
+                && t != "Windows 输入体验"
+                && t != "Program Manager"
+        })
         .collect();
     titles.sort();
     titles.dedup();

@@ -1,6 +1,7 @@
 [workspace]
 resolver = "2"
-members = ["core/capture", "core/encode", "core/link", "core/sender", "core/cli", "app"]
+members = ["core/capture", "core/encode", "core/link", "core/sender", "core/cli", "app-gpui"]
+exclude = ["app"]
 
 [workspace.package]
 edition = "2021"

@@ -31,7 +31,10 @@ impl fmt::Display for Error {
             Error::Rejected(reason) => write!(f, "the receiver refused: {reason}"),
             Error::PairingFailed(reason) => write!(f, "pairing failed: {reason}"),
             Error::CodeRequired => write!(f, "the receiver needs a pairing code"),
-            Error::ReceiverChanged => write!(f, "this is not the receiver paired before (its key changed)"),
+            Error::ReceiverChanged => write!(
+                f,
+                "this is not the receiver paired before (its key changed)"
+            ),
             Error::Protocol(what) => write!(f, "protocol error: {what}"),
             Error::Io(what) => write!(f, "network error: {what}"),
         }

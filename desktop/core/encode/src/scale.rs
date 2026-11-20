@@ -21,7 +21,15 @@ pub fn fit_size(w: u32, h: u32, max_w: u32, max_h: u32) -> (u32, u32) {
 /// Converts a BGRA picture of `sw`x`sh` to NV12 (BT.709 limited range) of exactly `dw`x`dh`
 /// into `out` (`dw * dh * 3 / 2` bytes). The picture is scaled down to fit, never up, keeping its
 /// shape and centred; what is left is black. Same size in and out is the plain fast conversion.
-pub fn bgra_to_nv12_fit(src: &[u8], stride: usize, sw: usize, sh: usize, dw: usize, dh: usize, out: &mut [u8]) {
+pub fn bgra_to_nv12_fit(
+    src: &[u8],
+    stride: usize,
+    sw: usize,
+    sh: usize,
+    dw: usize,
+    dh: usize,
+    out: &mut [u8],
+) {
     assert!(dw % 2 == 0 && dh % 2 == 0 && out.len() >= dw * dh * 3 / 2 && sw >= 2 && sh >= 2);
     if sw == dw && sh == dh {
         return bgra_to_nv12(src, stride, sw & !1, sh & !1, out);
@@ -44,7 +52,10 @@ pub fn bgra_to_nv12_fit(src: &[u8], stride: usize, sw: usize, sh: usize, dw: usi
         .filter(|(pair, _)| pair * 2 >= oy && pair * 2 < oy + fh)
         .map(|(pair, (l, c))| (pair, l, c))
         .collect();
-    let threads = std::thread::available_parallelism().map(|n| n.get()).unwrap_or(2).min(8);
+    let threads = std::thread::available_parallelism()
+        .map(|n| n.get())
+        .unwrap_or(2)
+        .min(8);
     let per = jobs.len().div_ceil(threads).max(1);
     std::thread::scope(|scope| {
         while !jobs.is_empty() {
@@ -56,16 +67,28 @@ pub fn bgra_to_nv12_fit(src: &[u8], stride: usize, sw: usize, sh: usize, dw: usi
                         let (mut r, mut g, mut b) = (0i32, 0i32, 0i32);
                         for dy in 0..2 {
                             for dx in 0..2 {
-                                let (pr, pg, pb) = average(src, stride, sw, sh, fw, fh, x + dx - ox, pair * 2 + dy - oy);
-                                l[dy * dw + x + dx] = (((47 * pr + 157 * pg + 16 * pb + 128) >> 8) + 16) as u8;
+                                let (pr, pg, pb) = average(
+                                    src,
+                                    stride,
+                                    sw,
+                                    sh,
+                                    fw,
+                                    fh,
+                                    x + dx - ox,
+                                    pair * 2 + dy - oy,
+                                );
+                                l[dy * dw + x + dx] =
+                                    (((47 * pr + 157 * pg + 16 * pb + 128) >> 8) + 16) as u8;
                                 r += pr;
                                 g += pg;
                                 b += pb;
                             }
                         }
                         let (r, g, b) = ((r + 2) >> 2, (g + 2) >> 2, (b + 2) >> 2);
-                        c[x] = ((((-26 * r - 87 * g + 112 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
-                        c[x + 1] = ((((112 * r - 102 * g - 10 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
+                        c[x] =
+                            ((((-26 * r - 87 * g + 112 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
+                        c[x + 1] =
+                            ((((112 * r - 102 * g - 10 * b + 128) >> 8) + 128).clamp(0, 255)) as u8;
                     }
                 }
             });
@@ -75,7 +98,16 @@ pub fn bgra_to_nv12_fit(src: &[u8], stride: usize, sw: usize, sh: usize, dw: usi
 
 /// The average colour of the source area that output pixel (`u`, `v`) of a `fw`x`fh` picture covers.
 #[allow(clippy::too_many_arguments)]
-fn average(src: &[u8], stride: usize, sw: usize, sh: usize, fw: usize, fh: usize, u: usize, v: usize) -> (i32, i32, i32) {
+fn average(
+    src: &[u8],
+    stride: usize,
+    sw: usize,
+    sh: usize,
+    fw: usize,
+    fh: usize,
+    u: usize,
+    v: usize,
+) -> (i32, i32, i32) {
     let x0 = u * sw / fw;
     let x1 = ((u + 1) * sw / fw).clamp(x0 + 1, sw);
     let y0 = v * sh / fh;
@@ -90,7 +122,11 @@ fn average(src: &[u8], stride: usize, sw: usize, sh: usize, fw: usize, fh: usize
         }
     }
     let n = ((x1 - x0) * (y1 - y0)) as u32;
-    (((r + n / 2) / n) as i32, ((g + n / 2) / n) as i32, ((b + n / 2) / n) as i32)
+    (
+        ((r + n / 2) / n) as i32,
+        ((g + n / 2) / n) as i32,
+        ((b + n / 2) / n) as i32,
+    )
 }
 
 #[cfg(test)]
@@ -139,7 +175,12 @@ mod tests {
         let mut out = vec![0u8; 4 * 6 * 3 / 2];
         bgra_to_nv12_fit(&src, 8 * 4, 8, 4, 4, 6, &mut out);
         let row = |y: usize| &out[y * 4..y * 4 + 4];
-        assert!(row(0).iter().chain(row(1)).chain(row(4)).chain(row(5)).all(|&y| y == 16));
+        assert!(row(0)
+            .iter()
+            .chain(row(1))
+            .chain(row(4))
+            .chain(row(5))
+            .all(|&y| y == 16));
         assert!(row(2).iter().chain(row(3)).all(|&y| y >= 234));
         // The chroma of the bars is neutral.
         assert_eq!(&out[24..28], &[128, 128, 128, 128]);

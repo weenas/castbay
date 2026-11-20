@@ -1,6 +1,6 @@
 # CastBay Desktop: design
 
-Status: draft for review. Decisions marked **open** need an experiment before they are final.
+Status: implementation update. The original Tauri shell decision below is superseded by the shared GPUI shell in `app-gpui/`; historical planning details remain for context.
 
 ## 1. Goals and non-goals
 
@@ -38,7 +38,8 @@ desktop/
     encode/             trait Encoder; Media Foundation H.264 (now)
     session/            glues capture, encode and link; owns the lifecycle and stats
     cli/                `castbay-cast`: a command-line sender used for tests and benchmarks
-  app/                  Tauri 2 + React + TypeScript shell (UI only)
+  app/                  legacy shell modules retained for shared support code and reference
+  app-gpui/             shared GPUI desktop application (Windows and Linux)
 .github/workflows/desktop.yml     path-filtered to desktop/**
 ```
 
@@ -57,19 +58,19 @@ appears.
 
 ## 4. Desktop stack
 
-**Tauri 2 shell over an independent Rust core.** Capture, encoding and networking are native
-in either framework, and the UI is a device list, a source picker and a status page, so the
-framework matters least. Keeping everything below the UI in `core` means the shell can be
-swapped (Electron through napi-rs) without touching it, which is what keeps this decision
-reversible.
+**GPUI shell over an independent Rust core.** Windows and Linux use one Rust UI implementation
+for receiver discovery, settings, paired devices, diagnostics, reports, updates and casting
+status. The screen/window selection remains platform-specific because Linux uses the XDG desktop
+portal while Windows enumerates capture sources directly. Core capture, encoding and transport
+remain independent from the UI.
 
 Why not rely on the web view's `getDisplayMedia` and WebCodecs: it exists on Windows
 (WebView2) but not on the other systems' web views, and it gives little control over frame
 rate, bitrate, window selection and latency.
 
-Costs accepted: the project has no Rust yet; Linux web views are the weakest part of Tauri
-(only the UI is affected). **open**: if the Tauri build or WebView2 deployment turns out
-painful in Phase 1, revisit.
+The GPUI crates are pinned to a stable crates.io distribution and the same application is built
+on Windows and Linux in CI. Keep the legacy shell excluded from the default workspace build while
+shared support modules are migrated out of it.
 
 ## 5. Pipeline (sender)
 

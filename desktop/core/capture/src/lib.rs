@@ -84,7 +84,9 @@ pub fn run(
     #[cfg(not(any(windows, target_os = "linux")))]
     {
         let _ = (target, stop, &mut on_frame);
-        Err(Error::Platform("screen capture is not implemented on this system".into()))
+        Err(Error::Platform(
+            "screen capture is not implemented on this system".into(),
+        ))
     }
 }
 

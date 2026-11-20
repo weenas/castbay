@@ -1,0 +1,32 @@
+[package]
+name = "castbay-desktop-gpui"
+version = "0.1.8"
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "castbay-desktop"
+path = "src/main.rs"
+
+[features]
+ffmpeg-lib = ["castbay-sender/ffmpeg-lib"]
+
+[dependencies]
+gpui = { package = "gpui-unofficial", version = "=1.28.1", default-features = false }
+gpui_platform = { package = "gpui-platform-gpui-unofficial", version = "=1.28.1", default-features = false, features = ["wayland", "x11"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+getrandom = "0.3"
+tray-icon = "0.25.1"
+sha2 = "0.10"
+castbay-capture = { path = "../core/capture" }
+castbay-link = { path = "../core/link" }
+castbay-sender = { path = "../core/sender" }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libloading = "0.8"
+
+[target.'cfg(windows)'.dependencies.windows]
+version = "0.61"
+features = ["Win32_Globalization", "Win32_Foundation", "Win32_UI_WindowsAndMessaging"]

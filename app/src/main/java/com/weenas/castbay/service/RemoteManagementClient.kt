@@ -356,8 +356,8 @@ class RemoteManagementClient(
 
     companion object {
         private const val TAG = "CastBayRemote"
-        private const val BASE = "https://cb.weenas.com"
-        private const val WS_BASE = "wss://cb.weenas.com"
+        private const val BASE = "https://manage.castbay.weenas.com"
+        private const val WS_BASE = "wss://manage.castbay.weenas.com"
         private val JSON = "application/json; charset=utf-8".toMediaType()
     }
 }

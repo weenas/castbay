@@ -13,7 +13,8 @@ use crate::protocol::Error;
 
 /// SHA-256 of a certificate's SubjectPublicKeyInfo: how both sides name a key.
 pub fn fingerprint(cert_der: &[u8]) -> Result<[u8; 32], Error> {
-    let (_, cert) = x509_parser::parse_x509_certificate(cert_der).map_err(|e| Error::Protocol(format!("certificate: {e}")))?;
+    let (_, cert) = x509_parser::parse_x509_certificate(cert_der)
+        .map_err(|e| Error::Protocol(format!("certificate: {e}")))?;
     Ok(Sha256::digest(cert.tbs_certificate.subject_pki.raw).into())
 }
 
@@ -36,21 +37,35 @@ impl Identity {
         let key_path = dir.join("key.der");
         if let (Ok(cert), Ok(key)) = (fs::read(&cert_path), fs::read(&key_path)) {
             let fingerprint = fingerprint(&cert)?;
-            return Ok(Identity { cert, key, fingerprint });
+            return Ok(Identity {
+                cert,
+                key,
+                fingerprint,
+            });
         }
-        let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256).map_err(|e| Error::Protocol(e.to_string()))?;
-        let mut params = CertificateParams::new(Vec::<String>::new()).map_err(|e| Error::Protocol(e.to_string()))?;
+        let key_pair = KeyPair::generate_for(&PKCS_ECDSA_P256_SHA256)
+            .map_err(|e| Error::Protocol(e.to_string()))?;
+        let mut params = CertificateParams::new(Vec::<String>::new())
+            .map_err(|e| Error::Protocol(e.to_string()))?;
         params.distinguished_name = DistinguishedName::new();
-        params.distinguished_name.push(DnType::CommonName, "CastBay Desktop");
+        params
+            .distinguished_name
+            .push(DnType::CommonName, "CastBay Desktop");
         // Valid for a long time: nothing checks the date, the key is the identity.
         params.not_before = rcgen::date_time_ymd(2024, 1, 1);
         params.not_after = rcgen::date_time_ymd(2054, 1, 1);
-        let cert = params.self_signed(&key_pair).map_err(|e| Error::Protocol(e.to_string()))?;
+        let cert = params
+            .self_signed(&key_pair)
+            .map_err(|e| Error::Protocol(e.to_string()))?;
         let (cert, key) = (cert.der().to_vec(), key_pair.serialize_der());
         write_private(&key_path, &key)?;
         fs::write(&cert_path, &cert)?;
         let fingerprint = fingerprint(&cert)?;
-        Ok(Identity { cert, key, fingerprint })
+        Ok(Identity {
+            cert,
+            key,
+            fingerprint,
+        })
     }
 
     pub(crate) fn rustls(&self) -> (Vec<CertificateDer<'static>>, PrivateKeyDer<'static>) {
@@ -100,7 +115,10 @@ impl Entry {
 
     fn known(&self) -> Known {
         match self {
-            Entry::Key(fp) => Known { fp: fp.clone(), ..Known::default() },
+            Entry::Key(fp) => Known {
+                fp: fp.clone(),
+                ..Known::default()
+            },
             Entry::Known(k) => k.clone(),
         }
     }
@@ -126,7 +144,10 @@ pub struct Pins {
 impl Pins {
     pub fn load(dir: &Path) -> Pins {
         let path = dir.join("receivers.json");
-        let map = fs::read(&path).ok().and_then(|b| serde_json::from_slice(&b).ok()).unwrap_or_default();
+        let map = fs::read(&path)
+            .ok()
+            .and_then(|b| serde_json::from_slice(&b).ok())
+            .unwrap_or_default();
         Pins { path, map }
     }
 
@@ -143,14 +164,27 @@ impl Pins {
     }
 
     /// Remembers a receiver's key, its name (kept when `name` is empty) and that it was just seen.
-    pub fn pin(&mut self, receiver_id: &str, fingerprint: &[u8; 32], name: &str) -> Result<(), Error> {
-        let mut known = self.map.get(receiver_id).map(Entry::known).unwrap_or_default();
+    pub fn pin(
+        &mut self,
+        receiver_id: &str,
+        fingerprint: &[u8; 32],
+        name: &str,
+    ) -> Result<(), Error> {
+        let mut known = self
+            .map
+            .get(receiver_id)
+            .map(Entry::known)
+            .unwrap_or_default();
         known.fp = hex(fingerprint);
         if !name.is_empty() {
             known.name = name.to_string();
         }
-        known.seen = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
-        self.map.insert(receiver_id.to_string(), Entry::Known(known));
+        known.seen = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        self.map
+            .insert(receiver_id.to_string(), Entry::Known(known));
         self.save()
     }
 
@@ -166,10 +200,19 @@ impl Pins {
             .iter()
             .map(|(id, e)| {
                 let k = e.known();
-                PinnedReceiver { id: id.clone(), name: k.name, seen: k.seen }
+                PinnedReceiver {
+                    id: id.clone(),
+                    name: k.name,
+                    seen: k.seen,
+                }
             })
             .collect();
-        all.sort_by(|a, b| b.seen.cmp(&a.seen).then_with(|| a.name.cmp(&b.name)).then_with(|| a.id.cmp(&b.id)));
+        all.sort_by(|a, b| {
+            b.seen
+                .cmp(&a.seen)
+                .then_with(|| a.name.cmp(&b.name))
+                .then_with(|| a.id.cmp(&b.id))
+        });
         all
     }
 
@@ -177,7 +220,10 @@ impl Pins {
         if let Some(dir) = self.path.parent() {
             fs::create_dir_all(dir)?;
         }
-        fs::write(&self.path, serde_json::to_vec_pretty(&self.map).expect("a map serialises"))?;
+        fs::write(
+            &self.path,
+            serde_json::to_vec_pretty(&self.map).expect("a map serialises"),
+        )?;
         Ok(())
     }
 }
@@ -187,7 +233,8 @@ mod tests {
     use super::*;
 
     fn temp(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!("castbay-link-test-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("castbay-link-test-{name}-{}", std::process::id()));
         let _ = fs::remove_dir_all(&dir);
         dir
     }
@@ -228,7 +275,10 @@ mod tests {
         std::thread::sleep(std::time::Duration::from_millis(1100));
         pins.pin("a", &[1u8; 32], "").unwrap();
         let list = Pins::load(&dir).list();
-        assert_eq!(list.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(), ["a", "b"]);
+        assert_eq!(
+            list.iter().map(|r| r.id.as_str()).collect::<Vec<_>>(),
+            ["a", "b"]
+        );
         assert_eq!(list[0].name, "Bedroom");
         assert!(list[0].seen > list[1].seen);
         let _ = fs::remove_dir_all(dir);
@@ -242,7 +292,14 @@ mod tests {
         fs::write(dir.join("receivers.json"), format!(r#"{{"abc": "{key}"}}"#)).unwrap();
         let mut pins = Pins::load(&dir);
         assert_eq!(pins.get("abc"), Some([7u8; 32]));
-        assert_eq!(pins.list(), vec![PinnedReceiver { id: "abc".into(), name: String::new(), seen: 0 }]);
+        assert_eq!(
+            pins.list(),
+            vec![PinnedReceiver {
+                id: "abc".into(),
+                name: String::new(),
+                seen: 0
+            }]
+        );
         // Meeting it again fills in the name; the file is then in the new format.
         pins.pin("abc", &[7u8; 32], "Old TV").unwrap();
         let reread = Pins::load(&dir);

@@ -19,7 +19,10 @@ use tokio_rustls::client::TlsStream;
 use tokio_rustls::TlsConnector;
 
 use crate::identity::{fingerprint, hex, Identity, Pins};
-use crate::protocol::{audio_frame, control_frame, verification_code, video_frame, Error, MAX_CONTROL, TYPE_CONTROL, VERSION};
+use crate::protocol::{
+    audio_frame, control_frame, verification_code, video_frame, Error, MAX_CONTROL, TYPE_CONTROL,
+    VERSION,
+};
 
 /// Audio the sender will send: AAC-LC frames (see docs/protocol.md).
 #[derive(Debug, Clone)]
@@ -54,7 +57,11 @@ const DEFAULT_FORMATS: [&str; 1] = ["h264"];
 
 /// The format to offer: the sender's best that the receiver (its `hello`'s `video`) decodes, else H.264.
 pub fn choose_format(wanted: &[String], receiver_video: &[String]) -> String {
-    wanted.iter().find(|f| receiver_video.contains(f)).cloned().unwrap_or_else(|| "h264".to_string())
+    wanted
+        .iter()
+        .find(|f| receiver_video.contains(f))
+        .cloned()
+        .unwrap_or_else(|| "h264".to_string())
 }
 
 /// Where the pairing code comes from: the person at the keyboard, who reads it off the TV.
@@ -76,7 +83,11 @@ impl<F: FnMut(&str) -> Option<String> + Send> PairingCode for F {
 pub enum Event {
     /// The decoder lost its place (or frames were dropped here): send a key frame soon.
     KeyFrameRequested,
-    Stats { decode_ms: i64, dropped: u64, fps: f64 },
+    Stats {
+        decode_ms: i64,
+        dropped: u64,
+        fps: f64,
+    },
     /// The session is over: the receiver said goodbye (`stopped_by_receiver`, `replaced`, ...) or the connection broke.
     Closed(String),
 }
@@ -106,12 +117,32 @@ impl ServerCertVerifier for AcceptAny {
         Ok(ServerCertVerified::assertion())
     }
 
-    fn verify_tls12_signature(&self, message: &[u8], cert: &CertificateDer<'_>, dss: &DigitallySignedStruct) -> Result<HandshakeSignatureValid, rustls::Error> {
-        verify_tls12_signature(message, cert, dss, &self.0.signature_verification_algorithms)
+    fn verify_tls12_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls12_signature(
+            message,
+            cert,
+            dss,
+            &self.0.signature_verification_algorithms,
+        )
     }
 
-    fn verify_tls13_signature(&self, message: &[u8], cert: &CertificateDer<'_>, dss: &DigitallySignedStruct) -> Result<HandshakeSignatureValid, rustls::Error> {
-        verify_tls13_signature(message, cert, dss, &self.0.signature_verification_algorithms)
+    fn verify_tls13_signature(
+        &self,
+        message: &[u8],
+        cert: &CertificateDer<'_>,
+        dss: &DigitallySignedStruct,
+    ) -> Result<HandshakeSignatureValid, rustls::Error> {
+        verify_tls13_signature(
+            message,
+            cert,
+            dss,
+            &self.0.signature_verification_algorithms,
+        )
     }
 
     fn supported_verify_schemes(&self) -> Vec<SignatureScheme> {
@@ -144,14 +175,20 @@ async fn read_control(reader: &mut Reader) -> Result<Option<Value>, Error> {
             Err(e) => return Err(e.into()),
         }
         let length = u32::from_be_bytes([head[1], head[2], head[3], head[4]]) as usize;
-        let limit = if head[0] == TYPE_CONTROL { MAX_CONTROL } else { crate::protocol::MAX_MESSAGE };
+        let limit = if head[0] == TYPE_CONTROL {
+            MAX_CONTROL
+        } else {
+            crate::protocol::MAX_MESSAGE
+        };
         if length > limit {
             return Err(Error::Protocol(format!("a message of {length} bytes")));
         }
         let mut payload = vec![0u8; length];
         reader.read_exact(&mut payload).await?;
         if head[0] == TYPE_CONTROL {
-            return serde_json::from_slice(&payload).map(Some).map_err(|_| Error::Protocol("a control message that is not JSON".into()));
+            return serde_json::from_slice(&payload)
+                .map(Some)
+                .map_err(|_| Error::Protocol("a control message that is not JSON".into()));
         }
     }
 }
@@ -170,7 +207,11 @@ fn kind(message: &Value) -> &str {
 }
 
 fn reason(message: &Value) -> String {
-    message.get("reason").and_then(Value::as_str).unwrap_or("").to_string()
+    message
+        .get("reason")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string()
 }
 
 /// A running cast. Frames go in with [`Session::send_video`]; the receiver's messages come
@@ -210,10 +251,18 @@ pub async fn connect(
         .map_err(|_| Error::Io("connecting timed out".into()))??;
     tcp.set_nodelay(true)?;
     let connector = TlsConnector::from(Arc::new(tls_config(identity)?));
-    let tls = timeout(Duration::from_secs(10), connector.connect(ServerName::try_from("castbay").expect("a valid name"), tcp))
-        .await
-        .map_err(|_| Error::Io("the TLS handshake timed out".into()))??;
-    let peer = tls.get_ref().1.peer_certificates().and_then(|c| c.first()).ok_or_else(|| Error::Protocol("the receiver sent no certificate".into()))?;
+    let tls = timeout(
+        Duration::from_secs(10),
+        connector.connect(ServerName::try_from("castbay").expect("a valid name"), tcp),
+    )
+    .await
+    .map_err(|_| Error::Io("the TLS handshake timed out".into()))??;
+    let peer = tls
+        .get_ref()
+        .1
+        .peer_certificates()
+        .and_then(|c| c.first())
+        .ok_or_else(|| Error::Protocol("the receiver sent no certificate".into()))?;
     let receiver_fp = fingerprint(peer.as_ref())?;
     if let Some(id) = receiver_id {
         if let Some(pinned) = pins.get(id) {
@@ -235,15 +284,29 @@ pub async fn connect(
         return Err(Error::Rejected(reason(&first)));
     }
     if kind(&first) != "hello" {
-        return Err(Error::Protocol(format!("expected hello, got {}", kind(&first))));
+        return Err(Error::Protocol(format!(
+            "expected hello, got {}",
+            kind(&first)
+        )));
     }
-    let receiver_name = first.get("name").and_then(Value::as_str).unwrap_or("").to_string();
+    let receiver_name = first
+        .get("name")
+        .and_then(Value::as_str)
+        .unwrap_or("")
+        .to_string();
     let receiver_video: Vec<String> = match first.get("video").and_then(Value::as_array) {
-        Some(list) => list.iter().filter_map(Value::as_str).map(str::to_string).collect(),
+        Some(list) => list
+            .iter()
+            .filter_map(Value::as_str)
+            .map(str::to_string)
+            .collect(),
         None => DEFAULT_FORMATS.iter().map(|f| f.to_string()).collect(),
     };
     let format = choose_format(&config.formats, &receiver_video);
-    let id = receiver_id.map(str::to_string).or_else(|| first.get("id").and_then(Value::as_str).map(str::to_string)).unwrap_or_default();
+    let id = receiver_id
+        .map(str::to_string)
+        .or_else(|| first.get("id").and_then(Value::as_str).map(str::to_string))
+        .unwrap_or_default();
 
     // Admission: a reject, a pairing code to type, or ready.
     loop {
@@ -253,7 +316,9 @@ pub async fn connect(
             "pair_required" => {
                 let expected = verification_code(&receiver_fp, &identity.fingerprint);
                 let typed = code.code(&expected).ok_or(Error::CodeRequired)?;
-                writer.write_all(&control_frame(&json!({"t": "pair", "sas": typed}))).await?;
+                writer
+                    .write_all(&control_frame(&json!({"t": "pair", "sas": typed})))
+                    .await?;
             }
             "pair_result" => {
                 if message.get("ok").and_then(Value::as_bool) != Some(true) {
@@ -279,7 +344,8 @@ pub async fn connect(
         let message = expect(&mut reader, "accept").await?;
         match kind(&message) {
             "accept" => {
-                audio_accepted = config.audio.is_some() && message.get("audio").and_then(Value::as_bool) == Some(true);
+                audio_accepted = config.audio.is_some()
+                    && message.get("audio").and_then(Value::as_bool) == Some(true);
                 break;
             }
             "reject" => return Err(Error::Rejected(reason(&message))),
@@ -294,7 +360,19 @@ pub async fn connect(
     let closed = Arc::new(AtomicBool::new(false));
     let writer_task = tokio::spawn(write_loop(writer, queue, audio_queue, closed.clone()));
     let reader_task = tokio::spawn(read_loop(reader, events_tx, closed.clone()));
-    Ok(Session { frames, audio, events, dropping, closed, writer: writer_task, reader: reader_task, receiver_id: id, receiver_name, audio_accepted, format })
+    Ok(Session {
+        frames,
+        audio,
+        events,
+        dropping,
+        closed,
+        writer: writer_task,
+        reader: reader_task,
+        receiver_id: id,
+        receiver_name,
+        audio_accepted,
+        format,
+    })
 }
 
 /// Pictures waiting to be written; more than this and the connection is not keeping up.
@@ -303,7 +381,12 @@ const QUEUE_FRAMES: usize = 6;
 /// AAC frames waiting to be written (about 21 ms each): well under a second, then the oldest news is dropped.
 const AUDIO_QUEUE_FRAMES: usize = 32;
 
-async fn write_loop(mut writer: Writer, mut queue: mpsc::Receiver<Vec<u8>>, mut audio: mpsc::Receiver<Vec<u8>>, closed: Arc<AtomicBool>) {
+async fn write_loop(
+    mut writer: Writer,
+    mut queue: mpsc::Receiver<Vec<u8>>,
+    mut audio: mpsc::Receiver<Vec<u8>>,
+    closed: Arc<AtomicBool>,
+) {
     let mut ping = tokio::time::interval(Duration::from_secs(2));
     let mut audio_open = true;
     loop {
@@ -336,7 +419,11 @@ async fn write_loop(mut writer: Writer, mut queue: mpsc::Receiver<Vec<u8>>, mut 
     let _ = writer.shutdown().await;
 }
 
-async fn read_loop(mut reader: Reader, events: mpsc::UnboundedSender<Event>, closed: Arc<AtomicBool>) {
+async fn read_loop(
+    mut reader: Reader,
+    events: mpsc::UnboundedSender<Event>,
+    closed: Arc<AtomicBool>,
+) {
     let end = loop {
         match timeout(Duration::from_secs(10), read_control(&mut reader)).await {
             Err(_) => break "the receiver went silent".to_string(),
@@ -348,7 +435,10 @@ async fn read_loop(mut reader: Reader, events: mpsc::UnboundedSender<Event>, clo
                 }
                 "stats" => {
                     let _ = events.send(Event::Stats {
-                        decode_ms: message.get("decode_ms").and_then(Value::as_i64).unwrap_or(-1),
+                        decode_ms: message
+                            .get("decode_ms")
+                            .and_then(Value::as_i64)
+                            .unwrap_or(-1),
                         dropped: message.get("dropped").and_then(Value::as_u64).unwrap_or(0),
                         fps: message.get("fps").and_then(Value::as_f64).unwrap_or(0.0),
                     });
@@ -411,7 +501,10 @@ impl Session {
 
     /// Says goodbye and waits for what is queued to be written.
     pub async fn close(self) {
-        let _ = self.frames.send(control_frame(&json!({"t": "bye", "reason": "done"}))).await;
+        let _ = self
+            .frames
+            .send(control_frame(&json!({"t": "bye", "reason": "done"})))
+            .await;
         drop(self.frames);
         let _ = timeout(Duration::from_secs(3), self.writer).await;
         self.reader.abort();
@@ -428,10 +521,25 @@ mod tests {
 
     #[test]
     fn the_best_format_both_sides_have_is_offered() {
-        assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&["h264", "h265"])), "h265");
-        assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&["h264"])), "h264", "the receiver does not decode H.265");
-        assert_eq!(choose_format(&v(&["h264"]), &v(&["h264", "h265"])), "h264", "the sender cannot encode H.265, or was told not to");
-        assert_eq!(choose_format(&v(&["h265"]), &v(&["h264"])), "h264", "nothing in common: H.264, which every receiver decodes");
+        assert_eq!(
+            choose_format(&v(&["h265", "h264"]), &v(&["h264", "h265"])),
+            "h265"
+        );
+        assert_eq!(
+            choose_format(&v(&["h265", "h264"]), &v(&["h264"])),
+            "h264",
+            "the receiver does not decode H.265"
+        );
+        assert_eq!(
+            choose_format(&v(&["h264"]), &v(&["h264", "h265"])),
+            "h264",
+            "the sender cannot encode H.265, or was told not to"
+        );
+        assert_eq!(
+            choose_format(&v(&["h265"]), &v(&["h264"])),
+            "h264",
+            "nothing in common: H.264, which every receiver decodes"
+        );
         assert_eq!(choose_format(&v(&["h265", "h264"]), &v(&[])), "h264");
     }
 }

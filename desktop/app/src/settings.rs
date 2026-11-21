@@ -79,7 +79,10 @@ const KINDS: [&str; 2] = ["monitor", "window"];
 impl Settings {
     /// What is saved; defaults for a missing, unreadable or damaged file (and for fields it lacks).
     pub fn load(dir: &Path) -> Settings {
-        let Some(value) = std::fs::read(dir.join("settings.json")).ok().and_then(|b| serde_json::from_slice::<Value>(&b).ok()) else {
+        let Some(value) = std::fs::read(dir.join("settings.json"))
+            .ok()
+            .and_then(|b| serde_json::from_slice::<Value>(&b).ok())
+        else {
             return Settings::default();
         };
         let mut settings: Settings = serde_json::from_value(value.clone()).unwrap_or_default();
@@ -103,7 +106,11 @@ impl Settings {
     pub fn save(&self, dir: &Path) -> Result<(), String> {
         std::fs::create_dir_all(dir).map_err(|e| e.to_string())?;
         let temporary = dir.join("settings.json.tmp");
-        std::fs::write(&temporary, serde_json::to_vec_pretty(self).expect("settings serialise")).map_err(|e| e.to_string())?;
+        std::fs::write(
+            &temporary,
+            serde_json::to_vec_pretty(self).expect("settings serialise"),
+        )
+        .map_err(|e| e.to_string())?;
         std::fs::rename(&temporary, dir.join("settings.json")).map_err(|e| e.to_string())
     }
 
@@ -117,7 +124,15 @@ impl Settings {
         for (key, value) in object {
             match key.as_str() {
                 "bitrate_mbps" => next.bitrate_mbps = number(value, BITRATE_MBPS, key)?,
-                "fps" => next.fps = number(value, 30..=60, key).and_then(|n| if FPS.contains(&n) { Ok(n) } else { Err(format!("{key}: 30 or 60")) })?,
+                "fps" => {
+                    next.fps = number(value, 30..=60, key).and_then(|n| {
+                        if FPS.contains(&n) {
+                            Ok(n)
+                        } else {
+                            Err(format!("{key}: 30 or 60"))
+                        }
+                    })?
+                }
                 // What the page kept in its own storage before settings.json (three fixed qualities).
                 "quality" => match value.as_str() {
                     Some(q @ ("saver" | "balanced" | "smooth")) => next.use_quality(q),
@@ -202,12 +217,18 @@ fn choice(value: &Value, allowed: &[&str], key: &str) -> Result<String, String> 
 fn number(value: &Value, allowed: std::ops::RangeInclusive<u32>, key: &str) -> Result<u32, String> {
     match value.as_u64() {
         Some(n) if allowed.contains(&(n as u32)) && n <= u32::MAX as u64 => Ok(n as u32),
-        _ => Err(format!("{key}: a whole number from {} to {}", allowed.start(), allowed.end())),
+        _ => Err(format!(
+            "{key}: a whole number from {} to {}",
+            allowed.start(),
+            allowed.end()
+        )),
     }
 }
 
 fn boolean(value: &Value, key: &str) -> Result<bool, String> {
-    value.as_bool().ok_or_else(|| format!("{key}: must be true or false"))
+    value
+        .as_bool()
+        .ok_or_else(|| format!("{key}: must be true or false"))
 }
 
 fn text(value: &Value, key: &str) -> Result<String, String> {
@@ -223,7 +244,8 @@ mod tests {
     use serde_json::json;
 
     fn temp(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("castbay-settings-{name}-{}", std::process::id()));
+        let dir =
+            std::env::temp_dir().join(format!("castbay-settings-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         dir
     }
@@ -232,7 +254,10 @@ mod tests {
     fn a_new_install_gets_the_defaults() {
         let s = Settings::load(&temp("none"));
         assert_eq!(s, Settings::default());
-        assert_eq!((s.send_audio, s.encoder.as_str(), s.error_reports), (true, "auto", false));
+        assert_eq!(
+            (s.send_audio, s.encoder.as_str(), s.error_reports),
+            (true, "auto", false)
+        );
         assert_eq!(s.quality_params(), (30, 8_000_000));
     }
 
@@ -252,7 +277,15 @@ mod tests {
     fn a_bad_value_changes_nothing() {
         let mut s = Settings::default();
         assert!(s.apply(&json!({"fps": 60, "encoder": "magic"})).is_err());
-        for bad in [json!({"fps": 45}), json!({"fps": "60"}), json!({"bitrate_mbps": 1}), json!({"bitrate_mbps": 21}), json!({"bitrate_mbps": 7.5}), json!({"bitrate_mbps": -3}), json!({"quality": "best"})] {
+        for bad in [
+            json!({"fps": 45}),
+            json!({"fps": "60"}),
+            json!({"bitrate_mbps": 1}),
+            json!({"bitrate_mbps": 21}),
+            json!({"bitrate_mbps": 7.5}),
+            json!({"bitrate_mbps": -3}),
+            json!({"quality": "best"}),
+        ] {
             assert!(s.apply(&bad).is_err(), "{bad}");
         }
         assert_eq!(s, Settings::default());
@@ -265,7 +298,8 @@ mod tests {
     #[test]
     fn unknown_fields_are_ignored_and_a_patch_changes_only_what_it_names() {
         let mut s = Settings::default();
-        s.apply(&json!({"language": "zh", "from_the_future": 1})).unwrap();
+        s.apply(&json!({"language": "zh", "from_the_future": 1}))
+            .unwrap();
         assert_eq!(s.language, "zh");
         assert_eq!((s.fps, s.bitrate_mbps), (30, 8));
     }
@@ -279,7 +313,10 @@ mod tests {
         // A file from a version with fewer fields keeps what it has.
         std::fs::write(dir.join("settings.json"), br#"{"language": "en"}"#).unwrap();
         let s = Settings::load(&dir);
-        assert_eq!((s.language.as_str(), s.send_audio, s.quality_params()), ("en", true, (30, 8_000_000)));
+        assert_eq!(
+            (s.language.as_str(), s.send_audio, s.quality_params()),
+            ("en", true, (30, 8_000_000))
+        );
         let _ = std::fs::remove_dir_all(dir);
     }
 
@@ -287,15 +324,32 @@ mod tests {
     fn the_three_qualities_of_earlier_versions_become_a_rate_and_a_bitrate() {
         let dir = temp("qualities");
         std::fs::create_dir_all(&dir).unwrap();
-        for (quality, expected) in [("saver", (30, 4_000_000)), ("balanced", (30, 8_000_000)), ("smooth", (60, 10_000_000)), ("unheard-of", (30, 8_000_000))] {
-            std::fs::write(dir.join("settings.json"), format!(r#"{{"quality": "{quality}"}}"#)).unwrap();
+        for (quality, expected) in [
+            ("saver", (30, 4_000_000)),
+            ("balanced", (30, 8_000_000)),
+            ("smooth", (60, 10_000_000)),
+            ("unheard-of", (30, 8_000_000)),
+        ] {
+            std::fs::write(
+                dir.join("settings.json"),
+                format!(r#"{{"quality": "{quality}"}}"#),
+            )
+            .unwrap();
             assert_eq!(Settings::load(&dir).quality_params(), expected, "{quality}");
         }
         // Once the two settings exist the old one is not looked at again.
-        std::fs::write(dir.join("settings.json"), br#"{"quality": "smooth", "bitrate_mbps": 6, "fps": 30}"#).unwrap();
+        std::fs::write(
+            dir.join("settings.json"),
+            br#"{"quality": "smooth", "bitrate_mbps": 6, "fps": 30}"#,
+        )
+        .unwrap();
         assert_eq!(Settings::load(&dir).quality_params(), (30, 6_000_000));
         // A hand-edited value out of range falls back to the default.
-        std::fs::write(dir.join("settings.json"), br#"{"bitrate_mbps": 500, "fps": 144}"#).unwrap();
+        std::fs::write(
+            dir.join("settings.json"),
+            br#"{"bitrate_mbps": 500, "fps": 144}"#,
+        )
+        .unwrap();
         assert_eq!(Settings::load(&dir).quality_params(), (30, 8_000_000));
         // The page's old storage can still hand over a quality.
         let mut s = Settings::default();
@@ -311,9 +365,34 @@ mod tests {
             "check_updates": false, "usage_stats": true, "last_receiver": "tv-1", "source_kind": "window", "source_window": "Notes", "welcome_done": true})).unwrap();
         s.restore_defaults();
         let fresh = Settings::default();
-        assert_eq!((s.fps, s.bitrate_mbps, s.encoder.as_str(), s.language.as_str()), (fresh.fps, fresh.bitrate_mbps, "auto", "auto"));
-        assert_eq!((s.send_audio, s.error_reports, s.check_updates, s.usage_stats, s.minimize_on_cast), (true, false, true, false, true));
-        assert_eq!((s.last_receiver.as_str(), s.source_kind.as_str(), s.source_window.as_str(), s.welcome_done), ("tv-1", "window", "Notes", true));
+        assert_eq!(
+            (
+                s.fps,
+                s.bitrate_mbps,
+                s.encoder.as_str(),
+                s.language.as_str()
+            ),
+            (fresh.fps, fresh.bitrate_mbps, "auto", "auto")
+        );
+        assert_eq!(
+            (
+                s.send_audio,
+                s.error_reports,
+                s.check_updates,
+                s.usage_stats,
+                s.minimize_on_cast
+            ),
+            (true, false, true, false, true)
+        );
+        assert_eq!(
+            (
+                s.last_receiver.as_str(),
+                s.source_kind.as_str(),
+                s.source_window.as_str(),
+                s.welcome_done
+            ),
+            ("tv-1", "window", "Notes", true)
+        );
     }
 
     #[test]
@@ -326,7 +405,10 @@ mod tests {
         assert!(s.apply(&json!({"video_format": 265})).is_err());
         assert_eq!(s.video_format, "h265", "a refused value changes nothing");
         s.restore_defaults();
-        assert_eq!(s.video_format, "h264", "it is how the program behaves, so it goes back");
+        assert_eq!(
+            s.video_format, "h264",
+            "it is how the program behaves, so it goes back"
+        );
     }
 
     #[test]
@@ -335,11 +417,17 @@ mod tests {
         assert_eq!(s.ignored_update, "");
         s.apply(&json!({"ignored_update": "0.1.4"})).unwrap();
         assert_eq!(s.ignored_update, "0.1.4");
-        assert!(s.apply(&json!({"ignored_update": "https://evil.example/"})).is_err());
+        assert!(
+            s.apply(&json!({"ignored_update": "https://evil.example/"}))
+                .is_err()
+        );
         assert!(s.apply(&json!({"ignored_update": 4})).is_err());
         assert_eq!(s.ignored_update, "0.1.4", "a refused value changes nothing");
         s.restore_defaults();
-        assert_eq!(s.ignored_update, "0.1.4", "it is what the person decided, not how the program behaves");
+        assert_eq!(
+            s.ignored_update, "0.1.4",
+            "it is what the person decided, not how the program behaves"
+        );
         s.apply(&json!({"ignored_update": ""})).unwrap();
         assert_eq!(s.ignored_update, "");
     }

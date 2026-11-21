@@ -8,7 +8,14 @@ pub struct Awake(Option<Child>);
 impl Awake {
     pub fn new() -> Awake {
         let child = Command::new("systemd-inhibit")
-            .args(["--what=idle:sleep", "--who=CastBay Desktop", "--why=Casting the screen", "--mode=block", "sleep", "infinity"])
+            .args([
+                "--what=idle:sleep",
+                "--who=CastBay Desktop",
+                "--why=Casting the screen",
+                "--mode=block",
+                "sleep",
+                "infinity",
+            ])
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -29,7 +36,9 @@ impl Drop for Awake {
 
 /// Whether the session is locked, as the desktop told logind.
 pub fn screen_locked() -> bool {
-    let Ok(id) = std::env::var("XDG_SESSION_ID") else { return false };
+    let Ok(id) = std::env::var("XDG_SESSION_ID") else {
+        return false;
+    };
     Command::new("loginctl")
         .args(["show-session", &id, "-p", "LockedHint", "--value"])
         .stdin(Stdio::null())

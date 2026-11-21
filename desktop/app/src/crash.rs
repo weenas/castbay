@@ -26,9 +26,15 @@ pub fn install_hook(dir: PathBuf) {
     std::panic::set_hook(Box::new(move |info| {
         let backtrace = std::backtrace::Backtrace::force_capture();
         let thread = std::thread::current();
-        let text = format!("panic in thread {}: {info}\n{backtrace}", thread.name().unwrap_or("?"));
+        let text = format!(
+            "panic in thread {}: {info}\n{backtrace}",
+            thread.name().unwrap_or("?")
+        );
         let _ = std::fs::create_dir_all(&dir);
-        let _ = std::fs::write(dir.join(CRASH), &text.as_bytes()[..text.len().min(MAX_CRASH_BYTES)]);
+        let _ = std::fs::write(
+            dir.join(CRASH),
+            &text.as_bytes()[..text.len().min(MAX_CRASH_BYTES)],
+        );
         previous(info);
     }));
 }
@@ -45,7 +51,9 @@ pub fn mark_casting(dir: &Path, on: bool) {
 
 /// What the previous run left, and then nothing: the files are removed, the text is the caller's.
 pub fn take(dir: &Path) -> Option<Pending> {
-    let panic = std::fs::read(dir.join(CRASH)).ok().map(|b| String::from_utf8_lossy(&b).into_owned());
+    let panic = std::fs::read(dir.join(CRASH))
+        .ok()
+        .map(|b| String::from_utf8_lossy(&b).into_owned());
     let unfinished = dir.join(MARKER).exists();
     let _ = std::fs::remove_file(dir.join(CRASH));
     let _ = std::fs::remove_file(dir.join(MARKER));
@@ -96,7 +104,10 @@ mod tests {
         std::fs::write(dir.join(CRASH), "panic in thread main: boom").unwrap();
         mark_casting(&dir, true);
         let pending = take(&dir).unwrap();
-        assert_eq!((pending.kind, pending.text.as_str()), ("panic", "panic in thread main: boom"));
+        assert_eq!(
+            (pending.kind, pending.text.as_str()),
+            ("panic", "panic in thread main: boom")
+        );
         assert_eq!(take(&dir), None);
         let _ = std::fs::remove_dir_all(dir);
     }

@@ -4,6 +4,7 @@ import com.weenas.castbay.ui.usingKeys
 import com.weenas.castbay.ui.hasTouchScreen
 import com.weenas.castbay.ui.isNarrowScreen
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
@@ -17,6 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +26,7 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
 import com.weenas.castbay.service.ReceiverSettings
+import com.weenas.castbay.service.RemoteManagementStore
 import com.weenas.castbay.service.ScreenLauncher
 import androidx.compose.ui.res.stringResource
 import com.weenas.castbay.BuildConfig
@@ -31,6 +34,7 @@ import com.weenas.castbay.R
 import com.weenas.castbay.ui.settingValueLabel
 import com.weenas.castbay.ui.AppBackground
 import com.weenas.castbay.ui.SegmentedChoice
+import com.weenas.castbay.ui.QrCode
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.focus.FocusDirection
@@ -56,7 +60,7 @@ import com.weenas.castbay.viewmodel.AirPlayViewModel
 import kotlinx.coroutines.delay
 
 /** Settings' pages, one tab each. */
-private enum class SettingsTab { CONNECTION, MIRRORING, PLAYBACK, GENERAL }
+private enum class SettingsTab { CONNECTION, MIRRORING, PLAYBACK, GENERAL, REMOTE }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,6 +127,7 @@ fun SettingsScreen(viewModel: AirPlayViewModel) {
                         SettingsTab.MIRRORING -> MirroringPage(settings, viewModel)
                         SettingsTab.PLAYBACK -> PlaybackPage(settings, viewModel)
                         SettingsTab.GENERAL -> GeneralPage(settings, viewModel, languageFocus, recreateForLanguage)
+                        SettingsTab.REMOTE -> RemoteManagementSetting(viewModel)
                     }
                 }
             }
@@ -136,6 +141,7 @@ private val SettingsTab.title
         SettingsTab.MIRRORING -> R.string.section_mirroring
         SettingsTab.PLAYBACK -> R.string.section_playback
         SettingsTab.GENERAL -> R.string.section_general
+        SettingsTab.REMOTE -> R.string.remote_management
     }
 
 /** What a page's settings affect, above its card. */
@@ -148,6 +154,7 @@ private val SettingsTab.note: Int?
         // Live, and also in the quick menu during playback.
         SettingsTab.PLAYBACK -> R.string.section_playback_note
         SettingsTab.GENERAL -> null
+        SettingsTab.REMOTE -> null
     }
 
 @Composable
@@ -177,6 +184,72 @@ private fun ColumnScope.ConnectionPage(settings: ReceiverSettings, viewModel: Ai
     ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
     CardDivider()
     KnownDevicesSetting(viewModel)
+}
+
+@Composable
+private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
+    val context = LocalContext.current
+    val store = remember { RemoteManagementStore(context) }
+    var enabled by remember { mutableStateOf(store.enabled()) }
+    var state by remember { mutableStateOf(store.state()) }
+    var code by remember { mutableStateOf(store.pairingCode()) }
+    var message by remember { mutableStateOf(store.pairingMessage()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            enabled = store.enabled()
+            state = store.state()
+            code = store.pairingCode()
+            message = store.pairingMessage()
+            delay(1000)
+        }
+    }
+    SwitchSetting(stringResource(R.string.remote_management), enabled) { value ->
+        enabled = value
+        viewModel.setRemoteManagementEnabled(value)
+    }
+    Text(stringResource(R.string.remote_management_note), color = Color.Gray, fontSize = 14.sp)
+    if (enabled) {
+        val paired = store.hasDeviceCredential()
+        val narrow = isNarrowScreen()
+        Spacer(Modifier.height(8.dp))
+        if (paired) {
+            Text(stringResource(if (state == RemoteManagementStore.STATE_CONNECTED) R.string.remote_management_online else R.string.remote_management_offline), color = Color.White, fontSize = 18.sp)
+        } else if (!code.isNullOrBlank() && state == RemoteManagementStore.STATE_PAIRING) {
+            val qr = remember(code) { QrCode.bitmap("https://cb.weenas.com/?pair=$code", 480)?.asImageBitmap() }
+            if (narrow) {
+                Column {
+                    Text(stringResource(R.string.remote_management_pair_code, code!!.chunked(3).joinToString(" ")), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.remote_management_pair_code_note), color = Color.Gray, fontSize = 14.sp)
+                    qr?.let {
+                        Spacer(Modifier.height(12.dp))
+                        Image(bitmap = it, contentDescription = stringResource(R.string.remote_management_qr_description), modifier = Modifier.size(180.dp))
+                        Text(stringResource(R.string.remote_management_qr_note), color = Color.Gray, fontSize = 14.sp)
+                    }
+                }
+            } else {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(28.dp)) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.remote_management_pair_code, code!!.chunked(3).joinToString(" ")), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)
+                        Spacer(Modifier.height(8.dp))
+                        Text(stringResource(R.string.remote_management_pair_code_note), color = Color.Gray, fontSize = 14.sp)
+                        Text(stringResource(R.string.remote_management_qr_note), color = Color.Gray, fontSize = 14.sp)
+                    }
+                    qr?.let {
+                        Image(bitmap = it, contentDescription = stringResource(R.string.remote_management_qr_description), modifier = Modifier.size(240.dp))
+                    }
+                }
+            }
+        } else {
+            HomeButton(stringResource(R.string.remote_management_pair)) { viewModel.pairRemoteManagementDevice() }
+        }
+        val messageId = when (message) {
+            "expired" -> R.string.remote_management_expired
+            "unbound" -> R.string.remote_management_unbound
+            "error" -> R.string.remote_management_error
+            else -> 0
+        }
+        if (messageId != 0) Text(stringResource(messageId), color = Color.Gray, fontSize = 14.sp)
+    }
 }
 
 /**

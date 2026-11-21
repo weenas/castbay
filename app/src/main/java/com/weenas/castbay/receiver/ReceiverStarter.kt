@@ -25,7 +25,9 @@ object ReceiverStarter {
             return
         }
         // The user turned auto-start off: only opening the app starts the receiver.
-        if (!ReceiverSettingsStore(context).load().startOnBoot) {
+        val settings = ReceiverSettingsStore(context).load()
+        val remoteManagement = com.weenas.castbay.service.RemoteManagementStore(context).enabled()
+        if (!settings.startOnBoot && !remoteManagement) {
             Diagnostics.record("start", "$why: start on boot is off")
             return
         }
@@ -37,7 +39,9 @@ object ReceiverStarter {
         try {
             ContextCompat.startForegroundService(
                 context,
-                Intent(context, AirPlayService::class.java).setAction(AirPlayService.ACTION_START)
+                Intent(context, AirPlayService::class.java).setAction(
+                    if (settings.startOnBoot) AirPlayService.ACTION_START else AirPlayService.ACTION_REMOTE_SYNC
+                )
             )
             Diagnostics.record("start", "$why: starting the receiver")
             Log.i(TAG, "Starting the receiver ($why)")

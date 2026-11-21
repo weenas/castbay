@@ -155,6 +155,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
 
     implementation("com.google.code.gson:gson:2.14.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
     // QR codes on the About screen (a TV can't easily open a link; a phone can scan one).
     implementation("com.google.zxing:core:3.5.4")
 

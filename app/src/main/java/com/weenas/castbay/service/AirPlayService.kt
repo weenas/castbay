@@ -19,6 +19,8 @@ class AirPlayService : Service() {
     companion object {
         const val ACTION_START = "com.weenas.castbay.action.START_RECEIVER"
         const val ACTION_STOP = "com.weenas.castbay.action.STOP_RECEIVER"
+        const val ACTION_REMOTE_SYNC = "com.weenas.castbay.action.REMOTE_SYNC"
+        const val ACTION_REMOTE_PAIR = "com.weenas.castbay.action.REMOTE_PAIR"
         const val CHANNEL_ID = "castbay_channel"
         const val NOTIFICATION_ID = 1
         private const val TAG = "CastBayService"
@@ -44,6 +46,7 @@ class AirPlayService : Service() {
     }
 
     private val manager by lazy { AirPlayManager.getInstance(this) }
+    private var remoteManagement: RemoteManagementClient? = null
     private var running = false
         set(value) {
             field = value
@@ -64,6 +67,7 @@ class AirPlayService : Service() {
     }
 
     private fun onStateChanged(state: AirPlayConnectionState) {
+        remoteManagement?.sendStatus()
         if (!running) return
         val notifications = getSystemService(NotificationManager::class.java)
         when (state) {
@@ -79,8 +83,12 @@ class AirPlayService : Service() {
                 } else {
                     retrying = false
                     running = false
-                    removeForeground()
-                    stopSelf(lastStartId)
+                    if (RemoteManagementStore(this).enabled()) {
+                        notifications.notify(NOTIFICATION_ID, buildNotification(getString(com.weenas.castbay.R.string.notification_discovery_only)))
+                    } else {
+                        removeForeground()
+                        stopSelf(lastStartId)
+                    }
                 }
             }
             AirPlayConnectionState.Discovering -> if (retrying) {
@@ -125,14 +133,47 @@ class AirPlayService : Service() {
         com.weenas.castbay.receiver.WakeJobService.schedule(this)
         createNotificationChannel()
         manager.registerStateCallback(stateCallback)
+        remoteManagement = RemoteManagementClient(this, manager, this)
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         lastStartId = startId
         Diagnostics.record("service", "Start command ${intent?.action ?: "(restart)"}" + if (running) ", already running" else "")
+        if (intent?.action == ACTION_REMOTE_SYNC) {
+            remoteManagement?.syncEnabled()
+            val remoteEnabled = RemoteManagementStore(this).enabled()
+            if (running) return START_NOT_STICKY
+            if (!remoteEnabled) {
+                stopSelf(startId)
+                return START_NOT_STICKY
+            }
+        }
+        if (intent?.action == ACTION_REMOTE_PAIR && running) {
+            remoteManagement?.pair()
+            return START_NOT_STICKY
+        }
+        if (intent?.action in listOf(ACTION_REMOTE_SYNC, ACTION_REMOTE_PAIR) &&
+            RemoteManagementStore(this).enabled() && !ReceiverSettingsStore(this).load().startOnBoot
+        ) {
+            if (!enterForeground(buildNotification(getString(com.weenas.castbay.R.string.notification_starting)))) {
+                stopSelf(startId)
+                return START_NOT_STICKY
+            }
+            remoteManagement?.sendStatus()
+            if (intent?.action == ACTION_REMOTE_PAIR) remoteManagement?.pair()
+            return START_NOT_STICKY
+        }
         if (intent?.action == ACTION_STOP) {
             if (running) manager.stop()
             running = false
+            remoteManagement?.sendStatus()
+            if (RemoteManagementStore(this).enabled()) {
+                getSystemService(NotificationManager::class.java).notify(
+                    NOTIFICATION_ID,
+                    buildNotification(getString(com.weenas.castbay.R.string.notification_discovery_only))
+                )
+                return START_NOT_STICKY
+            }
             // With the id: a start request that came in after this stop is not thrown away with it
             // (stopSelf() without one stops the service whatever is queued, #239).
             stopSelf(startId)
@@ -162,6 +203,8 @@ class AirPlayService : Service() {
             return START_NOT_STICKY
         }
         running = true
+        remoteManagement?.syncEnabled()
+        if (intent?.action == ACTION_REMOTE_PAIR) remoteManagement?.pair()
         mainHandler.removeCallbacks(updateCheck)
         mainHandler.postDelayed(updateCheck, FIRST_UPDATE_CHECK_DELAY_MS)
         getSystemService(NotificationManager::class.java)
@@ -176,11 +219,31 @@ class AirPlayService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /** Called on the main thread by the remote command handler; the service stays foreground while opted in. */
+    internal fun restartReceiverFromRemote(): Boolean {
+        val settings = ReceiverSettingsStore(this).load()
+        if (running) {
+            manager.restartIfRunning(settings)
+            return true
+        }
+        if (!manager.start(settings)) return false
+        running = true
+        getSystemService(NotificationManager::class.java).notify(
+            NOTIFICATION_ID,
+            buildNotification(getString(if (manager.isDiscoveryOnly) com.weenas.castbay.R.string.notification_discovery_only else com.weenas.castbay.R.string.notification_waiting))
+        )
+        mainHandler.removeCallbacks(updateCheck)
+        mainHandler.postDelayed(updateCheck, FIRST_UPDATE_CHECK_DELAY_MS)
+        return true
+    }
+
     override fun onDestroy() {
         Diagnostics.record("service", "Destroyed" + if (running) " while running" else "")
         Diagnostics.receiverRunning(false)
         mainHandler.removeCallbacks(updateCheck)
         if (running) manager.stop()
+        remoteManagement?.close()
+        remoteManagement = null
         manager.unregisterStateCallback(stateCallback)
         super.onDestroy()
     }

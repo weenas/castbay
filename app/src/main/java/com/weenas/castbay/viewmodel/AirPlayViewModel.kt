@@ -1,7 +1,9 @@
 package com.weenas.castbay.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.view.Surface
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
@@ -19,6 +21,7 @@ import com.weenas.castbay.util.Log
 import com.weenas.castbay.util.UsageStats
 import com.weenas.castbay.service.ReceiverSettings
 import com.weenas.castbay.service.ReceiverSettingsStore
+import com.weenas.castbay.service.RemoteManagementStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,11 +35,15 @@ data class AirPlayUiState(
 class AirPlayViewModel(application: Application) : AndroidViewModel(application) {
     private val manager = AirPlayManager.getInstance(application)
     private val settingsStore = ReceiverSettingsStore(application)
+    private val settingsPreferences = application.getSharedPreferences("receiver_settings", Context.MODE_PRIVATE)
 
     private val _state = MutableStateFlow(AirPlayUiState())
     val state: StateFlow<AirPlayUiState> = _state.asStateFlow()
     private val _settings = MutableStateFlow(settingsStore.load())
     val settings: StateFlow<ReceiverSettings> = _settings.asStateFlow()
+    private val settingsPreferenceListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        _settings.value = settingsStore.load()
+    }
 
     private val networkMonitor = com.weenas.castbay.service.NetworkMonitor(application).also { it.start() }
     /** The TV's network (type, Wi-Fi name, IP) for the home screen. */
@@ -112,6 +119,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     }
 
     init {
+        settingsPreferences.registerOnSharedPreferenceChangeListener(settingsPreferenceListener)
         manager.registerStateCallback(stateCallback)
         // Opening the app starts the receiver (a no-op if it is running), like turning on an Apple TV.
         startServer()
@@ -390,6 +398,21 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         if (updated.needsRestartComparedTo(previous)) manager.restartIfRunning(updated)
     }
 
+    fun setRemoteManagementEnabled(enabled: Boolean) {
+        RemoteManagementStore(getApplication()).setEnabled(enabled)
+        val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
+            .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_SYNC)
+        runCatching { ContextCompat.startForegroundService(getApplication(), intent) }
+            .onFailure { Diagnostics.record("remote", "Could not update remote management: ${it.javaClass.simpleName}") }
+    }
+
+    fun pairRemoteManagementDevice() {
+        val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
+            .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_PAIR)
+        runCatching { ContextCompat.startForegroundService(getApplication(), intent) }
+            .onFailure { Diagnostics.record("remote", "Could not start device pairing: ${it.javaClass.simpleName}") }
+    }
+
     /** The home screen button that opened the current screen, focused again on the way back. */
     var homeFocus: String = "settings"
         private set
@@ -434,6 +457,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     override fun onCleared() {
         super.onCleared()
+        settingsPreferences.unregisterOnSharedPreferenceChangeListener(settingsPreferenceListener)
         startHandler.removeCallbacks(startCheck)
         startHandler.removeCallbacks(askServiceLater)
         networkMonitor.stop()

@@ -215,7 +215,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
         if (paired) {
             Text(stringResource(if (state == RemoteManagementStore.STATE_CONNECTED) R.string.remote_management_online else R.string.remote_management_offline), color = Color.White, fontSize = 18.sp)
         } else if (!code.isNullOrBlank() && state == RemoteManagementStore.STATE_PAIRING) {
-            val qr = remember(code) { QrCode.bitmap("https://manage.castbay.weenas.com/?pair=$code", 480)?.asImageBitmap() }
+            val qr = remember(code) { QrCode.bitmap("https://manage.weenas.com/?pair=$code", 480)?.asImageBitmap() }
             if (narrow) {
                 Column {
                     Text(stringResource(R.string.remote_management_pair_code, code!!.chunked(3).joinToString(" ")), color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Bold)

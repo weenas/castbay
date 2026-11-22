@@ -280,6 +280,13 @@ class RemoteManagementClient(
                 "showStats" -> after = after.copy(showStats = value.asBoolean)
                 "showLyrics" -> after = after.copy(showLyrics = value.asBoolean)
                 "coverSpin" -> after = after.copy(coverSpin = value.asBoolean)
+                "openOnCast" -> {
+                    val enabled = value.asBoolean
+                    require(!enabled || ScreenLauncher.allowed(app)) {
+                        "Allow CastBay to display over other apps on the TV first"
+                    }
+                    after = after.copy(openOnCast = enabled)
+                }
                 "testVersions" -> after = after.copy(testVersions = value.asBoolean)
                 "sendErrorReports" -> after = after.copy(sendErrorReports = value.asBoolean)
                 "frameRate" -> {
@@ -336,6 +343,7 @@ class RemoteManagementClient(
                 addProperty("showStats", s.showStats)
                 addProperty("showLyrics", s.showLyrics)
                 addProperty("coverSpin", s.coverSpin)
+                addProperty("openOnCast", s.openOnCast)
                 addProperty("testVersions", s.testVersions)
                 addProperty("sendErrorReports", s.sendErrorReports)
                 addProperty("frameRate", s.frameRate)

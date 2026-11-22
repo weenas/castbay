@@ -421,6 +421,20 @@ class AirPlayManager private constructor(private val context: Context) {
         }
 
     @Volatile private var currentStreamInfo: StreamInfo = StreamInfo()
+
+    internal fun remoteCastingState(): String {
+        if (currentState != AirPlayConnectionState.Streaming) return "idle"
+        val stream = currentStreamInfo
+        if (stream.awaitingNext) return "idle"
+        return when {
+            stream.isDesktop -> "castbay_link"
+            stream.isDlna -> if (stream.isAudioOnly) "dlna_audio" else "dlna_video"
+            stream.isMirroring -> "airplay_mirror"
+            stream.isAudioOnly -> "airplay_audio"
+            stream.isVideoPlayback -> "airplay_video"
+            else -> "casting"
+        }
+    }
     /** The name of the AirPlay sender that set up the latest session, for [StreamInfo.sender]. */
     @Volatile private var airPlaySender = ""
     /** The AirPlay device ID of that sender: a different one is a takeover. */

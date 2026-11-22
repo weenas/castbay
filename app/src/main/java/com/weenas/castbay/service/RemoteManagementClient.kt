@@ -324,6 +324,9 @@ class RemoteManagementClient(
             addProperty("protocolVersion", 2)
             addProperty("appVersion", AppVersion.name(app))
             addProperty("receiverState", receiverState())
+            addProperty("castingState", manager.remoteCastingState())
+            addProperty("androidVersion", Build.VERSION.RELEASE.orEmpty().take(40))
+            addProperty("androidSdk", Build.VERSION.SDK_INT)
         }
         webSocket.send(gson.toJson(message))
     }
@@ -335,6 +338,9 @@ class RemoteManagementClient(
             addProperty("type", "status")
             addProperty("seq", store.nextOutgoingSeq())
             addProperty("receiverState", receiverState())
+            addProperty("castingState", manager.remoteCastingState())
+            addProperty("androidVersion", Build.VERSION.RELEASE.orEmpty().take(40))
+            addProperty("androidSdk", Build.VERSION.SDK_INT)
             add("actualConfig", JsonObject().apply {
                 addProperty("deviceName", s.deviceName)
                 addProperty("appendTvName", s.appendTvName)

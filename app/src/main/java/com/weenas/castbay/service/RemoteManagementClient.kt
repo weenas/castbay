@@ -254,6 +254,11 @@ class RemoteManagementClient(
         var after = before
         for ((key, value) in config.entrySet()) {
             when (key) {
+                "deviceName" -> {
+                    val name = value.asString.trim()
+                    require(name.isNotEmpty() && name.toByteArray().size <= 60) { "Invalid device name" }
+                    after = after.copy(deviceName = name)
+                }
                 "access" -> {
                     val v = value.asString
                     require(v == ReceiverSettings.ACCESS_OPEN || v == ReceiverSettings.ACCESS_CONFIRM) { "Unsupported access mode" }
@@ -301,6 +306,7 @@ class RemoteManagementClient(
             addProperty("seq", store.nextOutgoingSeq())
             addProperty("receiverState", receiverState())
             add("actualConfig", JsonObject().apply {
+                addProperty("deviceName", s.deviceName)
                 if (s.access == ReceiverSettings.ACCESS_OPEN || s.access == ReceiverSettings.ACCESS_CONFIRM) addProperty("access", s.access)
                 addProperty("resolution", s.resolution)
                 addProperty("videoCodec", s.videoCodec)

@@ -274,6 +274,29 @@ class RemoteManagementClient(
                     require(v in listOf("Auto", "H.264 only")) { "Unsupported video codec" }
                     after = after.copy(videoCodec = v)
                 }
+                "appendTvName" -> after = after.copy(appendTvName = value.asBoolean)
+                "desktopEnabled" -> after = after.copy(desktopEnabled = value.asBoolean)
+                "allowTakeover" -> after = after.copy(allowTakeover = value.asBoolean)
+                "showStats" -> after = after.copy(showStats = value.asBoolean)
+                "showLyrics" -> after = after.copy(showLyrics = value.asBoolean)
+                "coverSpin" -> after = after.copy(coverSpin = value.asBoolean)
+                "testVersions" -> after = after.copy(testVersions = value.asBoolean)
+                "sendErrorReports" -> after = after.copy(sendErrorReports = value.asBoolean)
+                "frameRate" -> {
+                    val setting = value.asString
+                    require(setting in ReceiverSettings.FRAME_RATES) { "Unsupported frameRate" }
+                    after = after.copy(frameRate = setting)
+                }
+                "pictureMode" -> {
+                    val setting = value.asString
+                    require(setting in ReceiverSettings.PICTURE_MODES) { "Unsupported pictureMode" }
+                    after = after.copy(pictureMode = setting)
+                }
+                "screenSaver" -> {
+                    val setting = value.asString
+                    require(setting in ReceiverSettings.SCREEN_SAVERS) { "Unsupported screenSaver" }
+                    after = after.copy(screenSaver = setting)
+                }
                 "dlnaEnabled" -> after = after.copy(dlnaEnabled = value.asBoolean)
                 "startOnBoot" -> after = after.copy(startOnBoot = value.asBoolean)
                 "checkUpdates" -> after = after.copy(checkUpdates = value.asBoolean)
@@ -307,6 +330,17 @@ class RemoteManagementClient(
             addProperty("receiverState", receiverState())
             add("actualConfig", JsonObject().apply {
                 addProperty("deviceName", s.deviceName)
+                addProperty("appendTvName", s.appendTvName)
+                addProperty("desktopEnabled", s.desktopEnabled)
+                addProperty("allowTakeover", s.allowTakeover)
+                addProperty("showStats", s.showStats)
+                addProperty("showLyrics", s.showLyrics)
+                addProperty("coverSpin", s.coverSpin)
+                addProperty("testVersions", s.testVersions)
+                addProperty("sendErrorReports", s.sendErrorReports)
+                addProperty("frameRate", s.frameRate)
+                addProperty("pictureMode", s.pictureMode)
+                addProperty("screenSaver", s.screenSaver)
                 if (s.access == ReceiverSettings.ACCESS_OPEN || s.access == ReceiverSettings.ACCESS_CONFIRM) addProperty("access", s.access)
                 addProperty("resolution", s.resolution)
                 addProperty("videoCodec", s.videoCodec)

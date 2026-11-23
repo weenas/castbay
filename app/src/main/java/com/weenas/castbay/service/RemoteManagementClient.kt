@@ -182,8 +182,16 @@ class RemoteManagementClient(
                             "heartbeat_ack" -> {
                                 if (socket === webSocket && store.hasDeviceCredential() && data.has("policy")) {
                                     val policy = data.get("policy")
-                                    if (policy.isJsonNull) store.savePolicy(null)
-                                    else if (policy.isJsonObject) store.savePolicy(policy.asJsonObject)
+                                    if (policy.isJsonNull || policy.isJsonObject) {
+                                        store.savePolicy(if (policy.isJsonNull) null else policy.asJsonObject)
+                                        if (data.get("policyReceipt")?.asBoolean == true) {
+                                            webSocket.send(gson.toJson(JsonObject().apply {
+                                                addProperty("type", "policy_ack")
+                                                addProperty("id", data.get("id").asString)
+                                                addProperty("seq", store.nextOutgoingSeq())
+                                            }))
+                                        }
+                                    }
                                 }
                                 val label = data.get("accountLabel")
                                 if (socket === webSocket && store.hasDeviceCredential() &&

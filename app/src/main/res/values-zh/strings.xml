@@ -341,7 +341,7 @@
     <string name="remote_management_online">已连接远程管理。</string>
     <string name="remote_management_offline">远程管理暂时离线。</string>
     <string name="remote_management_expired">绑定码已过期，请重新生成。</string>
-    <string name="remote_management_locked">管理员已锁定</string>
+    <string name="remote_management_locked">已锁定</string>
     <string name="remote_management_account_label">绑定账号：%1$s</string>
     <string name="remote_management_unbind_device">解绑本机</string>
     <string name="remote_management_confirm_unbind">确认解绑本机</string>

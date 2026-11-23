@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.Intent
@@ -66,8 +67,23 @@ private val LocalManagementPolicy = staticCompositionLocalOf<RemoteManagementSto
 
 @Composable
 private fun LockedSetting(label: String, value: String) {
-    SettingLine("🔒 $label") {
-        Text("$value · ${stringResource(R.string.remote_management_locked)}", color = Color.Gray, fontSize = 14.sp)
+    SettingLine(label) {
+        Row(
+            modifier = Modifier.widthIn(max = 480.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                value,
+                modifier = Modifier.weight(1f, fill = false),
+                color = Color.White,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text("🔒 ${stringResource(R.string.remote_management_locked)}", color = Color.LightGray, fontSize = 16.sp)
+        }
     }
 }
 

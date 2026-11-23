@@ -339,7 +339,7 @@
     <string name="remote_management_online">Connected to remote management.</string>
     <string name="remote_management_offline">Remote management is temporarily offline.</string>
     <string name="remote_management_expired">The pairing code expired. Please generate a new one.</string>
-    <string name="remote_management_locked">Locked by administrator</string>
+    <string name="remote_management_locked">Locked</string>
     <string name="remote_management_account_label">Account: %1$s</string>
     <string name="remote_management_unbind_device">Unbind this TV</string>
     <string name="remote_management_confirm_unbind">Confirm unbinding</string>

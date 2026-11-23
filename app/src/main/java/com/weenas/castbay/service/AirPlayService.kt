@@ -142,7 +142,7 @@ class AirPlayService : Service() {
         if (intent?.action == ACTION_REMOTE_SYNC) {
             remoteManagement?.syncEnabled()
             val remoteEnabled = RemoteManagementStore(this).enabled()
-            if (running) return START_NOT_STICKY
+            if (running) return receiverRestartPolicy()
             if (!remoteEnabled) {
                 stopSelf(startId)
                 return START_NOT_STICKY
@@ -150,7 +150,7 @@ class AirPlayService : Service() {
         }
         if (intent?.action == ACTION_REMOTE_PAIR && running) {
             remoteManagement?.pair()
-            return START_NOT_STICKY
+            return receiverRestartPolicy()
         }
         if (intent?.action in listOf(ACTION_REMOTE_SYNC, ACTION_REMOTE_PAIR) &&
             RemoteManagementStore(this).enabled() && !ReceiverSettingsStore(this).load().startOnBoot
@@ -179,7 +179,12 @@ class AirPlayService : Service() {
             stopSelf(startId)
             return START_NOT_STICKY
         }
-        if (running) return START_NOT_STICKY
+        if (running) return receiverRestartPolicy()
+
+        if (intent == null && receiverRestartPolicy() != START_STICKY) {
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
 
         if (!enterForeground(buildNotification(getString(com.weenas.castbay.R.string.notification_starting)))) {
             stopSelf(startId)
@@ -214,7 +219,18 @@ class AirPlayService : Service() {
                     else com.weenas.castbay.R.string.notification_waiting
                 )
             ))
-        return START_NOT_STICKY
+        return receiverRestartPolicy()
+    }
+
+    // An opted-in receiver may resume after Android reclaims its process. Explicit stops
+    // and management-only starts above retain START_NOT_STICKY.
+    private fun receiverRestartPolicy(): Int {
+        val store = RemoteManagementStore(this)
+        return if (store.enabled() && store.hasDeviceCredential() && ReceiverSettingsStore(this).load().startOnBoot) {
+            START_STICKY
+        } else {
+            START_NOT_STICKY
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

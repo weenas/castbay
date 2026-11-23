@@ -178,6 +178,14 @@ class RemoteManagementClient(
                         when (data.get("type")?.asString) {
                             "command" -> handleCommand(webSocket, data)
                             "device_revoked" -> handleRevoked(webSocket)
+                            "heartbeat_ack" -> {
+                                val label = data.get("accountLabel")
+                                if (socket === webSocket && store.hasDeviceCredential() &&
+                                    label?.isJsonPrimitive == true && label.asJsonPrimitive.isString
+                                ) {
+                                    store.setAccountLabel(label.asString.take(254))
+                                }
+                            }
                         }
                     }
                     .onFailure { Log.w(TAG, "Ignoring invalid management message") }

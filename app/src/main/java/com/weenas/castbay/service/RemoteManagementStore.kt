@@ -21,11 +21,16 @@ class RemoteManagementStore(context: Context) {
     fun hasDeviceCredential() = !deviceToken().isNullOrBlank()
 
     fun saveDeviceCredential(deviceId: String, token: String) {
-        prefs.edit().putString("device_id", deviceId).putString("device_token", encrypt(token)).apply()
+        prefs.edit().putString("device_id", deviceId).putString("device_token", encrypt(token)).remove("account_label").apply()
+    }
+
+    fun accountLabel() = prefs.getString("account_label", "").orEmpty()
+    fun setAccountLabel(value: String) {
+        if (accountLabel() != value) prefs.edit().putString("account_label", value).apply()
     }
 
     fun clearDeviceCredential() {
-        prefs.edit().remove("device_id").remove("device_token").remove("pair_code").remove("pair_expiry").apply()
+        prefs.edit().remove("device_id").remove("device_token").remove("account_label").remove("pair_code").remove("pair_expiry").apply()
     }
 
     fun setPairing(code: String, expiresAt: String) {

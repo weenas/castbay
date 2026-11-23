@@ -194,6 +194,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
     var state by remember { mutableStateOf(store.state()) }
     var code by remember { mutableStateOf(store.pairingCode()) }
     var message by remember { mutableStateOf(store.pairingMessage()) }
+    var accountLabel by remember { mutableStateOf(store.accountLabel()) }
     var confirmUnbind by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {
@@ -201,6 +202,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
             state = store.state()
             code = store.pairingCode()
             message = store.pairingMessage()
+            accountLabel = store.accountLabel()
             delay(1000)
         }
     }
@@ -215,6 +217,9 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
         Spacer(Modifier.height(8.dp))
         if (paired) {
             Text(stringResource(if (state == RemoteManagementStore.STATE_CONNECTED) R.string.remote_management_online else R.string.remote_management_offline), color = Color.White, fontSize = 18.sp)
+            if (accountLabel.isNotBlank()) {
+                Text(stringResource(R.string.remote_management_account_label, accountLabel), color = Color.Gray, fontSize = 14.sp)
+            }
             HomeButton(stringResource(if (confirmUnbind) R.string.remote_management_confirm_unbind else R.string.remote_management_unbind_device)) {
                 if (confirmUnbind) {
                     confirmUnbind = false

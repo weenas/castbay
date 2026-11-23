@@ -129,6 +129,7 @@ class RemoteManagementClient(
 
     fun unbind() {
         executor.execute {
+            if (store.activePolicy() != null) return@execute
             val token = store.deviceToken() ?: return@execute
             try {
                 val request = Request.Builder().url("$BASE/api/device/v1/unbind")
@@ -179,6 +180,11 @@ class RemoteManagementClient(
                             "command" -> handleCommand(webSocket, data)
                             "device_revoked" -> handleRevoked(webSocket)
                             "heartbeat_ack" -> {
+                                if (socket === webSocket && store.hasDeviceCredential() && data.has("policy")) {
+                                    val policy = data.get("policy")
+                                    if (policy.isJsonNull) store.savePolicy(null)
+                                    else if (policy.isJsonObject) store.savePolicy(policy.asJsonObject)
+                                }
                                 val label = data.get("accountLabel")
                                 if (socket === webSocket && store.hasDeviceCredential() &&
                                     label?.isJsonPrimitive == true && label.asJsonPrimitive.isString
@@ -370,7 +376,7 @@ class RemoteManagementClient(
             addProperty("id", java.util.UUID.randomUUID().toString())
             addProperty("type", type)
             addProperty("seq", store.nextOutgoingSeq())
-            addProperty("protocolVersion", 2)
+            addProperty("protocolVersion", 3)
             addProperty("appVersion", AppVersion.name(app))
             addProperty("receiverState", receiverState())
             addProperty("castingState", manager.remoteCastingState())

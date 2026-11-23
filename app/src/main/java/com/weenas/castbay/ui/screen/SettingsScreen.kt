@@ -62,10 +62,27 @@ import kotlinx.coroutines.delay
 /** Settings' pages, one tab each. */
 private enum class SettingsTab { CONNECTION, MIRRORING, PLAYBACK, GENERAL, REMOTE }
 
+private val LocalManagementPolicy = staticCompositionLocalOf<RemoteManagementStore.Policy?> { null }
+
+@Composable
+private fun LockedSetting(label: String, value: String) {
+    SettingLine("🔒 $label") {
+        Text("$value · ${stringResource(R.string.remote_management_locked)}", color = Color.Gray, fontSize = 14.sp)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: AirPlayViewModel) {
     val settings by viewModel.settings.collectAsState()
+    val context = LocalContext.current
+    val policy by produceState(RemoteManagementStore(context).activePolicy(), context) {
+        val store = RemoteManagementStore(context)
+        while (true) {
+            value = store.activePolicy()
+            delay(1000)
+        }
+    }
     // Kept across the recreation a language change causes, so the General page stays open.
     var tab by rememberSaveable { mutableStateOf(SettingsTab.CONNECTION) }
     // Starts on the tabs: no page scrolls, and no text field opens the keyboard. After a
@@ -121,13 +138,15 @@ fun SettingsScreen(viewModel: AirPlayViewModel) {
                 tab.note?.let { if (touch && it == R.string.section_playback_note) R.string.section_playback_note_touch else it }?.let {
                     Text(stringResource(it), color = Color.Gray, fontSize = 14.sp, modifier = Modifier.padding(start = 8.dp, bottom = 10.dp))
                 }
-                SettingsCard {
-                    when (tab) {
+                CompositionLocalProvider(LocalManagementPolicy provides policy) {
+                    SettingsCard {
+                        when (tab) {
                         SettingsTab.CONNECTION -> ConnectionPage(settings, viewModel)
                         SettingsTab.MIRRORING -> MirroringPage(settings, viewModel)
                         SettingsTab.PLAYBACK -> PlaybackPage(settings, viewModel)
                         SettingsTab.GENERAL -> GeneralPage(settings, viewModel, languageFocus, recreateForLanguage)
                         SettingsTab.REMOTE -> RemoteManagementSetting(viewModel)
+                        }
                     }
                 }
             }
@@ -159,18 +178,22 @@ private val SettingsTab.note: Int?
 
 @Composable
 private fun ColumnScope.ConnectionPage(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
-    DeviceNameSetting(value = settings.deviceName) { name ->
-        viewModel.updateSettings { it.copy(deviceName = name) }
+    if (LocalManagementPolicy.current?.locks?.contains("deviceName") == true) {
+        LockedSetting(stringResource(R.string.setting_device_name), settings.deviceName)
+    } else {
+        DeviceNameSetting(value = settings.deviceName) { name ->
+            viewModel.updateSettings { it.copy(deviceName = name) }
+        }
     }
-    SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_append_tv_name), settings.appendTvName, lockKey = "appendTvName") { enabled ->
         viewModel.updateSettings { it.copy(appendTvName = enabled) }
     }
     Text(stringResource(R.string.setting_append_tv_name_note, settings.advertisedName), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
-    SwitchSetting(stringResource(R.string.setting_desktop), settings.desktopEnabled) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_desktop), settings.desktopEnabled, lockKey = "desktopEnabled") { enabled ->
         viewModel.updateSettings { it.copy(desktopEnabled = enabled) }
     }
-    SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_dlna), settings.dlnaEnabled, lockKey = "dlnaEnabled") { enabled ->
         viewModel.updateSettings { it.copy(dlnaEnabled = enabled) }
     }
     CardDivider()
@@ -180,7 +203,8 @@ private fun ColumnScope.ConnectionPage(settings: ReceiverSettings, viewModel: Ai
         stringResource(R.string.setting_takeover),
         if (settings.allowTakeover) TAKEOVER_ALLOW else TAKEOVER_REFUSE,
         listOf(TAKEOVER_REFUSE, TAKEOVER_ALLOW),
-        display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) }
+        display = { stringResource(if (it == TAKEOVER_ALLOW) R.string.setting_takeover_allow else R.string.setting_takeover_refuse) },
+        lockKey = "allowTakeover"
     ) { choice -> viewModel.updateSettings { it.copy(allowTakeover = choice == TAKEOVER_ALLOW) } }
     CardDivider()
     KnownDevicesSetting(viewModel)
@@ -206,9 +230,14 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
             delay(1000)
         }
     }
-    SwitchSetting(stringResource(R.string.remote_management), enabled) { value ->
-        enabled = value
-        viewModel.setRemoteManagementEnabled(value)
+    val managed = LocalManagementPolicy.current != null
+    if (managed) {
+        LockedSetting(stringResource(R.string.remote_management), stringResource(R.string.on))
+    } else {
+        SwitchSetting(stringResource(R.string.remote_management), enabled) { value ->
+            enabled = value
+            viewModel.setRemoteManagementEnabled(value)
+        }
     }
     Text(stringResource(R.string.remote_management_note), color = Color.Gray, fontSize = 14.sp)
     if (enabled) {
@@ -220,7 +249,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
             if (accountLabel.isNotBlank()) {
                 Text(stringResource(R.string.remote_management_account_label, accountLabel), color = Color.Gray, fontSize = 14.sp)
             }
-            HomeButton(stringResource(if (confirmUnbind) R.string.remote_management_confirm_unbind else R.string.remote_management_unbind_device)) {
+            if (!managed) HomeButton(stringResource(if (confirmUnbind) R.string.remote_management_confirm_unbind else R.string.remote_management_unbind_device)) {
                 if (confirmUnbind) {
                     confirmUnbind = false
                     viewModel.unbindRemoteManagementDevice()
@@ -321,7 +350,8 @@ private fun ColumnScope.MirroringPage(settings: ReceiverSettings, viewModel: Air
         stringResource(R.string.setting_resolution),
         settings.resolution,
         ReceiverSettings.RESOLUTIONS,
-        display = { if (it == ReceiverSettings.RESOLUTION_AUTO) resolutionAuto else settingValueLabel(it) }
+        display = { if (it == ReceiverSettings.RESOLUTION_AUTO) resolutionAuto else settingValueLabel(it) },
+        lockKey = "resolution"
     ) { viewModel.updateSettings { current -> current.copy(resolution = it) } }
     CardDivider()
     val autoFps = settings.copy(frameRate = ReceiverSettings.FRAME_RATE_AUTO).maxFps()
@@ -330,7 +360,8 @@ private fun ColumnScope.MirroringPage(settings: ReceiverSettings, viewModel: Air
         stringResource(R.string.setting_frame_rate),
         settings.frameRate,
         ReceiverSettings.FRAME_RATES,
-        display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) fpsAuto else settingValueLabel(it) }
+        display = { if (it == ReceiverSettings.FRAME_RATE_AUTO) fpsAuto else settingValueLabel(it) },
+        lockKey = "frameRate"
     ) { viewModel.updateSettings { current -> current.copy(frameRate = it) } }
     CardDivider()
     // H.265 only for 4K mirroring, on a 4K screen with a hardware HEVC decoder.
@@ -342,28 +373,29 @@ private fun ColumnScope.MirroringPage(settings: ReceiverSettings, viewModel: Air
         stringResource(R.string.setting_codec),
         settings.videoCodec,
         ReceiverSettings.VIDEO_CODECS,
-        display = { if (it == ReceiverSettings.CODEC_AUTO) codecAuto else settingValueLabel(it) }
+        display = { if (it == ReceiverSettings.CODEC_AUTO) codecAuto else settingValueLabel(it) },
+        lockKey = "videoCodec"
     ) { viewModel.updateSettings { current -> current.copy(videoCodec = it) } }
 }
 
 @Composable
 private fun ColumnScope.PlaybackPage(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
-    SwitchSetting(stringResource(R.string.setting_stats), settings.showStats) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_stats), settings.showStats, lockKey = "showStats") { enabled ->
         viewModel.updateSettings { it.copy(showStats = enabled) }
     }
     CardDivider()
-    SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_lyrics), settings.showLyrics, lockKey = "showLyrics") { enabled ->
         viewModel.updateSettings { it.copy(showLyrics = enabled) }
     }
     Text(stringResource(R.string.setting_lyrics_note), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
-    SwitchSetting(stringResource(R.string.setting_cover_spin), settings.coverSpin) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_cover_spin), settings.coverSpin, lockKey = "coverSpin") { enabled ->
         viewModel.updateSettings { it.copy(coverSpin = enabled) }
     }
     Text(stringResource(R.string.setting_cover_spin_note), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
     val context = LocalContext.current
-    SwitchSetting(stringResource(R.string.setting_open_on_cast), settings.openOnCast) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_open_on_cast), settings.openOnCast, lockKey = "openOnCast") { enabled ->
         viewModel.updateSettings { it.copy(openOnCast = enabled) }
         // Android lets an app open its screen from the background only with "Display over other apps".
         if (enabled && !ScreenLauncher.allowed(context)) {
@@ -377,11 +409,11 @@ private fun ColumnScope.PlaybackPage(settings: ReceiverSettings, viewModel: AirP
     }
     Text(stringResource(R.string.setting_open_on_cast_note), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
-    ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES) {
+    ChoiceSetting(stringResource(R.string.setting_picture), settings.pictureMode, ReceiverSettings.PICTURE_MODES, lockKey = "pictureMode") {
         viewModel.updateSettings { current -> current.copy(pictureMode = it) }
     }
     CardDivider()
-    ChoiceSetting(stringResource(R.string.setting_screen_saver), settings.screenSaver, ReceiverSettings.SCREEN_SAVERS) {
+    ChoiceSetting(stringResource(R.string.setting_screen_saver), settings.screenSaver, ReceiverSettings.SCREEN_SAVERS, lockKey = "screenSaver") {
         viewModel.updateSettings { current -> current.copy(screenSaver = it) }
     }
     Text(stringResource(R.string.setting_screen_saver_note), color = Color.Gray, fontSize = 14.sp)
@@ -408,21 +440,21 @@ private fun ColumnScope.GeneralPage(
         onLanguageChanged()
     }
     CardDivider()
-    SwitchSetting(stringResource(R.string.setting_start_on_boot), settings.startOnBoot) { enabled ->
+    SwitchSetting(stringResource(R.string.setting_start_on_boot), settings.startOnBoot, lockKey = "startOnBoot") { enabled ->
         viewModel.updateSettings { it.copy(startOnBoot = enabled) }
     }
     Text(stringResource(R.string.setting_start_on_boot_note), color = Color.Gray, fontSize = 14.sp)
     // Store builds (F-Droid) are updated by the store, so they don't look for updates themselves.
     if (BuildConfig.SELF_UPDATE) {
         CardDivider()
-        SwitchSetting(stringResource(R.string.setting_check_updates), settings.checkUpdates) { viewModel.setCheckUpdates(it) }
+        SwitchSetting(stringResource(R.string.setting_check_updates), settings.checkUpdates, lockKey = "checkUpdates") { viewModel.setCheckUpdates(it) }
         Text(stringResource(R.string.setting_check_updates_note), color = Color.Gray, fontSize = 14.sp)
         CardDivider()
-        SwitchSetting(stringResource(R.string.setting_test_versions), settings.testVersions) { viewModel.setTestVersions(it) }
+        SwitchSetting(stringResource(R.string.setting_test_versions), settings.testVersions, lockKey = "testVersions") { viewModel.setTestVersions(it) }
         Text(stringResource(R.string.setting_test_versions_note), color = Color.Gray, fontSize = 14.sp)
     }
     CardDivider()
-    SwitchSetting(stringResource(R.string.setting_error_reports), settings.sendErrorReports) { viewModel.setSendErrorReports(it) }
+    SwitchSetting(stringResource(R.string.setting_error_reports), settings.sendErrorReports, lockKey = "sendErrorReports") { viewModel.setSendErrorReports(it) }
     Text(stringResource(R.string.setting_error_reports_note), color = Color.Gray, fontSize = 14.sp)
     CardDivider()
     val usageStatsOn by viewModel.usageStatsOn.collectAsState()
@@ -491,8 +523,13 @@ fun <T> ChoiceSetting(
     /** How a stored value is shown, in the TV's language. */
     display: @Composable (T) -> String = { settingValueLabel(it.toString()) },
     modifier: Modifier = Modifier,
+    lockKey: String? = null,
     onSelected: (T) -> Unit
 ) {
+    if (lockKey != null && LocalManagementPolicy.current?.locks?.contains(lockKey) == true) {
+        LockedSetting(label, display(value))
+        return
+    }
     SettingLine(label) {
         SegmentedChoice(value, choices, display, modifier, onSelected)
     }
@@ -605,6 +642,10 @@ fun accessLabel(access: String): String = stringResource(
  */
 @Composable
 fun AccessSetting(settings: ReceiverSettings, viewModel: AirPlayViewModel) {
+    if (LocalManagementPolicy.current?.locks?.contains("access") == true) {
+        LockedSetting(stringResource(R.string.setting_access), accessLabel(settings.access))
+        return
+    }
     var choosingPassword by remember { mutableStateOf(false) }
     // Shows "Password" while one is being chosen, though it applies only once saved.
     val shown = if (choosingPassword) ReceiverSettings.ACCESS_PASSWORD else settings.access
@@ -652,7 +693,11 @@ fun PasswordSetting(value: String, onSaved: (String) -> Unit) {
 }
 
 @Composable
-fun SwitchSetting(label: String, checked: Boolean, modifier: Modifier = Modifier, onChanged: (Boolean) -> Unit) {
+fun SwitchSetting(label: String, checked: Boolean, modifier: Modifier = Modifier, lockKey: String? = null, onChanged: (Boolean) -> Unit) {
+    if (lockKey != null && LocalManagementPolicy.current?.locks?.contains(lockKey) == true) {
+        LockedSetting(label, stringResource(if (checked) R.string.on else R.string.off))
+        return
+    }
     SettingLine(label) {
         // Off and On side by side, like the other settings' choices.
         SegmentedChoice(checked, listOf(false, true), { stringResource(if (it) R.string.on else R.string.off) }, modifier, onChanged)

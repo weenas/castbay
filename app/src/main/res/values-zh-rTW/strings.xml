@@ -327,6 +327,7 @@
     <string name="remote_management_online">已連線遠端管理。</string>
     <string name="remote_management_offline">遠端管理暫時離線。</string>
     <string name="remote_management_expired">綁定碼已過期，請重新產生。</string>
+    <string name="remote_management_locked">管理員已鎖定</string>
     <string name="remote_management_account_label">綁定帳號：%1$s</string>
     <string name="remote_management_unbind_device">解除綁定本機</string>
     <string name="remote_management_confirm_unbind">確認解除綁定</string>

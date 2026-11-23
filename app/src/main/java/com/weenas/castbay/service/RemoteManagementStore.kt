@@ -9,6 +9,8 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 
 /** Local opt-in, short-lived pairing display state and Keystore-backed device credential. */
 class RemoteManagementStore(context: Context) {
@@ -21,7 +23,7 @@ class RemoteManagementStore(context: Context) {
     fun hasDeviceCredential() = !deviceToken().isNullOrBlank()
 
     fun saveDeviceCredential(deviceId: String, token: String) {
-        prefs.edit().putString("device_id", deviceId).putString("device_token", encrypt(token)).remove("account_label").apply()
+        prefs.edit().putString("device_id", deviceId).putString("device_token", encrypt(token)).remove("account_label").remove("managed_policy").apply()
     }
 
     fun accountLabel() = prefs.getString("account_label", "").orEmpty()
@@ -29,8 +31,58 @@ class RemoteManagementStore(context: Context) {
         if (accountLabel() != value) prefs.edit().putString("account_label", value).apply()
     }
 
+    data class Policy(val locks: Set<String>, val expiresAt: Long)
+
+    fun savePolicy(value: JsonObject?) {
+        if (value == null) {
+            prefs.edit().remove("managed_policy").apply()
+            return
+        }
+        val text = value.toString()
+        val previous = prefs.getString("managed_policy", null)?.let(::decrypt)
+        if (previous != text) prefs.edit().putString("managed_policy", encrypt(text)).apply()
+    }
+
+    fun activePolicy(): Policy? {
+        val text = prefs.getString("managed_policy", null)?.let(::decrypt) ?: return null
+        return runCatching {
+            val json = JsonParser.parseString(text).asJsonObject
+            val expiry = android.text.format.Time().apply { parse3339(json.get("expiresAt").asString) }.toMillis(false)
+            if (expiry <= System.currentTimeMillis()) null
+            else Policy(json.getAsJsonArray("locks").map { it.asString }.toSet(), expiry)
+        }.getOrNull()
+    }
+
+    fun blocksLocalChange(before: ReceiverSettings, after: ReceiverSettings): Boolean {
+        val locks = activePolicy()?.locks ?: return false
+        return locks.any { key ->
+            when (key) {
+                "deviceName" -> before.deviceName != after.deviceName
+                "appendTvName" -> before.appendTvName != after.appendTvName
+                "desktopEnabled" -> before.desktopEnabled != after.desktopEnabled
+                "dlnaEnabled" -> before.dlnaEnabled != after.dlnaEnabled
+                "access" -> before.access != after.access || before.password != after.password
+                "allowTakeover" -> before.allowTakeover != after.allowTakeover
+                "resolution" -> before.resolution != after.resolution
+                "frameRate" -> before.frameRate != after.frameRate
+                "videoCodec" -> before.videoCodec != after.videoCodec
+                "showStats" -> before.showStats != after.showStats
+                "showLyrics" -> before.showLyrics != after.showLyrics
+                "coverSpin" -> before.coverSpin != after.coverSpin
+                "openOnCast" -> before.openOnCast != after.openOnCast
+                "pictureMode" -> before.pictureMode != after.pictureMode
+                "screenSaver" -> before.screenSaver != after.screenSaver
+                "startOnBoot" -> before.startOnBoot != after.startOnBoot
+                "checkUpdates" -> before.checkUpdates != after.checkUpdates
+                "testVersions" -> before.testVersions != after.testVersions
+                "sendErrorReports" -> before.sendErrorReports != after.sendErrorReports
+                else -> false
+            }
+        }
+    }
+
     fun clearDeviceCredential() {
-        prefs.edit().remove("device_id").remove("device_token").remove("account_label").remove("pair_code").remove("pair_expiry").apply()
+        prefs.edit().remove("device_id").remove("device_token").remove("account_label").remove("managed_policy").remove("pair_code").remove("pair_expiry").apply()
     }
 
     fun setPairing(code: String, expiresAt: String) {

@@ -347,7 +347,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     fun setSendErrorReports(enabled: Boolean) {
         updateSettings { it.copy(sendErrorReports = enabled) }
         // Turning it on while asked about a crash: that is a yes.
-        if (enabled && _crashNotice.value == CrashNotice.Ask) sendCrashReport()
+        if (enabled && settings.value.sendErrorReports && _crashNotice.value == CrashNotice.Ask) sendCrashReport()
     }
 
     /** Synced lyrics for a song (found, none, or failed for now); looked up online, so call off the main thread. */
@@ -392,6 +392,10 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
         val previous = _settings.value
         val updated = transform(previous)
         if (updated == previous) return
+        if (RemoteManagementStore(getApplication()).blocksLocalChange(previous, updated)) {
+            android.widget.Toast.makeText(getApplication<Application>(), com.weenas.castbay.R.string.remote_management_locked, android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
         _settings.value = updated
         settingsStore.save(updated)
         // Only protocol settings need the receiver restarted (not start-on-boot or the overlay).
@@ -399,7 +403,9 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun setRemoteManagementEnabled(enabled: Boolean) {
-        RemoteManagementStore(getApplication()).setEnabled(enabled)
+        val remote = RemoteManagementStore(getApplication())
+        if (!enabled && remote.activePolicy() != null) return
+        remote.setEnabled(enabled)
         val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
             .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_SYNC)
         runCatching { ContextCompat.startForegroundService(getApplication(), intent) }
@@ -407,6 +413,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun unbindRemoteManagementDevice() {
+        if (RemoteManagementStore(getApplication()).activePolicy() != null) return
         val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
             .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_UNBIND)
         runCatching { ContextCompat.startForegroundService(getApplication(), intent) }

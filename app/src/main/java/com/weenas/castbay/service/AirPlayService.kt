@@ -20,6 +20,7 @@ class AirPlayService : Service() {
         const val ACTION_START = "com.weenas.castbay.action.START_RECEIVER"
         const val ACTION_STOP = "com.weenas.castbay.action.STOP_RECEIVER"
         const val ACTION_REMOTE_SYNC = "com.weenas.castbay.action.REMOTE_SYNC"
+        const val ACTION_REMOTE_UNBIND = "com.weenas.castbay.action.REMOTE_UNBIND"
         const val ACTION_REMOTE_PAIR = "com.weenas.castbay.action.REMOTE_PAIR"
         const val CHANNEL_ID = "castbay_channel"
         const val NOTIFICATION_ID = 1
@@ -139,6 +140,14 @@ class AirPlayService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         lastStartId = startId
         Diagnostics.record("service", "Start command ${intent?.action ?: "(restart)"}" + if (running) ", already running" else "")
+        if (intent?.action == ACTION_REMOTE_UNBIND) {
+            if (!running && !enterForeground(buildNotification(getString(com.weenas.castbay.R.string.notification_starting)))) {
+                stopSelf(startId)
+                return START_NOT_STICKY
+            }
+            remoteManagement?.unbind()
+            return if (running) receiverRestartPolicy() else START_NOT_STICKY
+        }
         if (intent?.action == ACTION_REMOTE_SYNC) {
             remoteManagement?.syncEnabled()
             val remoteEnabled = RemoteManagementStore(this).enabled()

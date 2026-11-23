@@ -194,6 +194,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
     var state by remember { mutableStateOf(store.state()) }
     var code by remember { mutableStateOf(store.pairingCode()) }
     var message by remember { mutableStateOf(store.pairingMessage()) }
+    var confirmUnbind by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         while (true) {
             enabled = store.enabled()
@@ -214,6 +215,14 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
         Spacer(Modifier.height(8.dp))
         if (paired) {
             Text(stringResource(if (state == RemoteManagementStore.STATE_CONNECTED) R.string.remote_management_online else R.string.remote_management_offline), color = Color.White, fontSize = 18.sp)
+            HomeButton(stringResource(if (confirmUnbind) R.string.remote_management_confirm_unbind else R.string.remote_management_unbind_device)) {
+                if (confirmUnbind) {
+                    confirmUnbind = false
+                    viewModel.unbindRemoteManagementDevice()
+                } else {
+                    confirmUnbind = true
+                }
+            }
         } else if (!code.isNullOrBlank() && state == RemoteManagementStore.STATE_PAIRING) {
             val qr = remember(code) { QrCode.bitmap("https://manage.weenas.com/?pair=$code", 480)?.asImageBitmap() }
             if (narrow) {
@@ -244,6 +253,7 @@ private fun ColumnScope.RemoteManagementSetting(viewModel: AirPlayViewModel) {
         }
         val messageId = when (message) {
             "expired" -> R.string.remote_management_expired
+            "unbind_error" -> R.string.remote_management_unbind_error
             "unbound" -> R.string.remote_management_unbound
             "error" -> R.string.remote_management_error
             else -> 0

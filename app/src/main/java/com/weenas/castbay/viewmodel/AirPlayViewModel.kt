@@ -406,6 +406,13 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
             .onFailure { Diagnostics.record("remote", "Could not update remote management: ${it.javaClass.simpleName}") }
     }
 
+    fun unbindRemoteManagementDevice() {
+        val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
+            .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_UNBIND)
+        runCatching { ContextCompat.startForegroundService(getApplication(), intent) }
+            .onFailure { RemoteManagementStore(getApplication()).setPairingMessage("unbind_error") }
+    }
+
     fun pairRemoteManagementDevice() {
         val intent = Intent(getApplication<Application>(), com.weenas.castbay.service.AirPlayService::class.java)
             .setAction(com.weenas.castbay.service.AirPlayService.ACTION_REMOTE_PAIR)

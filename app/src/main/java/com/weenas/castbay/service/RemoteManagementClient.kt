@@ -127,6 +127,32 @@ class RemoteManagementClient(
         }
     }
 
+    fun unbind() {
+        executor.execute {
+            val token = store.deviceToken() ?: return@execute
+            try {
+                val request = Request.Builder().url("$BASE/api/device/v1/unbind")
+                    .header("Authorization", "Bearer $token")
+                    .post("{}".toRequestBody(JSON))
+                    .build()
+                http.newCall(request).execute().use { response ->
+                    if (response.code != 410 && (!response.isSuccessful || readJson(response).get("ok")?.asBoolean != true)) {
+                        error("Unbind not confirmed")
+                    }
+                }
+                if (store.deviceToken() == token) {
+                    socket?.close(1000, "unbound locally")
+                    clearRevokedLocalState()
+                }
+            } catch (error: Exception) {
+                if (store.deviceToken() == token) {
+                    store.setPairingMessage("unbind_error")
+                    Log.w(TAG, "Local unbind failed: ${error.javaClass.simpleName}")
+                }
+            }
+        }
+    }
+
     private fun connect() {
         val token = store.deviceToken() ?: return
         if (!store.enabled() || closed || socket != null) return

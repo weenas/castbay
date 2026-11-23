@@ -339,6 +339,9 @@
     <string name="remote_management_online">Connected to remote management.</string>
     <string name="remote_management_offline">Remote management is temporarily offline.</string>
     <string name="remote_management_expired">The pairing code expired. Please generate a new one.</string>
+    <string name="remote_management_unbind_device">Unbind this TV</string>
+    <string name="remote_management_confirm_unbind">Confirm unbinding</string>
+    <string name="remote_management_unbind_error">Could not unbind. Check the network and try again.</string>
     <string name="remote_management_unbound">This TV is unbound.</string>
     <string name="remote_management_error">Could not connect. Check the network and try again.</string>
     <string name="device_request_title">“%1$s” wants to cast to this TV</string>

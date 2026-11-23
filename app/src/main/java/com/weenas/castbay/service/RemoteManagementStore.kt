@@ -48,13 +48,14 @@ class RemoteManagementStore(context: Context) {
     fun lastCommandId() = prefs.getString("last_command_id", null)
     fun lastCommandStatus() = prefs.getString("last_command_status", "rejected") ?: "rejected"
     fun lastCommandMessage() = prefs.getString("last_command_message", "").orEmpty()
-    fun saveCommandResult(seq: Long, id: String, status: String, message: String) {
+    fun lastCommandFields() = prefs.getString("last_command_fields", null)
+    fun saveCommandResult(seq: Long, id: String, status: String, message: String, fields: String?) {
         prefs.edit().putLong("last_command_seq", seq).putString("last_command_id", id)
-            .putString("last_command_status", status).putString("last_command_message", message).apply()
+            .putString("last_command_status", status).putString("last_command_message", message).putString("last_command_fields", fields).apply()
     }
     fun resetCommandHistory() {
         prefs.edit().remove("last_command_seq").remove("last_command_id")
-            .remove("last_command_status").remove("last_command_message").apply()
+            .remove("last_command_status").remove("last_command_message").remove("last_command_fields").apply()
     }
     fun ensureCommandHistoryDevice(deviceId: String) {
         if (prefs.getString("command_history_device_id", null) == deviceId) return
@@ -63,6 +64,7 @@ class RemoteManagementStore(context: Context) {
             .remove("last_command_id")
             .remove("last_command_status")
             .remove("last_command_message")
+            .remove("last_command_fields")
             .putString("command_history_device_id", deviceId)
             .apply()
     }

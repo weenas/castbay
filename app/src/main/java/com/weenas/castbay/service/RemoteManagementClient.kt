@@ -254,15 +254,22 @@ class RemoteManagementClient(
         }
         val lastSeq = store.lastCommandSeq()
         if (commandSeq <= lastSeq) {
-            if (store.lastCommandId() == id) sendAck(webSocket, id, commandSeq, store.lastCommandStatus(), store.lastCommandMessage())
+            if (store.lastCommandId() == id) sendAck(webSocket, id, commandSeq, store.lastCommandStatus(), store.lastCommandMessage(), store.lastCommandFields())
             else sendAck(webSocket, id, commandSeq, "rejected", "Stale command")
             return
         }
         val commandType = data.get("commandType")?.asString.orEmpty()
         mainHandler.post {
+        var fields: String? = null
         val result = runCatching {
             when (commandType) {
-                "set_config" -> applyConfig(data.getAsJsonObject("payload")?.getAsJsonObject("config") ?: error("Missing config"))
+                "set_config" -> {
+                    val results = applyConfig(data.getAsJsonObject("payload")?.getAsJsonObject("config") ?: error("Missing config"))
+                    fields = gson.toJson(results)
+                    require(results.entrySet().any { it.value.asJsonObject.get("status").asString == "applied" }) {
+                        "No settings applied"
+                    }
+                }
                 "restart_receiver" -> check(service.restartReceiverFromRemote()) { "Receiver could not be restarted" }
                 "unbind" -> {
                     // Acknowledge first; the server invalidates the credential when it receives this.
@@ -277,77 +284,85 @@ class RemoteManagementClient(
         }
         val status = if (result.isSuccess) "applied" else if (commandType == "set_config") "rejected" else "failed"
         val message = result.exceptionOrNull()?.message.orEmpty().take(200)
-        store.saveCommandResult(commandSeq, id, status, message)
-        sendAck(webSocket, id, commandSeq, status, message)
+        store.saveCommandResult(commandSeq, id, status, message, fields)
+        sendAck(webSocket, id, commandSeq, status, message, fields)
         if (status == "applied" && commandType != "unbind") sendStatus(webSocket)
         }
     }
 
-    private fun applyConfig(config: JsonObject) {
+    private fun applyConfig(config: JsonObject): JsonObject {
         val before = ReceiverSettingsStore(app).load()
         var after = before
+        val results = JsonObject()
         for ((key, value) in config.entrySet()) {
-            when (key) {
-                "deviceName" -> {
-                    val name = value.asString.trim()
-                    require(name.isNotEmpty() && name.toByteArray().size <= 60) { "Invalid device name" }
-                    after = after.copy(deviceName = name)
-                }
-                "access" -> {
-                    val v = value.asString
-                    require(v == ReceiverSettings.ACCESS_OPEN || v == ReceiverSettings.ACCESS_CONFIRM) { "Unsupported access mode" }
-                    after = after.copy(access = v)
-                }
-                "resolution" -> {
-                    val v = value.asString
-                    require(v in listOf("Auto", "720p", "1080p")) { "Unsupported resolution" }
-                    after = after.copy(resolution = v)
-                }
-                "videoCodec" -> {
-                    val v = value.asString
-                    require(v in listOf("Auto", "H.264 only")) { "Unsupported video codec" }
-                    after = after.copy(videoCodec = v)
-                }
-                "appendTvName" -> after = after.copy(appendTvName = value.asBoolean)
-                "desktopEnabled" -> after = after.copy(desktopEnabled = value.asBoolean)
-                "allowTakeover" -> after = after.copy(allowTakeover = value.asBoolean)
-                "showStats" -> after = after.copy(showStats = value.asBoolean)
-                "showLyrics" -> after = after.copy(showLyrics = value.asBoolean)
-                "coverSpin" -> after = after.copy(coverSpin = value.asBoolean)
-                "openOnCast" -> {
-                    val enabled = value.asBoolean
-                    require(!enabled || ScreenLauncher.allowed(app)) {
-                        "Allow CastBay to display over other apps on the TV first"
+            val outcome = runCatching {
+                when (key) {
+                    "deviceName" -> {
+                        val name = value.asString.trim()
+                        require(name.isNotEmpty() && name.toByteArray().size <= 60) { "Invalid device name" }
+                        after = after.copy(deviceName = name)
                     }
-                    after = after.copy(openOnCast = enabled)
+                    "access" -> {
+                        val v = value.asString
+                        require(v == ReceiverSettings.ACCESS_OPEN || v == ReceiverSettings.ACCESS_CONFIRM) { "Unsupported access mode" }
+                        after = after.copy(access = v)
+                    }
+                    "resolution" -> {
+                        val v = value.asString
+                        require(v in listOf("Auto", "720p", "1080p")) { "Unsupported resolution" }
+                        after = after.copy(resolution = v)
+                    }
+                    "videoCodec" -> {
+                        val v = value.asString
+                        require(v in listOf("Auto", "H.264 only")) { "Unsupported video codec" }
+                        after = after.copy(videoCodec = v)
+                    }
+                    "appendTvName" -> after = after.copy(appendTvName = value.asBoolean)
+                    "desktopEnabled" -> after = after.copy(desktopEnabled = value.asBoolean)
+                    "allowTakeover" -> after = after.copy(allowTakeover = value.asBoolean)
+                    "showStats" -> after = after.copy(showStats = value.asBoolean)
+                    "showLyrics" -> after = after.copy(showLyrics = value.asBoolean)
+                    "coverSpin" -> after = after.copy(coverSpin = value.asBoolean)
+                    "openOnCast" -> {
+                        val enabled = value.asBoolean
+                        require(!enabled || ScreenLauncher.allowed(app)) {
+                            "Allow CastBay to display over other apps on the TV first"
+                        }
+                        after = after.copy(openOnCast = enabled)
+                    }
+                    "testVersions" -> after = after.copy(testVersions = value.asBoolean)
+                    "sendErrorReports" -> after = after.copy(sendErrorReports = value.asBoolean)
+                    "frameRate" -> {
+                        val setting = value.asString
+                        require(setting in ReceiverSettings.FRAME_RATES) { "Unsupported frameRate" }
+                        after = after.copy(frameRate = setting)
+                    }
+                    "pictureMode" -> {
+                        val setting = value.asString
+                        require(setting in ReceiverSettings.PICTURE_MODES) { "Unsupported pictureMode" }
+                        after = after.copy(pictureMode = setting)
+                    }
+                    "screenSaver" -> {
+                        val setting = value.asString
+                        require(setting in ReceiverSettings.SCREEN_SAVERS) { "Unsupported screenSaver" }
+                        after = after.copy(screenSaver = setting)
+                    }
+                    "dlnaEnabled" -> after = after.copy(dlnaEnabled = value.asBoolean)
+                    "startOnBoot" -> after = after.copy(startOnBoot = value.asBoolean)
+                    "checkUpdates" -> after = after.copy(checkUpdates = value.asBoolean)
+                    else -> error("Unsupported setting: $key")
                 }
-                "testVersions" -> after = after.copy(testVersions = value.asBoolean)
-                "sendErrorReports" -> after = after.copy(sendErrorReports = value.asBoolean)
-                "frameRate" -> {
-                    val setting = value.asString
-                    require(setting in ReceiverSettings.FRAME_RATES) { "Unsupported frameRate" }
-                    after = after.copy(frameRate = setting)
-                }
-                "pictureMode" -> {
-                    val setting = value.asString
-                    require(setting in ReceiverSettings.PICTURE_MODES) { "Unsupported pictureMode" }
-                    after = after.copy(pictureMode = setting)
-                }
-                "screenSaver" -> {
-                    val setting = value.asString
-                    require(setting in ReceiverSettings.SCREEN_SAVERS) { "Unsupported screenSaver" }
-                    after = after.copy(screenSaver = setting)
-                }
-                "dlnaEnabled" -> after = after.copy(dlnaEnabled = value.asBoolean)
-                "startOnBoot" -> after = after.copy(startOnBoot = value.asBoolean)
-                "checkUpdates" -> after = after.copy(checkUpdates = value.asBoolean)
-                else -> error("Unsupported setting: $key")
             }
+            results.add(key, JsonObject().apply {
+                addProperty("status", if (outcome.isSuccess) "applied" else "rejected")
+                outcome.exceptionOrNull()?.message?.let { addProperty("message", it.take(200)) }
+            })
         }
         if (after != before) {
             ReceiverSettingsStore(app).save(after)
             manager.restartIfRunning(after)
         }
+        return results
     }
 
     private fun sendHello(webSocket: WebSocket, type: String) {
@@ -402,7 +417,7 @@ class RemoteManagementClient(
 
     fun sendStatus() { socket?.let(::sendStatus) }
 
-    private fun sendAck(webSocket: WebSocket, commandId: String, commandSeq: Long, status: String, message: String) {
+    private fun sendAck(webSocket: WebSocket, commandId: String, commandSeq: Long, status: String, message: String, fields: String? = null) {
         webSocket.send(gson.toJson(JsonObject().apply {
             addProperty("id", java.util.UUID.randomUUID().toString())
             addProperty("type", "ack")
@@ -410,6 +425,7 @@ class RemoteManagementClient(
             addProperty("commandId", commandId)
             addProperty("status", status)
             if (message.isNotBlank()) addProperty("message", message)
+            fields?.let { add("fields", gson.fromJson(it, JsonObject::class.java)) }
         }))
     }
 

@@ -383,6 +383,13 @@ class RemoteManagementClient(
                     }
                     "testVersions" -> after = after.copy(testVersions = value.asBoolean)
                     "sendErrorReports" -> after = after.copy(sendErrorReports = value.asBoolean)
+                    "usageStatsOn" -> {
+                        require(value.isJsonPrimitive && value.asJsonPrimitive.isBoolean) { "Expected a boolean" }
+                        val enabled = value.asBoolean
+                        if (com.weenas.castbay.util.UsageStats.isOn(app) != enabled) {
+                            com.weenas.castbay.util.UsageStats.setOn(app, enabled)
+                        }
+                    }
                     "frameRate" -> {
                         val setting = value.asString
                         require(setting in ReceiverSettings.FRAME_RATES) { "Unsupported frameRate" }
@@ -421,7 +428,7 @@ class RemoteManagementClient(
             addProperty("id", java.util.UUID.randomUUID().toString())
             addProperty("type", type)
             addProperty("seq", store.nextOutgoingSeq())
-            addProperty("protocolVersion", 4)
+            addProperty("protocolVersion", 5)
             addProperty("usageStatsOn", com.weenas.castbay.util.UsageStats.isOn(app))
             addProperty("appVersion", AppVersion.name(app))
             addProperty("receiverState", receiverState())

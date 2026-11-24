@@ -50,7 +50,7 @@ object UsageStats {
             return
         }
         val id = prefs.getString(KEY_ID, null)
-        prefs.edit().clear().apply()
+        prefs.edit().remove(KEY_ID).remove(KEY_DAYS).apply()
         if (id != null) {
             val app = context.applicationContext
             kotlin.concurrent.thread(name = "CastBay-stats-delete") {
@@ -209,5 +209,5 @@ object UsageStats {
         }
     }
 
-    private fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    internal fun prefs(context: Context) = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 }

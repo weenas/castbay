@@ -47,9 +47,19 @@ class RemoteManagementStore(context: Context) {
         val text = prefs.getString("managed_policy", null)?.let(::decrypt) ?: return null
         return runCatching {
             val json = JsonParser.parseString(text).asJsonObject
-            val expiry = android.text.format.Time().apply { parse3339(json.get("expiresAt").asString) }.toMillis(false)
-            if (expiry <= System.currentTimeMillis()) null
-            else Policy(json.getAsJsonArray("locks").map { it.asString }.toSet(), expiry)
+            val now = System.currentTimeMillis()
+            val sources = json.getAsJsonArray("sources")?.map { it.asJsonObject } ?: listOf(json)
+            val active = sources.mapNotNull { source ->
+                val expiry = android.text.format.Time().apply {
+                    parse3339(source.get("expiresAt").asString)
+                }.toMillis(false)
+                if (expiry <= now) null else Policy(source.getAsJsonArray("locks").map { it.asString }.toSet(), expiry)
+            }
+            if (active.isEmpty()) null else {
+                val locks = active.flatMap { it.locks }.toMutableSet()
+                if (active.any { "allowLocalReset" !in it.locks }) locks.remove("allowLocalReset")
+                Policy(locks, active.maxOf { it.expiresAt })
+            }
         }.getOrNull()
     }
 

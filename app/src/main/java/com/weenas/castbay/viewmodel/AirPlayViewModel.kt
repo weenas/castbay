@@ -325,6 +325,15 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
 
     private val _usageStatsOn = MutableStateFlow(UsageStats.isOn(application))
     /** Whether anonymous usage statistics are on (Settings → General; off by default). */
+    private val usageStatsPreferences = UsageStats.prefs(application)
+    private val usageStatsListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
+        _usageStatsOn.value = UsageStats.isOn(application)
+    }
+
+    init {
+        usageStatsPreferences.registerOnSharedPreferenceChangeListener(usageStatsListener)
+    }
+
     val usageStatsOn: StateFlow<Boolean> = _usageStatsOn.asStateFlow()
 
     fun setUsageStats(on: Boolean) {
@@ -478,6 +487,7 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     override fun onCleared() {
         super.onCleared()
         settingsPreferences.unregisterOnSharedPreferenceChangeListener(settingsPreferenceListener)
+        usageStatsPreferences.unregisterOnSharedPreferenceChangeListener(usageStatsListener)
         startHandler.removeCallbacks(startCheck)
         startHandler.removeCallbacks(askServiceLater)
         networkMonitor.stop()

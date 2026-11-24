@@ -65,7 +65,9 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     fun knownDevices() = manager.knownDevices()
     fun setDeviceAllowed(deviceId: String, allowed: Boolean) = manager.setDeviceAllowed(deviceId, allowed)
     /** Forgets every device, allowed, blocked or paired by PIN: they are new again. */
-    fun forgetDevices() = manager.forgetDevices()
+    fun forgetDevices() {
+        if (!RemoteManagementStore(getApplication()).isLocalActionLocked("forgetDevices")) manager.forgetDevices()
+    }
 
     val appVersion: String = com.weenas.castbay.util.AppVersion.name(application)
 
@@ -386,7 +388,11 @@ class AirPlayViewModel(application: Application) : AndroidViewModel(application)
     }
 
     /** Every setting back to its default (the TV's own name is kept: it isn't a setting). */
-    fun resetSettings() = updateSettings { ReceiverSettings(tvName = it.tvName) }
+    fun resetSettings() {
+        if (!RemoteManagementStore(getApplication()).isLocalActionLocked("resetDefaults")) {
+            updateSettings { ReceiverSettings(tvName = it.tvName) }
+        }
+    }
 
     fun updateSettings(transform: (ReceiverSettings) -> ReceiverSettings) {
         val previous = _settings.value

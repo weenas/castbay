@@ -326,7 +326,9 @@ private fun KnownDevicesSetting(viewModel: AirPlayViewModel) {
             armed = false
         }
     }
-    SettingLine(stringResource(R.string.setting_devices)) {
+    if (LocalManagementPolicy.current?.locks?.contains("forgetDevices") == true) {
+        LockedSetting(stringResource(R.string.setting_devices), "")
+    } else SettingLine(stringResource(R.string.setting_devices)) {
         if (devices.isEmpty()) {
             Text(stringResource(R.string.setting_devices_none), color = Color.Gray, fontSize = 18.sp)
         } else {
@@ -485,7 +487,9 @@ private fun ColumnScope.GeneralPage(
             armed = false
         }
     }
-    SettingLine(stringResource(R.string.setting_reset)) {
+    if (LocalManagementPolicy.current?.let { "allowLocalReset" !in it.locks } == true) {
+        LockedSetting(stringResource(R.string.setting_reset), "")
+    } else SettingLine(stringResource(R.string.setting_reset)) {
         HomeButton(stringResource(if (armed) R.string.setting_reset_confirm else R.string.setting_reset_action), muted = !armed) {
             if (!armed) {
                 armed = true

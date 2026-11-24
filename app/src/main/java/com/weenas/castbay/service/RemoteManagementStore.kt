@@ -53,6 +53,15 @@ class RemoteManagementStore(context: Context) {
         }.getOrNull()
     }
 
+    fun isLocalActionLocked(action: String): Boolean {
+        val policy = activePolicy() ?: return false
+        return when (action) {
+            "forgetDevices" -> action in policy.locks
+            "resetDefaults" -> "allowLocalReset" !in policy.locks
+            else -> false
+        }
+    }
+
     fun blocksLocalChange(before: ReceiverSettings, after: ReceiverSettings): Boolean {
         val locks = activePolicy()?.locks ?: return false
         return locks.any { key ->

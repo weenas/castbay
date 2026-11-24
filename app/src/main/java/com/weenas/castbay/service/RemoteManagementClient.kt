@@ -255,52 +255,89 @@ class RemoteManagementClient(
     }
 
     private fun handleCommand(webSocket: WebSocket, data: JsonObject) {
-        val id = data.get("id")?.asString.orEmpty()
-        val commandSeq = data.get("seq")?.asLong ?: return
-        if (id.isBlank() || data.get("expiresAt")?.asString?.let { expires ->
-                runCatching {
-                    val parsed = android.text.format.Time().apply { parse3339(expires) }
-                    parsed.toMillis(false) < System.currentTimeMillis()
-                }.getOrDefault(true)
-            } != false) {
-            sendAck(webSocket, id, commandSeq, "rejected", "Command expired or invalid")
-            return
-        }
-        val lastSeq = store.lastCommandSeq()
-        if (commandSeq <= lastSeq) {
-            if (store.lastCommandId() == id) sendAck(webSocket, id, commandSeq, store.lastCommandStatus(), store.lastCommandMessage(), store.lastCommandFields())
-            else sendAck(webSocket, id, commandSeq, "rejected", "Stale command")
-            return
-        }
-        val commandType = data.get("commandType")?.asString.orEmpty()
         mainHandler.post {
-        var fields: String? = null
-        val result = runCatching {
-            when (commandType) {
-                "set_config" -> {
-                    val results = applyConfig(data.getAsJsonObject("payload")?.getAsJsonObject("config") ?: error("Missing config"))
-                    fields = gson.toJson(results)
-                    require(results.entrySet().any { it.value.asJsonObject.get("status").asString == "applied" }) {
-                        "No settings applied"
-                    }
-                }
-                "restart_receiver" -> check(service.restartReceiverFromRemote()) { "Receiver could not be restarted" }
-                "unbind" -> {
-                    // Acknowledge first; the server invalidates the credential when it receives this.
-                    store.clearDeviceCredential()
-                    socket = null
-                    webSocket.close(1000, "unbound")
-                    store.setState(RemoteManagementStore.STATE_READY_TO_PAIR)
-                    store.setPairingMessage("unbound")
-                }
-                else -> error("Unsupported command")
+            if (socket !== webSocket) return@post
+            val id = data.get("id")?.asString.orEmpty()
+            val commandSeq = data.get("seq")?.asLong ?: return@post
+            if (id.isBlank() || data.get("expiresAt")?.asString?.let { expires ->
+                    runCatching {
+                        val parsed = android.text.format.Time().apply { parse3339(expires) }
+                        parsed.toMillis(false) < System.currentTimeMillis()
+                    }.getOrDefault(true)
+                } != false) {
+                sendAck(webSocket, id, commandSeq, "rejected", "Command expired or invalid")
+                return@post
             }
+            val lastSeq = store.lastCommandSeq()
+            if (commandSeq <= lastSeq) {
+                if (store.lastCommandId() == id) sendAck(webSocket, id, commandSeq, store.lastCommandStatus(), store.lastCommandMessage(), store.lastCommandFields())
+                else sendAck(webSocket, id, commandSeq, "rejected", "Stale command")
+                return@post
+            }
+            val commandType = data.get("commandType")?.asString.orEmpty()
+            var fields: String? = null
+            val result = runCatching {
+                when (commandType) {
+                    "set_config" -> {
+                        val results = applyConfig(data.getAsJsonObject("payload")?.getAsJsonObject("config") ?: error("Missing config"))
+                        fields = gson.toJson(results)
+                        require(results.entrySet().any { it.value.asJsonObject.get("status").asString == "applied" }) {
+                            "No settings applied"
+                        }
+                    }
+                    "forget_devices" -> manager.forgetDevices()
+                    "reset_defaults" -> resetReceiverDefaults(data.getAsJsonObject("payload"))
+                    "restart_receiver" -> check(service.restartReceiverFromRemote()) { "Receiver could not be restarted" }
+                    "unbind" -> {
+                        // Acknowledge first; the server invalidates the credential when it receives this.
+                        store.clearDeviceCredential()
+                        socket = null
+                        webSocket.close(1000, "unbound")
+                        store.setState(RemoteManagementStore.STATE_READY_TO_PAIR)
+                        store.setPairingMessage("unbound")
+                    }
+                    else -> error("Unsupported command")
+                }
+            }
+            val status = if (result.isSuccess) "applied" else if (commandType == "set_config") "rejected" else "failed"
+            val message = result.exceptionOrNull()?.message.orEmpty().take(200)
+            store.saveCommandResult(commandSeq, id, status, message, fields)
+            sendAck(webSocket, id, commandSeq, status, message, fields)
+            if (status == "applied" && commandType != "unbind") sendStatus(webSocket)
         }
-        val status = if (result.isSuccess) "applied" else if (commandType == "set_config") "rejected" else "failed"
-        val message = result.exceptionOrNull()?.message.orEmpty().take(200)
-        store.saveCommandResult(commandSeq, id, status, message, fields)
-        sendAck(webSocket, id, commandSeq, status, message, fields)
-        if (status == "applied" && commandType != "unbind") sendStatus(webSocket)
+    }
+
+    private fun resetReceiverDefaults(payload: JsonObject?) {
+        val settings = ReceiverSettingsStore(app)
+        val before = settings.load()
+        val defaults = ReceiverSettings(tvName = before.tvName)
+        val locks = store.activePolicy()?.locks.orEmpty() + payload?.getAsJsonArray("locks")?.map { it.asString }.orEmpty()
+        fun kept(key: String) = key in locks
+        val after = defaults.copy(
+            deviceName = if (kept("deviceName")) before.deviceName else defaults.deviceName,
+            appendTvName = if (kept("appendTvName")) before.appendTvName else defaults.appendTvName,
+            desktopEnabled = if (kept("desktopEnabled")) before.desktopEnabled else defaults.desktopEnabled,
+            dlnaEnabled = if (kept("dlnaEnabled")) before.dlnaEnabled else defaults.dlnaEnabled,
+            access = if (kept("access")) before.access else defaults.access,
+            allowTakeover = if (kept("allowTakeover")) before.allowTakeover else defaults.allowTakeover,
+            resolution = if (kept("resolution")) before.resolution else defaults.resolution,
+            frameRate = if (kept("frameRate")) before.frameRate else defaults.frameRate,
+            videoCodec = if (kept("videoCodec")) before.videoCodec else defaults.videoCodec,
+            showStats = if (kept("showStats")) before.showStats else defaults.showStats,
+            showLyrics = if (kept("showLyrics")) before.showLyrics else defaults.showLyrics,
+            coverSpin = if (kept("coverSpin")) before.coverSpin else defaults.coverSpin,
+            openOnCast = if (kept("openOnCast")) before.openOnCast else defaults.openOnCast,
+            pictureMode = if (kept("pictureMode")) before.pictureMode else defaults.pictureMode,
+            screenSaver = if (kept("screenSaver")) before.screenSaver else defaults.screenSaver,
+            startOnBoot = if (kept("startOnBoot")) before.startOnBoot else defaults.startOnBoot,
+            checkUpdates = if (kept("checkUpdates")) before.checkUpdates else defaults.checkUpdates,
+            testVersions = if (kept("testVersions")) before.testVersions else defaults.testVersions,
+            password = if (kept("access")) before.password else defaults.password,
+            sendErrorReports = before.sendErrorReports,
+        )
+        if (after != before) {
+            settings.save(after)
+            if (after.needsRestartComparedTo(before)) manager.restartIfRunning(after)
         }
     }
 
@@ -384,7 +421,8 @@ class RemoteManagementClient(
             addProperty("id", java.util.UUID.randomUUID().toString())
             addProperty("type", type)
             addProperty("seq", store.nextOutgoingSeq())
-            addProperty("protocolVersion", 3)
+            addProperty("protocolVersion", 4)
+            addProperty("usageStatsOn", com.weenas.castbay.util.UsageStats.isOn(app))
             addProperty("appVersion", AppVersion.name(app))
             addProperty("receiverState", receiverState())
             addProperty("castingState", manager.remoteCastingState())
@@ -415,6 +453,7 @@ class RemoteManagementClient(
                 addProperty("openOnCast", s.openOnCast)
                 addProperty("testVersions", s.testVersions)
                 addProperty("sendErrorReports", s.sendErrorReports)
+                addProperty("usageStatsOn", com.weenas.castbay.util.UsageStats.isOn(app))
                 addProperty("frameRate", s.frameRate)
                 addProperty("pictureMode", s.pictureMode)
                 addProperty("screenSaver", s.screenSaver)

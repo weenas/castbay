@@ -1,0 +1,3 @@
+• Update localized app names, branding, and TV banners.
+• AirPlay music wakes the TV from standby; screen-saver playback is unchanged.
+• The receiver no longer starts or uploads device reports on phones.
